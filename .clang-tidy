@@ -1,0 +1,2 @@
+---
+Checks: '-*,bugprone-*,clang-analyzer-*,cppcoreguidelines-*,google-*,llvm-*,modernize-*,-modernize-use-trailing-return-type,performance-*,readability-*'
