@@ -7,6 +7,7 @@ public:
     virtual void start() = 0;
     virtual void stop() = 0;
     virtual void configureInterfaces() = 0;
+    virtual bool checkHeartbeat() = 0;
 };
 
 #endif

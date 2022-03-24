@@ -54,6 +54,36 @@ int main()
     std::shared_ptr<ISubsystem> commandTerminal = std::make_shared<CommandTerminal>();
         
     // - Start all subsystems to begin functionality
+    infoDisplay->start();
+    starTracker->start();
+    motionController->start();
+    opticsManager->start();
+    positionManager->start();
+    commandTerminal->start();
+
     // - Check heartbeat until program termination
+    volatile bool running = true;
+    while (running)
+    {
+        if (infoDisplay->checkHeartbeat())
+            general_logger->error("Heartbeat failure for Info Display");
+        if (starTracker->checkHeartbeat())
+            general_logger->error("Heartbeat failure for Star Tracker");
+        if (motionController->checkHeartbeat())
+            general_logger->error("Heartbeat failure for Motion Controller");
+        if (opticsManager->checkHeartbeat())
+            general_logger->error("Heartbeat failure for Optics Manager");
+        if (positionManager->checkHeartbeat())
+            general_logger->error("Heartbeat failure for Position Manager");
+        if (commandTerminal->checkHeartbeat())
+            general_logger->error("Heartbeat failure for Command Terminal");
+    }
+
     // - Stop all subsystems and exit cleanly
+    infoDisplay->stop();
+    starTracker->stop();
+    motionController->stop();
+    opticsManager->stop();
+    positionManager->stop();
+    commandTerminal->stop();
 }
