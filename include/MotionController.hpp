@@ -9,6 +9,9 @@ class MotionController : public IMotionController
     // Move servo by a certain degree on command
     // Differentiate between camera and telescope position servo
     // Keep track of movement progress/completion
+    void moveFocusKnob(double theta);
+    void moveHorizAngle(double theta);
+    void moveVertAngle(double phi);
 };
 
 #endif

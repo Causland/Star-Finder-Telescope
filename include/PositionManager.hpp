@@ -10,6 +10,8 @@ class PositionManager : public IPositionManager
     // - Listen for star position update commands from star tracker
     // - Calculate motion required to move to new position
     // - Command the motion controller for telescope pointing
+    void userChangePosition(double theta, double phi);
+    void pointAtTarget(StarPosition position);
 };
 
 #endif

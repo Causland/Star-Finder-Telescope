@@ -23,6 +23,10 @@ class OpticsManager : public IOpticsManager
     //          - Take a photo of the target at specific timelapse frequency
     //          - Store photos in a known location based on timelapse/target/time
     // - Possible to focus camera based on distance to target and focal length of the camera/telescope
+public:
+    std::string takePhoto();
+    std::string takeVideo(double durationInSeconds);
+    std::string takeTimelapse(double durationInMinutes, double freqInHz);
 };
 
 #endif

@@ -5,6 +5,10 @@
 
 class IMotionController : public ISubsystem
 {
+public:
+    void moveFocusKnob(double theta);
+    void moveHorizAngle(double theta);
+    void moveVertAngle(double phi);
 };
 
 #endif
