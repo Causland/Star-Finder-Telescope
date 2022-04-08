@@ -2,8 +2,9 @@
 #define OPTICS_MANAGER_HPP
 
 #include "interfaces/IOpticsManager.hpp"
+#include "Subsystem.hpp"
 
-class OpticsManager : public IOpticsManager
+class OpticsManager : public IOpticsManager, public Subsystem
 {
     // Things for the optics manager to do
     // - Process requests for photos, videos, or timelapse
@@ -24,9 +25,17 @@ class OpticsManager : public IOpticsManager
     //          - Store photos in a known location based on timelapse/target/time
     // - Possible to focus camera based on distance to target and focal length of the camera/telescope
 public:
-    std::string takePhoto();
-    std::string takeVideo(double durationInSeconds);
-    std::string takeTimelapse(double durationInMinutes, double freqInHz);
+    // Includes from ISubsystem
+    void start() override;
+    void stop() override;
+    void configureInterfaces() override;
+    bool checkHeartbeat() override;
+    void threadLoop() override;
+
+    // Includes from IOpticsManager
+    std::string takePhoto() override;
+    std::string takeVideo(double durationInSeconds) override;
+    std::string takeTimelapse(double durationInMinutes, double freqInHz) override;
 };
 
 #endif

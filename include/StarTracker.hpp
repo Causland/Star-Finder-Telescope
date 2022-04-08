@@ -3,9 +3,10 @@
 
 #include <memory>
 #include "interfaces/IStarTracker.hpp"
+#include "Subsystem.hpp"
 #include "StarDatabase.hpp"
 
-class StarTracker : public IStarTracker
+class StarTracker : public IStarTracker, public Subsystem
 {
     // Things for Star Tracker to do
     // - Wait for particular star input
@@ -13,10 +14,18 @@ class StarTracker : public IStarTracker
     //         - If position query mode, get the position from the database
     // - Inform position manager of new coordinates
 public:
-    void pointToTarget(std::string targetName);
-    void trackTarget(std::string targetName, unsigned short updateFreqInHz);
-    void queryTargetPosition(std::string targetName);
-    void queryTargetsWithinRange(double rangeInLightMinutes); 
+    // Includes from ISubsystem
+    void start() override;
+    void stop() override;
+    void configureInterfaces() override;
+    bool checkHeartbeat() override;
+    void threadLoop() override;
+
+    // Includes from IStarTracker
+    void pointToTarget(std::string targetName) override;
+    void trackTarget(std::string targetName, uint16_t updateFreqInHz) override;
+    void queryTargetPosition(std::string targetName) override;
+    void queryTargetsWithinRange(double rangeInLightMinutes) override; 
 private:
     StarDatabase database;
 };

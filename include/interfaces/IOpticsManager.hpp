@@ -2,14 +2,13 @@
 #define I_OPTICS_MANAGER_HPP
 
 #include <string>
-#include "interfaces/ISubsystem.hpp"
 
-class IOpticsManager : public ISubsystem
+class IOpticsManager
 {
 public:
-    std::string takePhoto();
-    std::string takeVideo(double durationInSeconds);
-    std::string takeTimelapse(double durationInMinutes, double freqInHz);
+    virtual std::string takePhoto() = 0;
+    virtual std::string takeVideo(double durationInSeconds) = 0;
+    virtual std::string takeTimelapse(double durationInMinutes, double freqInHz) = 0;
 };
 
 #endif

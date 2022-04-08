@@ -2,7 +2,6 @@
 #define I_POSITION_MANAGER_HPP
 
 #include <cmath>
-#include "interfaces/ISubsystem.hpp"
 
 struct StarPosition
 {
@@ -16,11 +15,11 @@ struct StarPosition
     double dist;
 };
 
-class IPositionManager : public ISubsystem
+class IPositionManager
 {
 public:
-    void userChangePosition(double theta, double phi);
-    void pointAtTarget(StarPosition position);
+    virtual void userChangePosition(double theta, double phi) = 0;
+    virtual void pointAtTarget(StarPosition position) = 0;
 };
 
 #endif

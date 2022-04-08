@@ -1,14 +1,12 @@
 #ifndef I_MOTION_CONTROLLER_HPP
 #define I_MOTION_CONTROLLER_HPP
 
-#include "interfaces/ISubsystem.hpp"
-
-class IMotionController : public ISubsystem
+class IMotionController
 {
 public:
-    void moveFocusKnob(double theta);
-    void moveHorizAngle(double theta);
-    void moveVertAngle(double phi);
+    virtual void moveFocusKnob(double theta) = 0;
+    virtual void moveHorizAngle(double theta) = 0;
+    virtual void moveVertAngle(double phi) = 0;
 };
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef STAR_DATABASE_HPP
 #define STAR_DATABASE_HPP
 
+#include <string>
+
 class StarDatabase
 {
     // Things for database interface to do
