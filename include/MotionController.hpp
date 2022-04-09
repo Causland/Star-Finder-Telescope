@@ -6,17 +6,13 @@
 
 class MotionController : public IMotionController, public Subsystem
 {
-    // Things for the motion controller to do
-    // Move servo by a certain degree on command
-    // Differentiate between camera and telescope position servo
-    // Keep track of movement progress/completion
-
 public:
+    MotionController(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
+
     // Includes from ISubsystem
     void start() override;
     void stop() override;
-    void configureInterfaces() override;
-    bool checkHeartbeat() override;
+    void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override;
     void threadLoop() override;
 
     // Includes from IMotionController

@@ -1,2 +1,2 @@
 ---
-Checks: '-*,bugprone-*,clang-analyzer-*,cppcoreguidelines-*,google-*,llvm-*,modernize-*,performance-*,readability-*,-modernize-use-trailing-return-type,-llvm-header-guard'
+Checks: '-*,bugprone-*,clang-analyzer-*,cppcoreguidelines-*,google-*,llvm-*,modernize-*,performance-*,readability-*,-modernize-use-trailing-return-type,-llvm-header-guard,-cppcoreguidelines-non-private-member-variables-in-classes'

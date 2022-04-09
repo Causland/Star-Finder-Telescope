@@ -1,41 +1,28 @@
 #ifndef OPTICS_MANAGER_HPP
 #define OPTICS_MANAGER_HPP
 
-#include "interfaces/IOpticsManager.hpp"
 #include "Subsystem.hpp"
+#include "interfaces/IInformationDisplay.hpp"
+#include "interfaces/IOpticsManager.hpp"
 
 class OpticsManager : public IOpticsManager, public Subsystem
 {
-    // Things for the optics manager to do
-    // - Process requests for photos, videos, or timelapse
-    //      - Photos
-    //          - Focus camera using the Motion Controller
-    //          - Take a photo of the target
-    //          - Store photo in a known location based on time and target
-    //          - Display to output about new photo (Possibly display photo to take another)
-    //      - Video
-    //          - Focus camera using the Motion Controller
-    //          - Take a video of the target
-    //          - Store video in a known location based on time and target
-    //              - Possibly break up file depending on size
-    //          - Display to output about video path
-    //      - Timelapse
-    //          - Focus camera using the Motion Controller
-    //          - Take a photo of the target at specific timelapse frequency
-    //          - Store photos in a known location based on timelapse/target/time
-    // - Possible to focus camera based on distance to target and focal length of the camera/telescope
 public:
+    OpticsManager(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
+
     // Includes from ISubsystem
     void start() override;
     void stop() override;
-    void configureInterfaces() override;
-    bool checkHeartbeat() override;
+    void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override;
     void threadLoop() override;
 
     // Includes from IOpticsManager
     std::string takePhoto() override;
     std::string takeVideo(double durationInSeconds) override;
     std::string takeTimelapse(double durationInMinutes, double freqInHz) override;
+
+private:
+    std::shared_ptr<IInformationDisplay> myInformationDisplay;
 };
 
 #endif

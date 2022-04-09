@@ -2,6 +2,7 @@
 #define I_POSITION_MANAGER_HPP
 
 #include <cmath>
+#include <string>
 
 struct StarPosition
 {
@@ -20,6 +21,8 @@ class IPositionManager
 public:
     virtual void userChangePosition(double theta, double phi) = 0;
     virtual void pointAtTarget(StarPosition position) = 0;
+
+    static const std::string NAME;
 };
 
 #endif

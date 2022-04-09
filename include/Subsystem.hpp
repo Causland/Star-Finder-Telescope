@@ -4,21 +4,32 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include "Logger.hpp"
 #include "interfaces/ISubsystem.hpp"
-#include "spdlog/sinks/basic_file_sink.h"
 
 class Subsystem : public ISubsystem
 {
 public:
-   Subsystem(std::string subsystemName, std::shared_ptr<spdlog::logger> logger) : 
-            mySubsystemName(subsystemName), 
-            myLogger(logger), 
-            myHeartbeatFlag(false),
-            myThread(threadLoop) {};
+   Subsystem(std::string subsystemName,  std::shared_ptr<Logger> logger) : 
+            mySubsystemName(std::move(subsystemName)), 
+            myLogger(logger) {}
+   
+   bool checkHeartbeat() override
+   {
+      bool statusFlag = myHeartbeatFlag;
+      myHeartbeatFlag = false;
+      return statusFlag;
+   }
+
+   std::string getName() override
+   {
+      return mySubsystemName;
+   }
 
 protected:
-   std::shared_ptr<spdlog::logger> myLogger;
-   bool myHeartbeatFlag;
+   std::shared_ptr<Logger> myLogger;
+   bool myHeartbeatFlag{false};
+   bool myExitingFlag{false};
    std::string mySubsystemName;
    std::thread myThread;
 };

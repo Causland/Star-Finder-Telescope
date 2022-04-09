@@ -35,7 +35,7 @@ struct LogMessage
    \param message [in] a string of the message to be logged moved into structure.
    */
    LogMessage(std::string subsystemName, const LogCodeEnum code, std::string message) : 
-      subsystemName(std::move(subsystemName)), code(code), message(std::move(message)), time(std::chrono::system_clock::now()) {}
+      mySubsystemName(std::move(subsystemName)), myCode(code), myMessage(std::move(message)), myTime(std::chrono::system_clock::now()) {}
    
    /*!
    Generate a string of the LogMessage to output to the log file. Log strings are in the format of:
@@ -47,14 +47,14 @@ struct LogMessage
    {
       // Logs are in format: DATETIME | SUBSYSTEM_NAME [LOG_CODE] MESSAGE
       std::ostringstream oss;
-      std::time_t t = std::chrono::system_clock::to_time_t(time);
+      std::time_t t = std::chrono::system_clock::to_time_t(myTime);
       oss << std::put_time(std::localtime(&t), "%T") 
          << " | "
-         << subsystemName
+         << mySubsystemName
          << " "
-         << "[" + logCodeToString(code) + "]"
+         << "[" + logCodeToString(myCode) + "]"
          << " "
-         << message
+         << myMessage
          << "\n";
       return oss.str();
    }
@@ -75,10 +75,10 @@ struct LogMessage
       } 
    }
    
-   const std::string subsystemName; //!< Name of the subsystem creating the log
-   const LogCodeEnum code; //!< Code of the log
-   const std::string message; //!< Message of the log
-   const std::chrono::time_point<std::chrono::system_clock> time; //!< Timestamp of when the log was created
+   const std::string mySubsystemName; //!< Name of the subsystem creating the log
+   const LogCodeEnum myCode; //!< Code of the log
+   const std::string myMessage; //!< Message of the log
+   const std::chrono::time_point<std::chrono::system_clock> myTime; //!< Timestamp of when the log was created
 };
 
 /*!
@@ -95,9 +95,9 @@ class Logger
       Creates a logger with a particular log file. The logging thread is started upon creation.
       \param fileName [in] a string of the relative path to the log file. The string is moved into the class
       */
-      explicit Logger(std::string fileName) : fileName(std::move(fileName)) 
+      explicit Logger(std::string fileName) : myFileName(std::move(fileName)) 
       {
-         thread = std::thread(&Logger::threadLoop, this);
+         myThread = std::thread(&Logger::threadLoop, this);
       }
 
       /*!
@@ -107,10 +107,10 @@ class Logger
       */
       ~Logger()
       {
-         exiting = true;
-         logsAvailable = true;
-         condVar.notify_one();
-         thread.join();
+         myExitingFlag = true;
+         myLogsAvailableFlag = true;
+         myCondVar.notify_one();
+         myThread.join();
          processLogs();
       }
 
@@ -151,15 +151,15 @@ class Logger
       */
       void writeToLog();
 
-      const std::string fileName; //!< Relative path to the log file.
-      std::ofstream outputFile; //!< The output file stream to write to the log file.
-      std::string logToWrite; //!< The output string used to write to the log file.
-      bool logsAvailable{false}; //!< The flag used to release the condition variable in the logger thread loop.
-      bool exiting{false}; //!< The flag used to control the thread loop. True when object is begin destroyed.
-      std::condition_variable condVar; //!< The condition variable used to block thread until logs are available for processing.
-      std::mutex mutex; //!< The mutex used to guard the log queue during access by subsystem threads and logging thread.
-      std::thread thread; //!< The thread for the logger.
-      std::queue<std::string> logsToRecord; //!< The queue which holds the pending log strings to write to the log file.
+      const std::string myFileName; //!< Relative path to the log file.
+      std::ofstream myOutputFile; //!< The output file stream to write to the log file.
+      std::string myLogToWrite; //!< The output string used to write to the log file.
+      bool myLogsAvailableFlag{false}; //!< The flag used to release the condition variable in the logger thread loop.
+      bool myExitingFlag{false}; //!< The flag used to control the thread loop. True when object is begin destroyed.
+      std::condition_variable myCondVar; //!< The condition variable used to block thread until logs are available for processing.
+      std::mutex myMutex; //!< The mutex used to guard the log queue during access by subsystem threads and logging thread.
+      std::thread myThread; //!< The thread for the logger.
+      std::queue<std::string> myLogsToRecord; //!< The queue which holds the pending log strings to write to the log file.
 };
 
 #endif

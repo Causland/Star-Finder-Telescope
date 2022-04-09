@@ -9,6 +9,8 @@ public:
     virtual std::string takePhoto() = 0;
     virtual std::string takeVideo(double durationInSeconds) = 0;
     virtual std::string takeTimelapse(double durationInMinutes, double freqInHz) = 0;
+
+    static const std::string NAME;
 };
 
 #endif

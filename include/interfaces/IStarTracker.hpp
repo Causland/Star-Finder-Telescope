@@ -10,6 +10,8 @@ public:
     virtual void trackTarget(std::string targetName, unsigned short updateFreqInHz) = 0;
     virtual void queryTargetPosition(std::string targetName) = 0;
     virtual void queryTargetsWithinRange(double rangeInLightMinutes) = 0; 
+
+    static const std::string NAME;
 };
 
 #endif

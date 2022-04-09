@@ -1,24 +1,22 @@
 #ifndef STAR_TRACKER_HPP
 #define STAR_TRACKER_HPP
 
-#include <memory>
-#include "interfaces/IStarTracker.hpp"
 #include "Subsystem.hpp"
 #include "StarDatabase.hpp"
+#include "interfaces/IInformationDisplay.hpp"
+#include "interfaces/IPositionManager.hpp"
+#include "interfaces/IStarTracker.hpp"
+#include <memory>
 
 class StarTracker : public IStarTracker, public Subsystem
 {
-    // Things for Star Tracker to do
-    // - Wait for particular star input
-    //         - If tracking mode, set update frequency and query database for position at Hz
-    //         - If position query mode, get the position from the database
-    // - Inform position manager of new coordinates
 public:
+    StarTracker(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
+
     // Includes from ISubsystem
     void start() override;
     void stop() override;
-    void configureInterfaces() override;
-    bool checkHeartbeat() override;
+    void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override;
     void threadLoop() override;
 
     // Includes from IStarTracker
@@ -28,6 +26,8 @@ public:
     void queryTargetsWithinRange(double rangeInLightMinutes) override; 
 private:
     StarDatabase database;
+    std::shared_ptr<IInformationDisplay> myInformationDisplay;
+    std::shared_ptr<IPositionManager> myPositionManager;
 };
 
 #endif

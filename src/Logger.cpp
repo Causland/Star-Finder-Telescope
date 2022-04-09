@@ -7,22 +7,22 @@ void Logger::log(const std::string& subsystemName, const LogCodeEnum& code, cons
    LogMessage messageToLog(subsystemName, code, message);
    std::string logString = messageToLog.toString();
    {
-      std::scoped_lock<std::mutex> lk(mutex);
-      logsToRecord.push(logString);
-      logsAvailable = true;
+      std::scoped_lock<std::mutex> lk(myMutex);
+      myLogsToRecord.push(logString);
+      myLogsAvailableFlag = true;
    }
    // Signal to the condition variable to wake up the logging thread
-   condVar.notify_one();
+   myCondVar.notify_one();
 }
 
 void Logger::threadLoop()
 {
-   while (!exiting)
+   while (!myExitingFlag)
    {
       // Wait until log is written into the queue
-      std::unique_lock<std::mutex> lk(mutex);
-      condVar.wait(lk, [this]{ return logsAvailable; });
-      if (exiting) // If signaled by the destructor, need to exit immediately
+      std::unique_lock<std::mutex> lk(myMutex);
+      myCondVar.wait(lk, [this]{ return myLogsAvailableFlag; });
+      if (myExitingFlag) // If signaled by the destructor, need to exit immediately
          break;
 
       // Access logs queue and append new information to output string
@@ -38,23 +38,23 @@ void Logger::threadLoop()
 
 void Logger::processLogs()
 {
-   while (!logsToRecord.empty())
+   while (!myLogsToRecord.empty())
    {
       // Append each log to the output string for writing to log file
-      logToWrite += logsToRecord.front();
-      logsToRecord.pop();
+      myLogToWrite += myLogsToRecord.front();
+      myLogsToRecord.pop();
    }
-   logsAvailable = false;
+   myLogsAvailableFlag = false;
 }
 
 void Logger::writeToLog()
 {
-   if (!logToWrite.empty())
+   if (!myLogToWrite.empty())
    {
       // Open file, write, and close so that user can view update
-      outputFile.open(fileName, std::ios::app);
-      outputFile << logToWrite;
-      outputFile.close();
+      myOutputFile.open(myFileName, std::ios::app);
+      myOutputFile << myLogToWrite;
+      myOutputFile.close();
    }
-   logToWrite.clear();
+   myLogToWrite.clear();
 }
