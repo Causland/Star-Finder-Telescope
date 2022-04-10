@@ -27,11 +27,11 @@ public:
    }
 
 protected:
+   std::string mySubsystemName;
    std::shared_ptr<Logger> myLogger;
+   std::thread myThread;
    bool myHeartbeatFlag{false};
    bool myExitingFlag{false};
-   std::string mySubsystemName;
-   std::thread myThread;
 };
 
 #endif

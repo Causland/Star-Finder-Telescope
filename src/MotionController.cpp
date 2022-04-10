@@ -14,7 +14,7 @@ void MotionController::stop()
    myThread.join();
 }
 
-void MotionController::configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems)
+void MotionController::configureInterfaces([[maybe_unused]] const std::vector<std::shared_ptr<ISubsystem>>& subsystems)
 {
    // Motion Controller does not use any subsystem interfaces
 }

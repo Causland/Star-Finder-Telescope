@@ -26,13 +26,12 @@ int main()
     // Use the current date and time to name the log file
     std::ostringstream oss;
     std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    oss << "logs/" << std::put_time(std::localtime(&t), "%m-%d-%y_%H-%M") << ".log";
+    oss << "logs/" << std::put_time(std::localtime(&t), "%m-%d-%Y-%I-%M%p") << ".log";
     std::string logFileName = oss.str();
     std::shared_ptr<Logger> logger = std::make_shared<Logger>(logFileName);
 
     // Construct all subsystems with their name and logger and push to subsystem vector
     std::vector<std::shared_ptr<ISubsystem>> subsystems;
-    InformationDisplay test("Test", logger);
     subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay", logger));
     subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", logger));
     subsystems.emplace_back(std::make_shared<MotionController>("MotionController", logger));

@@ -6,14 +6,14 @@
 
 struct StarPosition
 {
-    StarPosition(double x, double y, double z) : x(x), y(y), z(z)
+    StarPosition(double x, double y, double z) : myX(x), myY(y), myZ(z)
     {
-        dist = sqrt(x*x + y*y + z*z);
+        myDist = sqrt(x*x + y*y + z*z);
     }
-    double x;
-    double y;
-    double z;
-    double dist;
+    double myX;
+    double myY;
+    double myZ;
+    double myDist;
 };
 
 class IPositionManager
