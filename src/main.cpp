@@ -70,4 +70,6 @@ int main()
     {
         subsystem->stop();
     }
+
+    return 0;
 }

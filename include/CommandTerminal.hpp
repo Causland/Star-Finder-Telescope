@@ -7,6 +7,8 @@
 #include "interfaces/IOpticsManager.hpp"
 #include "interfaces/IPositionManager.hpp"
 #include "interfaces/IStarTracker.hpp"
+#include <queue>
+#include <string>
 
 class CommandTerminal : public ICommandTerminal, public Subsystem
 {
@@ -20,6 +22,11 @@ public:
     void threadLoop() override;
 
 private:
+    bool validateCommand(const std::string& command);
+    bool processCommand(const std::string& command);
+
+    std::queue<std::string> myCommandQueue;
+
     std::shared_ptr<IInformationDisplay> myInformationDisplay;
     std::shared_ptr<IOpticsManager> myOpticsManager;
     std::shared_ptr<IPositionManager> myPositionManager;

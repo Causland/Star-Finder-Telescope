@@ -1,5 +1,7 @@
 #include "CommandTerminal.hpp"
 #include <algorithm>
+#include <iostream>
+#include <istream>
 
 const std::string ICommandTerminal::NAME{"CommandTerminal"};
 
@@ -84,10 +86,45 @@ void CommandTerminal::threadLoop()
    while (!myExitingFlag)
    {
       // Things for command terminal to do
-      // - Process entered commands
-      //      - Validate the command
-      // - Pass along command to desired subsystem
-      // - Process series of timed commands from file
+      // Parse commands into a queue for validation and processing
+      std::string input;
+      std::getline(std::cin, input);
+      if (!input.empty())
+      {
+         // Commands can be delimited by semicolons for sequential inputs
+         std::istringstream iss(input);
+         std::string command;
+         while(std::getline(iss, command, ';'))
+         {
+            if (validateCommand(command))
+            {
+               myCommandQueue.push(command);
+            }
+            else
+            {
+               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Invalid command " + command);
+            }
+         }
+         // Process each command and take the specific action
+         while (!myCommandQueue.empty())
+         {
+            processCommand(myCommandQueue.front());
+            myCommandQueue.pop();
+         }
+      }
    }
+}
+
+bool CommandTerminal::validateCommand(const std::string& command)
+{
+   std::cout << "validating " << command << "\n";
+   return true;
+}
+
+bool CommandTerminal::processCommand(const std::string& command)
+{
+   std::cout << "processing " << command << "\n";
+   return true;
+
 }
 

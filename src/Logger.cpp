@@ -1,18 +1,25 @@
 #include "Logger.hpp"
-#include <iostream>
 
 void Logger::log(const std::string& subsystemName, const LogCodeEnum& code, const std::string& message)
 {
    // Create the log message and get the string representation
    LogMessage messageToLog(subsystemName, code, message);
-   std::string logString = messageToLog.toString();
+   auto logString = messageToLog.toString();
+
+   // Get the next write index in the buffer container and atomically increment the value
+   auto index = myLogBufferIndex.fetch_add(1) % NUM_LOG_BUFFERS;
+   
+   // Write string to buffer
+   // NOTE - This does not write or notify if all buffers are full. 
+   // The number of buffers is dictated the NUM_LOG_BUFFERS constant and should be
+   // resized depending on frequency of logging and number of independent threads
+   if (myLogsToRecord[index].empty())
    {
-      std::scoped_lock<std::mutex> lk(myMutex);
-      myLogsToRecord.push(logString);
-      myLogsAvailableFlag = true;
+      myLogsToRecord[index] = logString;
+      // Signal to the condition variable to wake up the logging thread
+      ++myNumLogsWaiting;
+      myCondVar.notify_one();
    }
-   // Signal to the condition variable to wake up the logging thread
-   myCondVar.notify_one();
 }
 
 void Logger::threadLoop()
@@ -21,15 +28,12 @@ void Logger::threadLoop()
    {
       // Wait until log is written into the queue
       std::unique_lock<std::mutex> lk(myMutex);
-      myCondVar.wait(lk, [this]{ return myLogsAvailableFlag; });
+      myCondVar.wait(lk, [this]{ return myNumLogsWaiting > 0; });
       if (myExitingFlag) // If signaled by the destructor, need to exit immediately
          break;
 
       // Access logs queue and append new information to output string
       processLogs();
-      
-      // Release the mutex as soon as possible to prevent delays in other threads
-      lk.unlock();
 
       // Write the logs to the output file
       writeToLog();
@@ -38,13 +42,14 @@ void Logger::threadLoop()
 
 void Logger::processLogs()
 {
-   while (!myLogsToRecord.empty())
+   // Decrement atomic until no logs are pending in buffers
+   while (myNumLogsWaiting.load())
    {
-      // Append each log to the output string for writing to log file
-      myLogToWrite += myLogsToRecord.front();
-      myLogsToRecord.pop();
+      myLogToWrite += myLogsToRecord[myLogBufferReadIndex];
+      myLogsToRecord[myLogBufferReadIndex].clear();
+      myLogBufferReadIndex = (myLogBufferReadIndex + 1) % NUM_LOG_BUFFERS;
+      --myNumLogsWaiting;
    }
-   myLogsAvailableFlag = false;
 }
 
 void Logger::writeToLog()

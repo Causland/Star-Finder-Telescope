@@ -1,7 +1,9 @@
 #ifndef SUBSYSTEM_H
 #define SUBSYSTEM_H
 
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include "Logger.hpp"
@@ -30,6 +32,8 @@ protected:
    std::string mySubsystemName;
    std::shared_ptr<Logger> myLogger;
    std::thread myThread;
+   std::condition_variable myCondVar;
+   std::mutex myMutex;
    bool myHeartbeatFlag{false};
    bool myExitingFlag{false};
 };
