@@ -16,7 +16,6 @@ public:
     virtual void stop() = 0;
     virtual void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) = 0;
     virtual bool checkHeartbeat() = 0;
-    virtual void threadLoop() = 0;
     virtual std::string getName() = 0;
 };
 

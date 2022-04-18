@@ -21,10 +21,10 @@ public:
     void threadLoop() override;
 
 private:
-    std::shared_ptr<ICommandTerminal> myCommandTerminal;
-    std::shared_ptr<IOpticsManager> myOpticsManager;
-    std::shared_ptr<IPositionManager> myPositionManager;
-    std::shared_ptr<IStarTracker> myStarTracker;
+    std::weak_ptr<ICommandTerminal> myCommandTerminal;
+    std::weak_ptr<IOpticsManager> myOpticsManager;
+    std::weak_ptr<IPositionManager> myPositionManager;
+    std::weak_ptr<IStarTracker> myStarTracker;
 };
 
 #endif

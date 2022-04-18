@@ -27,7 +27,7 @@ void OpticsManager::configureInterfaces(const std::vector<std::shared_ptr<ISubsy
    else
    {
       myInformationDisplay = std::dynamic_pointer_cast<IInformationDisplay>(*it);
-      if (myInformationDisplay == nullptr)
+      if (myInformationDisplay.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
       }

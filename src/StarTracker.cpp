@@ -27,7 +27,7 @@ void StarTracker::configureInterfaces(const std::vector<std::shared_ptr<ISubsyst
    else
    {
       myInformationDisplay = std::dynamic_pointer_cast<IInformationDisplay>(*it);
-      if (myInformationDisplay == nullptr)
+      if (myInformationDisplay.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
       }
@@ -42,7 +42,7 @@ void StarTracker::configureInterfaces(const std::vector<std::shared_ptr<ISubsyst
    else
    {
       myPositionManager = std::dynamic_pointer_cast<IPositionManager>(*it);
-      if (myPositionManager == nullptr)
+      if (myPositionManager.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Position Manager");
       }

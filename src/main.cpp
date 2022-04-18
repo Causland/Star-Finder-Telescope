@@ -22,6 +22,11 @@
 // The main function creates all resources for each subsystem of the telescope
 int main()
 {
+    // Create the flag which controls the lifetime of the main thread and execution
+    // of the program. This flag is set by the CommandTerminal when an "exit" command
+    // is entered by the user.
+    std::shared_ptr<std::atomic<bool>> exitSignal = std::make_shared<std::atomic<bool>>(false);
+
     // Create logger(s) to pass to the constructor of each subsystem
     // Use the current date and time to name the log file
     std::ostringstream oss;
@@ -37,7 +42,7 @@ int main()
     subsystems.emplace_back(std::make_shared<MotionController>("MotionController", logger));
     subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager", logger));
     subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", logger));
-    subsystems.emplace_back(std::make_shared<CommandTerminal>("CommandTerminal", logger));
+    subsystems.emplace_back(std::make_shared<CommandTerminal>("CommandTerminal", logger, exitSignal));
 
     // Update the subsystem interfaces before starting their thread loops
     for (auto& subsystem : subsystems)
@@ -48,12 +53,12 @@ int main()
     // Start all subsystems to begin functionality
     for (auto& subsystem : subsystems)
     {
+        logger->log(subsystem->getName(), LogCodeEnum::INFO, "Starting");
         subsystem->start();
     }
 
     // Check heartbeat until program termination
-    volatile bool runningFlag = true;
-    while (runningFlag)
+    while (!(*exitSignal))
     {
         for (auto& subsystem : subsystems)
         {
@@ -65,11 +70,12 @@ int main()
         std::this_thread::sleep_for(HEARTBEAT_CHECK_INTERVAL_MS);
     }
 
-    // Stop all subsystems and exit cleanly
+    // Stop all subsystems
     for (auto& subsystem : subsystems)
     {
+        logger->log(subsystem->getName(), LogCodeEnum::INFO, "Stopping");
         subsystem->stop();
     }
-
+    
     return 0;
 }

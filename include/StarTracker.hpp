@@ -26,8 +26,8 @@ public:
     void queryTargetsWithinRange(double rangeInLightMinutes) override; 
 private:
     StarDatabase database;
-    std::shared_ptr<IInformationDisplay> myInformationDisplay;
-    std::shared_ptr<IPositionManager> myPositionManager;
+    std::weak_ptr<IInformationDisplay> myInformationDisplay;
+    std::weak_ptr<IPositionManager> myPositionManager;
 };
 
 #endif

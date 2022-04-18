@@ -22,7 +22,7 @@ public:
     std::string takeTimelapse(double durationInMinutes, double freqInHz) override;
 
 private:
-    std::shared_ptr<IInformationDisplay> myInformationDisplay;
+    std::weak_ptr<IInformationDisplay> myInformationDisplay;
 };
 
 #endif

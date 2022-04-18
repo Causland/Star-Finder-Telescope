@@ -27,7 +27,7 @@ void InformationDisplay::configureInterfaces(const std::vector<std::shared_ptr<I
    else
    {
       myCommandTerminal = std::dynamic_pointer_cast<ICommandTerminal>(*it);
-      if (myCommandTerminal == nullptr)
+      if (myCommandTerminal.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Command Terminal");
       }
@@ -42,7 +42,7 @@ void InformationDisplay::configureInterfaces(const std::vector<std::shared_ptr<I
    else
    {
       myOpticsManager = std::dynamic_pointer_cast<IOpticsManager>(*it);
-      if (myOpticsManager == nullptr)
+      if (myOpticsManager.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Optics Manager");
       }
@@ -57,7 +57,7 @@ void InformationDisplay::configureInterfaces(const std::vector<std::shared_ptr<I
    else
    {
       myPositionManager = std::dynamic_pointer_cast<IPositionManager>(*it);
-      if (myPositionManager == nullptr)
+      if (myPositionManager.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Postion Manager");
       }
@@ -72,7 +72,7 @@ void InformationDisplay::configureInterfaces(const std::vector<std::shared_ptr<I
    else
    {
       myStarTracker = std::dynamic_pointer_cast<IStarTracker>(*it);
-      if (myStarTracker == nullptr)
+      if (myStarTracker.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Star Tracker");
       }

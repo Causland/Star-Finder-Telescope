@@ -14,7 +14,8 @@
 #include <thread>
 #include <utility>
 
-
+constexpr size_t SUBSYSTEM_NAME_MAX_WIDTH = 18;
+constexpr size_t LOG_CODE_NAME_MAX_WIDTH = 7;
 constexpr size_t NUM_LOG_BUFFERS = 8; //!< The number of buffers to store pending log messages for writing to file.
 constexpr size_t LOG_BUFFER_LENGTH = 128; //!< The number of bytes to reserve for each buffer.
 
@@ -56,9 +57,11 @@ struct LogMessage
       std::time_t t = std::chrono::system_clock::to_time_t(myTime);
       oss << std::put_time(std::localtime(&t), "%T") 
          << " | "
-         << mySubsystemName
+         << std::setw(SUBSYSTEM_NAME_MAX_WIDTH) << mySubsystemName
          << " "
-         << "[" + logCodeToString(myCode) + "]"
+         << "["
+         << std::setw(LOG_CODE_NAME_MAX_WIDTH) << logCodeToString(myCode)
+         << "]"
          << " "
          << myMessage
          << "\n";
