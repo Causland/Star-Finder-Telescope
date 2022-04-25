@@ -4,6 +4,7 @@
 #include "Subsystem.hpp"
 #include "interfaces/IInformationDisplay.hpp"
 #include "interfaces/IOpticsManager.hpp"
+#include <chrono>
 
 class OpticsManager : public IOpticsManager, public Subsystem
 {
@@ -17,9 +18,10 @@ public:
     void threadLoop() override;
 
     // Includes from IOpticsManager
-    std::string takePhoto() override;
-    std::string takeVideo(double durationInSeconds) override;
-    std::string takeTimelapse(double durationInMinutes, double freqInHz) override;
+    std::string takePhoto(const CmdTakePhoto& cmd) override;
+    std::string takeVideo(const CmdTakeVideo& cmd) override;
+    std::string takeTimelapse(const CmdTakeTimelapse& cmd) override;
+    void userChangeFocus(const CmdUserFocus& cmd) override;
 
 private:
     std::weak_ptr<IInformationDisplay> myInformationDisplay;

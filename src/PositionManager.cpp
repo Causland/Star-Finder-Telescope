@@ -46,12 +46,17 @@ void PositionManager::threadLoop()
    }
 }
 
-void PositionManager::userChangePosition(double theta, double phi)
+void PositionManager::userChangePosition(const CmdUserMove& cmd)
 {
 
 }
 
-void PositionManager::pointAtTarget(StarPosition position)
+void PositionManager::pointAtTarget(const CmdGoToTarget& cmd)
+{
+   
+}
+
+void PositionManager::calibrate(const CmdCalibrate& cmd)
 {
    
 }

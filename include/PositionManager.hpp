@@ -17,8 +17,9 @@ public:
     void threadLoop() override;
 
     // Includes from IPositionManager
-    void userChangePosition(double theta, double phi) override;
-    void pointAtTarget(StarPosition position) override;
+    void userChangePosition(const CmdUserMove& cmd) override;
+    void pointAtTarget(const CmdGoToTarget& cmd) override;
+    void calibrate(const CmdCalibrate& cmd) override;
 
 private:
     std::weak_ptr<IInformationDisplay> myInformationDisplay;

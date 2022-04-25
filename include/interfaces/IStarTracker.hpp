@@ -1,15 +1,15 @@
 #ifndef I_STAR_TRACKER_HPP
 #define I_STAR_TRACKER_HPP
 
+#include "CommandTypes.hpp"
 #include <string>
 
 class IStarTracker
 {
 public:
-    virtual void pointToTarget(std::string targetName) = 0;
-    virtual void trackTarget(std::string targetName, unsigned short updateFreqInHz) = 0;
-    virtual void queryTargetPosition(std::string targetName) = 0;
-    virtual void queryTargetsWithinRange(double rangeInLightMinutes) = 0; 
+    virtual void pointToTarget(const CmdGoToTarget& cmd) = 0;
+    virtual void trackTarget(const CmdFollowTarget& cmd) = 0;
+    virtual void queryTarget(const CmdSearchTarget& cmd) = 0;
 
     static const std::string NAME;
 };

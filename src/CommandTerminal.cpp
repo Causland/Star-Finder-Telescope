@@ -103,7 +103,7 @@ void CommandTerminal::threadLoop()
 
          // Command processing may take time if associated with a move, so unlock mutex
          lk.unlock();
-         interpretCommand(command);
+            interpretCommand(command);
          lk.lock();
       }
    }
@@ -129,6 +129,7 @@ void CommandTerminal::cinWaitThreadLoop()
             if (input == "exit")
             {
                myExitingFlag = true;
+               myCondVar.notify_one();
                break;
             }
             else
@@ -146,9 +147,17 @@ void CommandTerminal::cinWaitThreadLoop()
 
 bool CommandTerminal::interpretCommand(const std::string& command)
 {
-   std::stringstream ss(command);
-   std::string baseCommand;
-   ss >> baseCommand;
+   auto pos = command.find(' ');
+   std::string baseCommand = command.substr(0, pos);
+   std::string params;
+   if (pos == std::string::npos)
+   {
+      params = "";
+   }
+   else
+   {
+      params = command.substr(pos + 1);
+   }
    if (!baseCommand.empty())
    {
       // Do processing based on selected command
@@ -158,161 +167,187 @@ bool CommandTerminal::interpretCommand(const std::string& command)
       {
          // Format -> photo <name>
          std::string name;
-         ss >> name;
-         if (!ss.eof())
+         if (!validateParameters(params, name))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for photo command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process photo command");
             return false;
          }
-         CmdTakePhoto cmd(name);
-         processCommand(static_cast<Command>(cmd));
+         if (myOpticsManager.expired())
+         {
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
+            return false;
+         }
+         auto opticsManager = myOpticsManager.lock();
+         opticsManager->takePhoto(CmdTakePhoto(name));
       }
       else if (baseCommand == "video")
       {
-         // Format -> video <name>
+         // Format -> video <name> <duration>
          std::string name;
-         ss >> name;
-         if (!ss.eof())
+         uint64_t duration;
+         if (!validateParameters(params, name, duration))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for video command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process video command");
             return false;
          }
-         CmdTakeVideo cmd(name);
-         processCommand(static_cast<Command>(cmd));
+         if (myOpticsManager.expired())
+         {
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
+            return false;
+         }
+         auto opticsManager = myOpticsManager.lock();
+         opticsManager->takeVideo(CmdTakeVideo(name, std::chrono::seconds(duration)));
       }
       else if (baseCommand == "timelapse")
       {
-         // Format -> timelapse <name>
+         // Format -> timelapse <name> <duration> <rate>
          std::string name;
-         ss >> name;
-         if (!ss.eof())
+         uint64_t duration;
+         double rate;
+         if (!validateParameters(params, name, duration, rate))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for timelapse command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process timelapse command");
             return false;
          }
-         CmdTakeTimelapse cmd(name);
-         processCommand(static_cast<Command>(cmd));
+         if (myOpticsManager.expired())
+         {
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
+            return false;
+         }
+         auto opticsManager = myOpticsManager.lock();
+         opticsManager->takeTimelapse(CmdTakeTimelapse(name, std::chrono::minutes(duration), rate));
       }
       else if (baseCommand == "move")
       {
          // Format -> move <theta> <phi>
          double theta;
          double phi;
-         ss >> theta >> phi;
-         if (ss.fail())
+         if (!validateParameters(params, theta, phi))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to parse parameters for move command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process move command");
             return false;
          }
-         if (!ss.eof())
+         if (myPositionManager.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for move command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "PositionManager pointer has expired");
             return false;
          }
-         CmdUserMove cmd(theta, phi);
-         processCommand(static_cast<Command>(cmd));
+         auto positionManager = myPositionManager.lock();
+         positionManager->userChangePosition(CmdUserMove(theta, phi));
       }
       else if (baseCommand == "focus")
       {
          // Format -> focus <theta>
          double theta;
-         ss >> theta;
-         if (ss.fail())
+         if (!validateParameters(params, theta))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to parse parameter for focus command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process focus command");
             return false;
          }
-         if (!ss.eof())
+         if (myOpticsManager.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for focus command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
             return false;
          }
-         CmdUserFocus cmd(theta);
-         processCommand(static_cast<Command>(cmd));
+         auto opticsManager = myOpticsManager.lock();
+         opticsManager->userChangeFocus(CmdUserFocus(theta));
       }
       else if (baseCommand == "follow")
       {
          // Format -> follow <name> <duration>
          std::string name;
          uint64_t duration;
-         ss >> name >> duration;
-         if (ss.fail())
+         if (!validateParameters(params, name, duration))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to parse parameters for follow command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process follow command");
             return false;
          }
-         if (!ss.eof())
+         if (myStarTracker.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for follow command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
             return false;
          }
-         CmdFollowTarget cmd(name, std::chrono::seconds(duration));
-         processCommand(static_cast<Command>(cmd));         
+         auto starTracker = myStarTracker.lock();
+         starTracker->trackTarget(CmdFollowTarget(name, std::chrono::seconds(duration)));       
       }
       else if (baseCommand == "goto")
       {
          // Format -> goto <name>
          std::string name;
-         ss >> name;
-         if (!ss.eof())
+         if (!validateParameters(params, name))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for goto command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process goto command");
             return false;
          }
-         CmdGoToTarget cmd(name);
-         processCommand(static_cast<Command>(cmd));         
+         if (myStarTracker.expired())
+         {
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
+            return false;
+         }
+         auto starTracker = myStarTracker.lock();
+         starTracker->pointToTarget(CmdGoToTarget(name));           
       }
       else if (baseCommand == "search")
       {
-         std::string option;
-         ss >> option;
+         pos = params.find(' ');
+         std::string option = params.substr(0, pos);
+         if (pos == std::string::npos)
+         {
+            params = "";
+         }
+         else
+         {
+            params = params.substr(pos + 1);
+         }
          // Do processing based on option
+         CmdSearchTarget cmd;
+         double range = 0.0;
+         std::string name = "None";
          if (option == "range")
          {
             // Format -> search range <range>
-            double range;
-            ss >> range;
-            if (ss.fail())
+            if (!validateParameters(params, range))
             {
-               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to parse parameter for search radius command: " + command);
+               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search range command");
                return false;
             }
-            if (!ss.eof())
-            {
-               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for search radius command: " + command);
-               return false;
-            }
-            CmdSearchTarget cmd("None", range);
-            processCommand(static_cast<Command>(cmd));
          }
          else if (option == "name")
          {
             // Format -> search name <name>
-            std::string name;
-            ss >> name;
-            if (!ss.eof())
+            if (!validateParameters(params, name))
             {
-               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for search name command: " + command);
+               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search name command");
                return false;
             }
-            CmdSearchTarget cmd(name, 0.0);
-            processCommand(static_cast<Command>(cmd));
          }
          else
          {
             myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unknown option for search command: " + command);
             return false;
          }
+         if (myStarTracker.expired())
+         {
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
+            return false;
+         }
+         auto starTracker = myStarTracker.lock();
+         starTracker->queryTarget(CmdSearchTarget(name, range));   
       }
       else if (baseCommand == "calibrate")
       {
-         if (!ss.eof())
+         if (!validateParameters(params))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unexpected parameter for calibrate command: " + command);
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process calibrate command");
             return false;
          }
-         CmdCalibrate cmd;
-         processCommand(static_cast<Command>(cmd));
+         if (myPositionManager.expired())
+         {
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "PositionManager pointer has expired");
+            return false;
+         }
+         auto positionManager = myPositionManager.lock();
+         positionManager->calibrate(CmdCalibrate());
       }
       else
       {
@@ -326,12 +361,5 @@ bool CommandTerminal::interpretCommand(const std::string& command)
       return false;
    }
    return true;
-}
-
-bool CommandTerminal::processCommand(const Command& command)
-{
-   myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Command Type: " + std::to_string(static_cast<unsigned int>(command.myCommandType)));
-   return true;
-
 }
 

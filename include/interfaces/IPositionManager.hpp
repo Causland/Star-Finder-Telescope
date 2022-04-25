@@ -1,6 +1,7 @@
 #ifndef I_POSITION_MANAGER_HPP
 #define I_POSITION_MANAGER_HPP
 
+#include "CommandTypes.hpp"
 #include <cmath>
 #include <string>
 
@@ -19,8 +20,9 @@ struct StarPosition
 class IPositionManager
 {
 public:
-    virtual void userChangePosition(double theta, double phi) = 0;
-    virtual void pointAtTarget(StarPosition position) = 0;
+    virtual void userChangePosition(const CmdUserMove& cmd) = 0;
+    virtual void pointAtTarget(const CmdGoToTarget& cmd) = 0;
+    virtual void calibrate(const CmdCalibrate& cmd) = 0;
 
     static const std::string NAME;
 };

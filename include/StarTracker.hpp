@@ -20,10 +20,10 @@ public:
     void threadLoop() override;
 
     // Includes from IStarTracker
-    void pointToTarget(std::string targetName) override;
-    void trackTarget(std::string targetName, uint16_t updateFreqInHz) override;
-    void queryTargetPosition(std::string targetName) override;
-    void queryTargetsWithinRange(double rangeInLightMinutes) override; 
+    void pointToTarget(const CmdGoToTarget& cmd) override;
+    void trackTarget(const CmdFollowTarget& cmd) override;
+    void queryTarget(const CmdSearchTarget& cmd) override;
+    
 private:
     StarDatabase database;
     std::weak_ptr<IInformationDisplay> myInformationDisplay;

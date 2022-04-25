@@ -59,17 +59,22 @@ void OpticsManager::threadLoop()
    }
 }
 
-std::string OpticsManager::takePhoto()
+std::string OpticsManager::takePhoto(const CmdTakePhoto& cmd)
 {
    return "";
 }
 
-std::string OpticsManager::takeVideo(double durationInSeconds)
+std::string OpticsManager::takeVideo(const CmdTakeVideo& cmd)
 {
    return "";
 }
 
-std::string OpticsManager::takeTimelapse(double durationInMinutes, double freqInHz)
+std::string OpticsManager::takeTimelapse(const CmdTakeTimelapse& cmd)
 {
    return "";
+}
+
+void OpticsManager::userChangeFocus(const CmdUserFocus& cmd)
+{
+   
 }

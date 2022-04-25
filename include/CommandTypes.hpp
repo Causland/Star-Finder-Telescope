@@ -22,6 +22,24 @@ struct Command
 {
    explicit Command(const CommandTypeEnum& commandType) : myCommandType(commandType) {}
    CommandTypeEnum myCommandType{CommandTypeEnum::UNKNOWN};
+
+   std::string toString() const
+   {
+      switch(myCommandType)
+      {
+         case CommandTypeEnum::TAKE_PHOTO: return "PHOTO";
+         case CommandTypeEnum::TAKE_VIDEO: return "VIDEO";
+         case CommandTypeEnum::TAKE_TIMELAPSE: return "TIMELAPSE";
+         case CommandTypeEnum::USER_MOVE: return "MOVE";
+         case CommandTypeEnum::USER_FOCUS: return "FOCUS";
+         case CommandTypeEnum::FOLLOW_TARGET: return "FOLLOW";
+         case CommandTypeEnum::GOTO_TARGET: return "GOTO";
+         case CommandTypeEnum::SEARCH_TARGET: return "SEARCH";
+         case CommandTypeEnum::CALIBRATE: return "CALIBRATE";
+         case CommandTypeEnum::UNKNOWN:
+         default: return "UNKNOWN";
+      }
+   }
 };
 
 struct CmdTakePhoto : Command
@@ -37,21 +55,31 @@ struct CmdTakePhoto : Command
 struct CmdTakeVideo : Command
 {
    CmdTakeVideo() : Command(CommandTypeEnum::TAKE_VIDEO) {}
-   explicit CmdTakeVideo(std::string videoName) : 
+   explicit CmdTakeVideo(std::string videoName, const std::chrono::seconds& duration) : 
       Command(CommandTypeEnum::TAKE_VIDEO),
-      myVideoName(std::move(videoName)) {}
+      myVideoName(std::move(videoName)),
+      myDuration(duration),
+      myStartTime(std::chrono::system_clock::now()) {}
 
    std::string myVideoName{"None"};
+   std::chrono::seconds myDuration{0};
+   std::chrono::time_point<std::chrono::system_clock> myStartTime;
 };
 
 struct CmdTakeTimelapse : Command
 {
    CmdTakeTimelapse() : Command(CommandTypeEnum::TAKE_TIMELAPSE) {}
-   explicit CmdTakeTimelapse(std::string timelapseName) : 
+   explicit CmdTakeTimelapse(std::string timelapseName, const std::chrono::minutes& duration, const double rate) : 
       Command(CommandTypeEnum::TAKE_TIMELAPSE),
-      myTimelapseName(std::move(timelapseName)) {}
+      myTimelapseName(std::move(timelapseName)),
+      myDuration(duration),
+      myRateInHz(rate),
+      myStartTime(std::chrono::system_clock::now()) {}
    
    std::string myTimelapseName{"None"};
+   std::chrono::minutes myDuration{0};
+   double myRateInHz{0.0};
+   std::chrono::time_point<std::chrono::system_clock> myStartTime;
 };
 
 struct CmdUserMove : Command

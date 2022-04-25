@@ -61,22 +61,17 @@ void StarTracker::threadLoop()
    }
 }
 
-void StarTracker::pointToTarget(std::string targetName)
+void StarTracker::pointToTarget(const CmdGoToTarget& cmd)
 {
 
 }
 
-void StarTracker::trackTarget(std::string targetName, uint16_t updateFreqInHz)
+void StarTracker::trackTarget(const CmdFollowTarget& cmd)
 {
 
 }
 
-void StarTracker::queryTargetPosition(std::string targetName)
+void StarTracker::queryTarget(const CmdSearchTarget& cmd)
 {
 
-}
-
-void StarTracker::queryTargetsWithinRange(double rangeInLightMinutes)
-{
-   
 }
