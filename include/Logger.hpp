@@ -1,8 +1,6 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include <array>
-#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <fstream>
@@ -13,11 +11,6 @@
 #include <string>
 #include <thread>
 #include <utility>
-
-constexpr size_t SUBSYSTEM_NAME_MAX_WIDTH = 18;
-constexpr size_t LOG_CODE_NAME_MAX_WIDTH = 7;
-constexpr size_t NUM_LOG_BUFFERS = 8; //!< The number of buffers to store pending log messages for writing to file.
-constexpr size_t LOG_BUFFER_LENGTH = 128; //!< The number of bytes to reserve for each buffer.
 
 /*!
 Enum class of different log codes to use while logging a message.
@@ -57,11 +50,9 @@ struct LogMessage
       std::time_t t = std::chrono::system_clock::to_time_t(myTime);
       oss << std::put_time(std::localtime(&t), "%T") 
          << " | "
-         << std::setw(SUBSYSTEM_NAME_MAX_WIDTH) << mySubsystemName
+         << mySubsystemName
          << " "
-         << "["
-         << std::setw(LOG_CODE_NAME_MAX_WIDTH) << logCodeToString(myCode)
-         << "]"
+         << "[" + logCodeToString(myCode) + "]"
          << " "
          << myMessage
          << "\n";
@@ -107,20 +98,18 @@ class Logger
       explicit Logger(std::string fileName) : myFileName(std::move(fileName)) 
       {
          myThread = std::thread(&Logger::threadLoop, this);
-         for (auto& str : myLogsToRecord)
-         {
-            str.reserve(LOG_BUFFER_LENGTH);
-         }
       }
 
       /*!
-      Destroys a logger by signaling the flag to terminate the thread loop. The destructor
+      Destroys a logger by signaling the condition variable to terminate the thread loop. The destructor
       blocks on the thread join and writes the last remaining logs to the file.
       \sa processLogs()
       */
       ~Logger()
       {
          myExitingFlag = true;
+         myLogsAvailableFlag = true;
+         myCondVar.notify_one();
          myThread.join();
          processLogs();
       }
@@ -165,14 +154,12 @@ class Logger
       const std::string myFileName; //!< Relative path to the log file.
       std::ofstream myOutputFile; //!< The output file stream to write to the log file.
       std::string myLogToWrite; //!< The output string used to write to the log file.
+      bool myLogsAvailableFlag{false}; //!< The flag used to release the condition variable in the logger thread loop.
       bool myExitingFlag{false}; //!< The flag used to control the thread loop. True when object is begin destroyed.
       std::condition_variable myCondVar; //!< The condition variable used to block thread until logs are available for processing.
       std::mutex myMutex; //!< The mutex used to guard the log queue during access by subsystem threads and logging thread.
       std::thread myThread; //!< The thread for the logger.
-      std::array<std::string, NUM_LOG_BUFFERS> myLogsToRecord; //!< This container holds string buffers to place logs which are pending a write to file.
-      std::atomic<uint8_t> myLogBufferIndex{0}; //!< The atomic char used to index the next available location in the buffer container.
-      std::atomic<uint8_t> myNumLogsWaiting{0}; //!< The atomic char used to count the number of pending logs in the buffer container.
-      uint8_t myLogBufferReadIndex{0}; //!< The index to the next location in buffer container to log.
+      std::queue<std::string> myLogsToRecord; //!< The queue which holds the pending log strings to write to the log file.
 };
 
 #endif
