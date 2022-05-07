@@ -7,8 +7,8 @@ project(Star_Finder_Telescope)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Set compiler flags (Temporarily removed -Werror due to currently unimplemented functions)
-set (CMAKE_CXX_FLAGS "-g3 -Os -fsanitize=address -pedantic -fno-common -Wall -Wextra -Wshadow -Wdouble-promotion -Wundef -Wconversion")
+# Set compiler flags 
+set (CMAKE_CXX_FLAGS "-g3 -Os -fsanitize=address -pedantic -fno-common -Wall -Werror -Wextra -Wshadow -Wdouble-promotion -Wundef -Wconversion -Wno-unused-parameter")
 
 # Update the location of the executable
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)

@@ -7,6 +7,7 @@ const std::string ICommandTerminal::NAME{"CommandTerminal"};
 
 void CommandTerminal::start()
 {
+   myInputWaitingThread = std::thread(&CommandTerminal::cinWaitThreadLoop, this);
    myThread = std::thread(&CommandTerminal::threadLoop, this);
 }
 
@@ -101,10 +102,7 @@ void CommandTerminal::threadLoop()
          auto command = myCommandQueue.front();
          myCommandQueue.pop();
 
-         // Command processing may take time if associated with a move, so unlock mutex
-         lk.unlock();
-            interpretCommand(command);
-         lk.lock();
+         interpretCommand(command);
       }
    }
    *myExitingSignal = true;
@@ -134,10 +132,8 @@ void CommandTerminal::cinWaitThreadLoop()
             }
             else
             {
-               {
-                  std::scoped_lock lk(myMutex);
-                  myCommandQueue.push(command);
-               }
+               std::scoped_lock lk(myMutex);
+               myCommandQueue.push(command);
             }
          }
          myCondVar.notify_one(); // Notify when done parsing all input
@@ -147,6 +143,8 @@ void CommandTerminal::cinWaitThreadLoop()
 
 bool CommandTerminal::interpretCommand(const std::string& command)
 {
+   // Commands are space delimited strings starting with a base command keyword (ie. photo/move)
+   // followed by the necessary parameters for the command.
    auto pos = command.find(' ');
    std::string baseCommand = command.substr(0, pos);
    std::string params;
@@ -289,6 +287,7 @@ bool CommandTerminal::interpretCommand(const std::string& command)
       }
       else if (baseCommand == "search")
       {
+         // Search can be used with range or name option which are then followed by parameters
          pos = params.find(' ');
          std::string option = params.substr(0, pos);
          if (pos == std::string::npos)
