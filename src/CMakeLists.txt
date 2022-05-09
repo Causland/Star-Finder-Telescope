@@ -15,10 +15,9 @@ add_executable(Star_Finder_Telescope
 target_include_directories(Star_Finder_Telescope PUBLIC
    "${CMAKE_SOURCE_DIR}/include"
    "${CMAKE_SOURCE_DIR}/include/interfaces"
-   "${CMAKE_SOURCE_DIR}/include/curlpp"
 )
 
 # Add static libs to the executable
 target_link_libraries(Star_Finder_Telescope PUBLIC
-   "${CMAKE_SOURCE_DIR}/lib/libcurlpp.a"
+   curlpp
 )

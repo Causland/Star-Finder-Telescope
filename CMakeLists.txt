@@ -7,16 +7,19 @@ project(Star_Finder_Telescope)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Configure gtest environment variables
+set (GTEST_HAS_PTHREAD 1)
+
+# Add subdirectories for libraries before custom compiler flags
+add_subdirectory(lib/curlpp)
+add_subdirectory(lib/googletest)
+
 # Set compiler flags 
 set (CMAKE_CXX_FLAGS "-g3 -Os -fsanitize=address -pedantic -fno-common -Wall -Werror -Wextra -Wshadow -Wdouble-promotion -Wundef -Wconversion -Wno-unused-parameter")
 
 # Update the location of the executable
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-option(UNIT_TEST "Create unit test executable" OFF)
-
-if(UNIT_TEST)
-   add_subdirectory(test)
-else()
-   add_subdirectory(src)
-endif()
+# Add subdirectories for main application and unit tests
+add_subdirectory(src)
+add_subdirectory(test)
