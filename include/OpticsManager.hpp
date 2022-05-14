@@ -8,6 +8,9 @@
 
 class OpticsManager : public IOpticsManager, public Subsystem
 {
+#ifdef UNIT_TEST
+    friend class TestFixtureOpticsManager;
+#endif
 public:
     OpticsManager(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
 

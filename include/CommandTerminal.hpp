@@ -26,6 +26,9 @@
  */
 class CommandTerminal : public ICommandTerminal, public Subsystem
 {
+#ifdef UNIT_TEST
+    friend class TestFixtureCommandTerminal;
+#endif
 public:
     /*!
      * Creates a Command Terminal subsystem object with a logger and pointer to the main forever loop controller.

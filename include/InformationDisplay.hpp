@@ -10,7 +10,9 @@
 
 class InformationDisplay : public IInformationDisplay, public Subsystem
 {
-
+#ifdef UNIT_TEST
+    friend class TestFixtureInformationDisplay;
+#endif
 public:
     InformationDisplay(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
 

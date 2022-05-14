@@ -10,6 +10,9 @@
 
 class StarTracker : public IStarTracker, public Subsystem
 {
+#ifdef UNIT_TEST
+    friend class TestFixtureStarTracker;
+#endif
 public:
     StarTracker(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
 

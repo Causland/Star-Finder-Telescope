@@ -7,6 +7,9 @@
 
 class PositionManager : public IPositionManager, public Subsystem
 {
+#ifdef UNIT_TEST
+    friend class TestFixturePositionManager;
+#endif
 public:
     PositionManager(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
 
