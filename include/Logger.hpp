@@ -90,9 +90,6 @@ struct LogMessage
  */
 class Logger
 {
-#ifdef UNIT_TEST
-    friend class TestFixtureLogger;
-#endif
 public:
    /*!
       * Creates a logger with a particular log file. The logging thread is started upon creation.

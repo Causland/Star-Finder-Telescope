@@ -4,49 +4,210 @@
 #include "CT_StarTracker.hpp"
 #include "CommandTerminal.hpp"
 #include "MinInformationDisplay.hpp"
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 class TestFixtureCommandTerminal : public ::testing::Test
 {
-public:
-   void SetUp() override
+protected:
+   static void SetUpTestSuite()
    {
       // Create all required CommandTerminal objects
       logger = std::make_shared<Logger>("logs/CommandTerminalUnitTest.log");
       exitSignal = std::make_shared<std::atomic<bool>>(false);
-      subsystems.push_back(std::make_shared<ISubsystem>(CT_OpticsManager()));
-      subsystems.push_back(std::make_shared<ISubsystem>(CT_PositionManager()));
-      subsystems.push_back(std::make_shared<ISubsystem>(CT_StarTracker()));
-      subsystems.push_back(std::make_shared<ISubsystem>(MinInformationDisplay()));
+      opticsManager = std::make_shared<CT_OpticsManager>(CT_OpticsManager());
+      starTracker = std::make_shared<CT_StarTracker>(CT_StarTracker());
+      positionManager = std::make_shared<CT_PositionManager>(CT_PositionManager());
+      informationDisplay = std::make_shared<MinInformationDisplay>(MinInformationDisplay());
+      subsystems.emplace_back(opticsManager);
+      subsystems.emplace_back(starTracker);
+      subsystems.emplace_back(positionManager);
+      subsystems.emplace_back(informationDisplay);
 
       // Create the test subsystem
       commandTerminal = std::make_unique<CommandTerminal>("CommandTerminal", logger, exitSignal);
       commandTerminal->configureInterfaces(subsystems);
-      commandTerminal->start();
    }
-   void TearDown() override
+
+   bool checkReceived()
+   {
+      return (opticsManager->myCommandReceived || positionManager->myCommandReceived || starTracker->myCommandReceived);
+   }
+
+   void beginSubTest(std::stringstream& ss)
+   {
+      // Change std::cin to look for the test input stream
+      std::cin.rdbuf(ss.rdbuf());
+
+      // Start command processing and check results
+      commandTerminal->start();
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+   }
+
+   void endSubTest()
    {
       commandTerminal->stop();
+      opticsManager->reset();
+      positionManager->reset();
+      starTracker->reset();
    }
 
-   std::shared_ptr<Logger> logger{nullptr};
-   std::shared_ptr<std::atomic<bool>> exitSignal{nullptr};
-   std::vector<std::shared_ptr<ISubsystem>> subsystems{};
-   std::unique_ptr<CommandTerminal> commandTerminal{nullptr};
+   static std::shared_ptr<Logger> logger;
+   static std::shared_ptr<std::atomic<bool>> exitSignal;
+   static std::vector<std::shared_ptr<ISubsystem>> subsystems;
+   static std::shared_ptr<CT_OpticsManager> opticsManager;
+   static std::shared_ptr<CT_PositionManager> positionManager;
+   static std::shared_ptr<CT_StarTracker> starTracker;
+   static std::shared_ptr<MinInformationDisplay> informationDisplay;
+   static std::unique_ptr<CommandTerminal> commandTerminal;
 };
 
-TEST_F(TestFixtureCommandTerminal, CommandProcessing)
-{
-   // Redirect std::cin to look for test buffer instead of normal cin
-   auto originalBuffer = std::cin.rdbuf();
-   std::stringstream inputStream;
-   std::cin.rdbuf(inputStream.rdbuf());
+// Define static member variables from test fixture
+std::shared_ptr<Logger> TestFixtureCommandTerminal::logger{};
+std::shared_ptr<std::atomic<bool>> TestFixtureCommandTerminal::exitSignal{};
+std::vector<std::shared_ptr<ISubsystem>> TestFixtureCommandTerminal::subsystems{};
+std::shared_ptr<CT_OpticsManager> TestFixtureCommandTerminal::opticsManager{};
+std::shared_ptr<CT_PositionManager> TestFixtureCommandTerminal::positionManager{};
+std::shared_ptr<CT_StarTracker> TestFixtureCommandTerminal::starTracker{};
+std::shared_ptr<MinInformationDisplay> TestFixtureCommandTerminal::informationDisplay{};
+std::unique_ptr<CommandTerminal> TestFixtureCommandTerminal::commandTerminal{};
 
-   // Photo command checks
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_PhotoCommand)
+{
+   // Valid command
    {
-      std::string name{"TestPhoto.jpg"};
-      // Valid Format
-      std::string testCommand{"photo " + name};
-      ASSERT_EQ(true, commandTerminal->interpretCommand(testCommand));
+      const std::string name{"TestPhoto"};
+      std::stringstream testCommand{"photo " + name};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(name, opticsManager->myTakePhotoCmd.myPhotoName);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_VideoCommand)
+{
+   // Valid command
+   {
+      const std::string name{"TestVideo"};
+      const uint64_t duration{5};
+      std::stringstream testCommand{"video " + name + " " + std::to_string(duration)};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(name, opticsManager->myTakeVideoCmd.myVideoName);
+      ASSERT_EQ(std::chrono::seconds(duration), opticsManager->myTakeVideoCmd.myDuration);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_TimelapseCommand)
+{
+   // Valid command
+   {
+      const std::string name{"TestTimelapse"};
+      const uint64_t duration{5};
+      const double rate{10.3};
+      std::stringstream testCommand{"timelapse " + name + " " + std::to_string(duration) + " " + std::to_string(rate)};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(name, opticsManager->myTakeTimelapseCmd.myTimelapseName);
+      ASSERT_EQ(std::chrono::minutes(duration), opticsManager->myTakeTimelapseCmd.myDuration);
+      ASSERT_EQ(rate, opticsManager->myTakeTimelapseCmd.myRateInHz);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_MoveCommand)
+{
+   // Valid command
+   {
+      const double theta{6.8};
+      const double phi{32.7};
+      std::stringstream testCommand{"move " + std::to_string(theta) + " " + std::to_string(phi)};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(theta, positionManager->myUserMoveCmd.myThetaInDeg);
+      ASSERT_EQ(phi, positionManager->myUserMoveCmd.myPhiInDeg);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_FocusCommand)
+{
+   // Valid command
+   {
+      const double theta{56.9};
+      std::stringstream testCommand{"focus " + std::to_string(theta)};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(theta, opticsManager->myUserFocusCmd.myThetaInDeg);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_FollowCommand)
+{
+   // Valid command
+   {
+      const std::string name{"Jupiter"};
+      const uint64_t duration{76};
+      std::stringstream testCommand{"follow " + name + " " + std::to_string(duration)};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(name, starTracker->myFollowTargetCmd.myTargetName);
+      ASSERT_EQ(std::chrono::seconds(duration), starTracker->myFollowTargetCmd.myDuration);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_GoToCommand)
+{
+   // Valid command
+   {
+      const std::string name{"Pluto"};
+      std::stringstream testCommand{"goto " + name};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(name, starTracker->myGoToTargetCmd.myTargetName);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_SearchRangeCommand)
+{
+   // Valid command
+   {
+      const double range{5233.74};
+      std::stringstream testCommand{"search range " + std::to_string(range)};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(range, starTracker->mySearchTargetCmd.mySearchRadiusInLightYears);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_SearchNameCommand)
+{
+   // Valid command
+   {
+      const std::string name{"Mercu*"};
+      std::stringstream testCommand{"search name " + name};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(name, starTracker->mySearchTargetCmd.myTargetName);
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_CalibrateCommand)
+{
+   // Valid command
+   {
+      std::stringstream testCommand{"calibrate"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(true, positionManager->myCommandReceived);
+      endSubTest();
    }
 }

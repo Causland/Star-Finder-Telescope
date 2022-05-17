@@ -1,8 +1,6 @@
 #include "interfaces/IStarTracker.hpp"
 #include "interfaces/ISubsystem.hpp"
 
-const std::string IStarTracker::NAME{"StarTracker"};
-
 class MinStarTracker : public IStarTracker, public ISubsystem
 {
 public:

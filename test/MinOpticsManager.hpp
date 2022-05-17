@@ -1,8 +1,6 @@
 #include "interfaces/IOpticsManager.hpp"
 #include "interfaces/ISubsystem.hpp"
 
-const std::string IOpticsManager::NAME{"OpticsManager"};
-
 class MinOpticsManager : public IOpticsManager, public ISubsystem
 {
 public:

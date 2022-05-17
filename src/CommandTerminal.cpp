@@ -7,6 +7,7 @@ const std::string ICommandTerminal::NAME{"CommandTerminal"};
 
 void CommandTerminal::start()
 {
+   myExitingFlag = false;
    myInputWaitingThread = std::thread(&CommandTerminal::cinWaitThreadLoop, this);
    myThread = std::thread(&CommandTerminal::threadLoop, this);
 }

@@ -1,8 +1,6 @@
 #include "interfaces/ICommandTerminal.hpp"
 #include "interfaces/ISubsystem.hpp"
 
-const std::string ICommandTerminal::NAME{"CommandTerminal"};
-
 class MinCommandTerminal : public ICommandTerminal, public ISubsystem
 {
 public:

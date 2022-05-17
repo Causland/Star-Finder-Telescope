@@ -6,9 +6,6 @@
 
 class MotionController : public IMotionController, public Subsystem
 {
-#ifdef UNIT_TEST
-    friend class TestFixtureMotionController;
-#endif
 public:
     MotionController(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
 

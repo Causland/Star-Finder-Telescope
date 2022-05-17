@@ -5,9 +5,6 @@
 
 class StarDatabase
 {
-#ifdef UNIT_TEST
-    friend class TestFixtureStarDatabase;
-#endif
     // Things for database interface to do
     // - Formulate API query for specific star information
     // - Provide this information to the caller

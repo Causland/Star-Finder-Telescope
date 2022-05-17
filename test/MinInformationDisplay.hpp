@@ -1,8 +1,6 @@
 #include "interfaces/IInformationDisplay.hpp"
 #include "interfaces/ISubsystem.hpp"
 
-const std::string IInformationDisplay::NAME{"InformationDisplay"};
-
 class MinInformationDisplay : public IInformationDisplay, public ISubsystem
 {
 public:

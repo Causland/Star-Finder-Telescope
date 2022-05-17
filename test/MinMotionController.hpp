@@ -1,8 +1,6 @@
 #include "interfaces/IMotionController.hpp"
 #include "interfaces/ISubsystem.hpp"
 
-const std::string IMotionController::NAME{"MotionController"};
-
 class MinMotionController : public IMotionController, public ISubsystem
 {
 public:

@@ -1,8 +1,6 @@
 #include "interfaces/IPositionManager.hpp"
 #include "interfaces/ISubsystem.hpp"
 
-const std::string IPositionManager::NAME{"PositionManager"};
-
 class MinPositionManager : public IPositionManager, public ISubsystem
 {
 public:
