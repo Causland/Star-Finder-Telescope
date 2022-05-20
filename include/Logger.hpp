@@ -20,6 +20,7 @@ enum class LogCodeEnum
    ERROR,
    WARNING,
    INFO,
+   DEBUG,
 };
 
 /*!
@@ -71,6 +72,7 @@ struct LogMessage
          case (LogCodeEnum::ERROR)   : return "ERROR";
          case (LogCodeEnum::WARNING) : return "WARNING";
          case (LogCodeEnum::INFO)    : return "INFO";
+         case (LogCodeEnum::DEBUG)   : return "DEBUG";
          default                     : return "UNKNOWN";
       } 
    }

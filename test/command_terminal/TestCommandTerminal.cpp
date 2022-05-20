@@ -42,7 +42,7 @@ protected:
 
       // Start command processing and check results
       commandTerminal->start();
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
    }
 
    void endSubTest()
@@ -84,6 +84,22 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_PhotoCommand)
       ASSERT_EQ(name, opticsManager->myTakePhotoCmd.myPhotoName);
       endSubTest();
    }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"photo"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"photo name extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
 }
 
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_VideoCommand)
@@ -97,6 +113,38 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_VideoCommand)
       beginSubTest(testCommand);
       ASSERT_EQ(name, opticsManager->myTakeVideoCmd.myVideoName);
       ASSERT_EQ(std::chrono::seconds(duration), opticsManager->myTakeVideoCmd.myDuration);
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"video"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"video name"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad int conversion
+   {
+      std::stringstream testCommand{"video name invalid"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"video name 5 extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
       endSubTest();
    }
 }
@@ -116,6 +164,54 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_TimelapseCommand)
       ASSERT_EQ(rate, opticsManager->myTakeTimelapseCmd.myRateInHz);
       endSubTest();
    }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"timelapse"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"timelapse name"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"timelapse name 2"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad int conversion
+   {
+      std::stringstream testCommand{"timelapse name 5.5 2.2"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad double conversion
+   {
+      std::stringstream testCommand{"timelapse name 6 invalid"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"timelapse name 22 7.6 extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
 }
 
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_MoveCommand)
@@ -131,6 +227,46 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_MoveCommand)
       ASSERT_EQ(phi, positionManager->myUserMoveCmd.myPhiInDeg);
       endSubTest();
    }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"move"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"move 5.3"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad double conversion
+   {
+      std::stringstream testCommand{"move invalid 2.2"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad double conversion
+   {
+      std::stringstream testCommand{"move 5.7 invalid"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"move 7.4 3.8 extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
 }
 
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_FocusCommand)
@@ -142,6 +278,30 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_FocusCommand)
 
       beginSubTest(testCommand);
       ASSERT_EQ(theta, opticsManager->myUserFocusCmd.myThetaInDeg);
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"focus"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad double conversion
+   {
+      std::stringstream testCommand{"focus invalid"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"focus 33.5 extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
       endSubTest();
    }
 }
@@ -159,6 +319,38 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_FollowCommand)
       ASSERT_EQ(std::chrono::seconds(duration), starTracker->myFollowTargetCmd.myDuration);
       endSubTest();
    }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"follow"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"follow name"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad int conversion
+   {
+      std::stringstream testCommand{"follow name 6.4"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"follow name 9 extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
 }
 
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_GoToCommand)
@@ -170,6 +362,22 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_GoToCommand)
 
       beginSubTest(testCommand);
       ASSERT_EQ(name, starTracker->myGoToTargetCmd.myTargetName);
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"goto"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"goto name extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
       endSubTest();
    }
 }
@@ -185,6 +393,30 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_SearchRangeCommand)
       ASSERT_EQ(range, starTracker->mySearchTargetCmd.mySearchRadiusInLightYears);
       endSubTest();
    }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"search range"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad double conversion
+   {
+      std::stringstream testCommand{"search range invalid"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }   
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"search range 4.7 extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
 }
 
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_SearchNameCommand)
@@ -198,6 +430,22 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_SearchNameCommand)
       ASSERT_EQ(name, starTracker->mySearchTargetCmd.myTargetName);
       endSubTest();
    }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"search name"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"search name planet extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
 }
 
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_CalibrateCommand)
@@ -208,6 +456,35 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_CalibrateCommand)
 
       beginSubTest(testCommand);
       ASSERT_EQ(true, positionManager->myCommandReceived);
+      endSubTest();
+   }
+      // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"calibrate extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+}
+
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_Misc)
+{
+
+   // Invalid command -> unknown base command
+   {
+      std::stringstream testCommand{"unknown"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> unknown search secondary command
+   {
+      std::stringstream testCommand{"search unknown"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
       endSubTest();
    }
 }
