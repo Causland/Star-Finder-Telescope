@@ -42,7 +42,7 @@ struct Command
    }
 };
 
-struct CmdTakePhoto : Command
+struct CmdTakePhoto : public Command
 {
    CmdTakePhoto() : Command(CommandTypeEnum::TAKE_PHOTO) {} 
    explicit CmdTakePhoto(std::string photoName) : 
@@ -52,7 +52,7 @@ struct CmdTakePhoto : Command
    std::string myPhotoName{"None"};
 };
 
-struct CmdTakeVideo : Command
+struct CmdTakeVideo : public Command
 {
    CmdTakeVideo() : Command(CommandTypeEnum::TAKE_VIDEO) {}
    explicit CmdTakeVideo(std::string videoName, const std::chrono::seconds& duration) : 
@@ -66,7 +66,7 @@ struct CmdTakeVideo : Command
    std::chrono::time_point<std::chrono::system_clock> myStartTime;
 };
 
-struct CmdTakeTimelapse : Command
+struct CmdTakeTimelapse : public Command
 {
    CmdTakeTimelapse() : Command(CommandTypeEnum::TAKE_TIMELAPSE) {}
    explicit CmdTakeTimelapse(std::string timelapseName, const std::chrono::minutes& duration, const double rate) : 
@@ -82,7 +82,7 @@ struct CmdTakeTimelapse : Command
    std::chrono::time_point<std::chrono::system_clock> myStartTime;
 };
 
-struct CmdUserMove : Command
+struct CmdUserMove : public Command
 {
    CmdUserMove() : Command(CommandTypeEnum::USER_MOVE) {}
    CmdUserMove(const double& thetaInDeg, const double& phiInDeg) :
@@ -94,7 +94,7 @@ struct CmdUserMove : Command
    double myPhiInDeg{0.0};
 };
 
-struct CmdUserFocus : Command
+struct CmdUserFocus : public Command
 {
    CmdUserFocus() : Command(CommandTypeEnum::USER_FOCUS) {}
    explicit CmdUserFocus(const double& thetaInDeg) :
@@ -104,7 +104,7 @@ struct CmdUserFocus : Command
    double myThetaInDeg{0.0};
 };
 
-struct CmdFollowTarget : Command
+struct CmdFollowTarget : public Command
 {
    CmdFollowTarget() : Command(CommandTypeEnum::FOLLOW_TARGET), myStartTime(std::chrono::system_clock::now()) {}
    CmdFollowTarget(std::string targetName, const std::chrono::seconds& duration) : 
@@ -118,7 +118,7 @@ struct CmdFollowTarget : Command
    std::chrono::time_point<std::chrono::system_clock> myStartTime;
 };
 
-struct CmdGoToTarget : Command
+struct CmdGoToTarget : public Command
 {
    CmdGoToTarget() : Command(CommandTypeEnum::GOTO_TARGET) {}
    explicit CmdGoToTarget(std::string targetName) : 
@@ -128,7 +128,7 @@ struct CmdGoToTarget : Command
    std::string myTargetName{"None"};
 };
 
-struct CmdSearchTarget : Command
+struct CmdSearchTarget : public Command
 {
    CmdSearchTarget() : Command(CommandTypeEnum::SEARCH_TARGET) {}
    CmdSearchTarget(std::string targetName, const double& searchRadiusInLightYears) :
@@ -140,7 +140,7 @@ struct CmdSearchTarget : Command
    double mySearchRadiusInLightYears{0.0};
 };
 
-struct CmdCalibrate : Command
+struct CmdCalibrate : public Command
 {
    CmdCalibrate() : Command(CommandTypeEnum::CALIBRATE) {}
 };

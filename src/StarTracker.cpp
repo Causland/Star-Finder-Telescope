@@ -53,6 +53,45 @@ void StarTracker::threadLoop()
 {
    while (!myExitingFlag)
    {
+      myHeartbeatFlag = true;
+      std::unique_lock lk(myMutex);
+      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return !myCommandQueue.empty(); }))
+      {
+         continue; // Heartbeat update interval timeout
+      }
+      if (myExitingFlag)
+         break;
+
+      // Process each command and take the specified action
+      while (!myCommandQueue.empty())
+      {
+         auto generalCommand = myCommandQueue.front();
+         myCommandQueue.pop();
+
+         switch (generalCommand.myCommandType)
+         {
+         case CommandTypeEnum::GOTO_TARGET:
+         {
+            auto command = static_cast<CmdGoToTarget&>(generalCommand);
+            break;
+         }
+         case CommandTypeEnum::FOLLOW_TARGET:
+         {
+            auto command = static_cast<CmdFollowTarget&>(generalCommand);
+            break;
+         }
+         case CommandTypeEnum::SEARCH_TARGET:
+         {
+            auto command = static_cast<CmdSearchTarget&>(generalCommand);
+            break;
+         }
+         default:
+         {
+            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Invalid command in queue: " + generalCommand.toString());
+            break;
+         }
+         }
+      }
       // Things for Star Tracker to do
       // - Wait for particular star input
       //         - If tracking mode, set update frequency and query database for position at Hz

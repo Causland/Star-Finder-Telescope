@@ -51,9 +51,9 @@ struct LogMessage
       std::time_t t = std::chrono::system_clock::to_time_t(myTime);
       oss << std::put_time(std::localtime(&t), "%T") 
          << " | "
-         << mySubsystemName
+         << std::setw(18) << mySubsystemName
          << " "
-         << "[" + logCodeToString(myCode) + "]"
+         << std::setw(7) << "[" + logCodeToString(myCode) + "]"
          << " "
          << myMessage
          << "\n";
@@ -70,10 +70,10 @@ struct LogMessage
       switch (code)
       {
          case (LogCodeEnum::ERROR)   : return "ERROR";
-         case (LogCodeEnum::WARNING) : return "WARNING";
+         case (LogCodeEnum::WARNING) : return "WARN";
          case (LogCodeEnum::INFO)    : return "INFO";
          case (LogCodeEnum::DEBUG)   : return "DEBUG";
-         default                     : return "UNKNOWN";
+         default                     : return "?????";
       } 
    }
    

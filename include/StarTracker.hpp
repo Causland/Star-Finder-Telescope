@@ -7,6 +7,7 @@
 #include "interfaces/IPositionManager.hpp"
 #include "interfaces/IStarTracker.hpp"
 #include <memory>
+#include <queue>
 
 class StarTracker : public IStarTracker, public Subsystem
 {
@@ -26,6 +27,7 @@ public:
     
 private:
     StarDatabase database;
+    std::queue<Command> myCommandQueue;
     std::weak_ptr<IInformationDisplay> myInformationDisplay;
     std::weak_ptr<IPositionManager> myPositionManager;
 };
