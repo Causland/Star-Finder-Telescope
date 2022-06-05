@@ -2,4 +2,6 @@ bin/
 docs/
 build/
 logs/
+experimental/
 .vscode/
+.venv/

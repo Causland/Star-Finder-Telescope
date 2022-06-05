@@ -29,9 +29,9 @@ class CommandTerminal : public ICommandTerminal, public Subsystem
 public:
     /*!
      * Creates a Command Terminal subsystem object with a logger and pointer to the main forever loop controller.
-     * \param subsystemName [in] a string of the subsystem name moved into the class.
-     * \param logger [in] a shared pointer to a logger object used for logging within the subsystem.
-     * \param exitingSignal [out] a shared pointer to an atomic bool used to signal that the application should close.
+     * \param[in] subsystemName a string of the subsystem name moved into the class.
+     * \param[in] logger a shared pointer to a logger object used for logging within the subsystem.
+     * \param[out] exitingSignal a shared pointer to an atomic bool used to signal that the application should close.
      */
     CommandTerminal(const std::string& subsystemName, std::shared_ptr<Logger> logger, std::shared_ptr<std::atomic<bool>> exitingSignal) : 
         Subsystem(std::move(subsystemName), logger), myExitingSignal(exitingSignal) {}
@@ -48,7 +48,7 @@ public:
 
     /*!
      * Set interface pointers for use throughout the subsystem.
-     \param subsystems a list of subsystem interface pointers.
+     \param[in] subsystems a list of subsystem interface pointers.
      */
     void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override;
 
@@ -71,7 +71,7 @@ private:
      * list of parameters. This function parses out the base command to determine processing of the required
      * command arguments. The command arguments are validated and passed to the dedicated subsystem for further
      * processing.
-     * \param command [in] a command string to be interpreted.
+     * \param[in] command a command string to be interpreted.
      * \return true if the command is successfully interpreted.
      */
     bool interpretCommand(const std::string& command);
@@ -80,7 +80,7 @@ private:
      * The base case for the recursive variadic function validateParameters(). This function
      * checks the input string to see if it is empty. At the base case, the input string should
      * be completely processed leaving no more characters in the string.
-     * \param input [in] a list of remaining parameters for a command.
+     * \param[in] input a list of remaining parameters for a command.
      * \return true if the input string is empty.
      */
     bool validateParameters(const std::string& input)
@@ -108,9 +108,9 @@ private:
      * 
      * \tparam T the type of the current out parameter.
      * \tparam Args... the type of the parameter pack of out parameters.
-     * \param input a space delimited string of parameters to process as values.
-     * \param currParam the current out parameter to match with the input string.
-     * \param outParams a parameter pack of out parameters.
+     * \param[in] input a space delimited string of parameters to process as values.
+     * \param[in] currParam the current out parameter to match with the input string.
+     * \param[out] outParams a parameter pack of out parameters.
      * \return true if there are no remaining parameters in the input string, no remaining parameters in the out parameters, and all values could be converted.
      */
     template<typename T, typename... Args>

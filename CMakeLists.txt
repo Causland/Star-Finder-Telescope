@@ -13,6 +13,8 @@ set (GTEST_HAS_PTHREAD 1)
 # Add subdirectories for libraries before custom compiler flags
 add_subdirectory(lib/curlpp)
 add_subdirectory(lib/googletest)
+set (BUILD_SQLITE3_CONNECTOR true)
+add_subdirectory(lib/sqlpp11)
 
 # Update the location of the executable
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)

@@ -20,4 +20,5 @@ target_include_directories(Star_Finder_Telescope PUBLIC
 # Add static libs to the executable
 target_link_libraries(Star_Finder_Telescope PUBLIC
    curlpp
+   sqlpp11
 )

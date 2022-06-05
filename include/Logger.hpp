@@ -31,9 +31,9 @@ struct LogMessage
 {
    /*!
     * Creates a LogMessage object with the specific timestamp of when it is created.
-    * \param subsystemName [in] a string of the subsystem name moved into structure.
-    * \param code [in] a constant LogCodeEnum code.
-    * \param message [in] a string of the message to be logged moved into structure.
+    * \param[in] subsystemName a string of the subsystem name moved into structure.
+    * \param[in] code a constant LogCodeEnum code.
+    * \param[in] message a string of the message to be logged moved into structure.
     */
    LogMessage(std::string subsystemName, const LogCodeEnum code, std::string message) : 
       mySubsystemName(std::move(subsystemName)), myCode(code), myMessage(std::move(message)), myTime(std::chrono::system_clock::now()) {}
@@ -62,7 +62,7 @@ struct LogMessage
 
    /*!
     * Generate a string for each code in the LogCodeEnum.
-    * \param code [in] a LogCodeEnum code for the log.
+    * \param[in] code a LogCodeEnum code for the log.
     * \return a string for the provided code.
     */
    inline static std::string logCodeToString(const LogCodeEnum code)
@@ -95,7 +95,7 @@ class Logger
 public:
    /*!
       * Creates a logger with a particular log file. The logging thread is started upon creation.
-      * \param fileName [in] a string of the relative path to the log file. The string is moved into the class
+      * \param[in] fileName a string of the relative path to the log file. The string is moved into the class
       */
    explicit Logger(std::string fileName) : myFileName(std::move(fileName)) 
    {
@@ -123,9 +123,9 @@ public:
 
    /*!
       * Add a new log to the logging queue with the subsystem name, the log code, and a specific message.
-      * \param subsystemName [in] a constant string of the subsystem name.
-      * \param code [in] a constant LogCodeEnum code.
-      * \param message [in] a constant string of the message to be logged.
+      * \param[in] subsystemName a constant string of the subsystem name.
+      * \param[in] code a constant LogCodeEnum code.
+      * \param[in] message a constant string of the message to be logged.
       */
    void log(const std::string& subsystemName, const LogCodeEnum& code, const std::string& message);
 
@@ -143,7 +143,7 @@ private:
       * This function removes pending log strings from the log queue and appends them to the output string.
       * The output string is used to write directly to the log file. Once emptied, the condition variable is
       * reset to block the thread until a new log is added.
-      * \sa writeToLog();
+      * \sa writeToLog()
       */
    void processLogs();
 
