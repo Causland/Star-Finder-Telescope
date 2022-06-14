@@ -2,7 +2,7 @@
 #define STAR_TRACKER_HPP
 
 #include "Subsystem.hpp"
-#include "StarDatabase.hpp"
+#include "StarDatabaseAdapter.hpp"
 #include "interfaces/IInformationDisplay.hpp"
 #include "interfaces/IPositionManager.hpp"
 #include "interfaces/IStarTracker.hpp"
@@ -26,7 +26,7 @@ public:
     void queryTarget(const CmdSearchTarget& cmd) override;
     
 private:
-    StarDatabase database;
+    StarDatabaseAdapter database;
     std::queue<Command> myCommandQueue;
     std::weak_ptr<IInformationDisplay> myInformationDisplay;
     std::weak_ptr<IPositionManager> myPositionManager;

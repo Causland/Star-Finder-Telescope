@@ -36,7 +36,7 @@ set(POSITION_MANAGER_SRC
 
 # Star Database Test Files
 set(STAR_DATABASE_SRC
-   "${CMAKE_SOURCE_DIR}/src/StarDatabase.cpp"
+   "${CMAKE_SOURCE_DIR}/src/StarDatabaseAdapter.cpp"
    star_database/TestStarDatabase.cpp
 )
 

@@ -1,2 +1,2 @@
 #include "gtest/gtest.h"
-#include "StarDatabase.hpp"
+#include "StarDatabaseAdapter.hpp"

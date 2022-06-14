@@ -7,7 +7,7 @@
 #include "MotionController.hpp"
 #include "OpticsManager.hpp"
 #include "PositionManager.hpp"
-#include "StarDatabase.hpp"
+#include "StarDatabaseAdapter.hpp"
 #include "StarTracker.hpp"
 #include "interfaces/ISubsystem.hpp"
 #include <chrono>

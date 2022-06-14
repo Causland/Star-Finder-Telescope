@@ -8,5 +8,8 @@ CREATE TABLE IF NOT EXISTS Ephemeris (
    time TEXT NOT NULL,
    azimuth REAL NOT NULL,
    elevation REAL NOT NULL,
+   gpsLong REAL NOT NULL,
+   gpsLat REAL NOT NULL,
+   gpsElev REAL NOT NULL,
    FOREIGN KEY(bodyId) REFERENCES TargetBody(bodyId)
 );
