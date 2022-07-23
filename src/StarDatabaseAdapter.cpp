@@ -42,7 +42,7 @@ bool StarDatabaseAdapter::queryTargetPointing(const std::string& targetName, con
    StarDatabaseSchema::TargetBody tb;
    StarDatabaseSchema::Ephemeris eph;
    auto jt = tb.join(eph).on(tb.bodyId == eph.bodyId);
-   auto results = myDatabaseConnection(select(tb.bodyId, tb.bodyName, eph.azimuth, eph.elevation)
+   /*auto results = myDatabaseConnection(select(tb.bodyId, tb.bodyName, eph.azimuth, eph.elevation)
                                      .from(jt)
                                      .where(
                                           (tb.bodyName == targetName || tb.bodyId == targetName) && 
@@ -100,7 +100,7 @@ bool StarDatabaseAdapter::queryTargetPointing(const std::string& targetName, con
          *elevation = result.elevation;
          break; // Only look at the first entry (Should be only entry. Currently unable to check)
       }
-   }
+   }*/
    return true;   
 }
 

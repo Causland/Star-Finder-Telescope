@@ -46,6 +46,8 @@ set(STAR_TRACKER_SRC
    star_tracker/TestStarTracker.cpp
 )
 
+enable_testing()
+
 add_executable(Telescope_Unit_Test
    "${COMMAND_TERMINAL_SRC}"
    "${INFORMATION_DISPLAY_SRC}"
@@ -73,9 +75,17 @@ target_include_directories(Telescope_Unit_Test PUBLIC
    "${CMAKE_SOURCE_DIR}/test/optics_manager"
    "${CMAKE_SOURCE_DIR}/test/position_manager"
    "${CMAKE_SOURCE_DIR}/test/star_tracker"
+   "${CMAKE_BINARY_DIR}/_deps/curlpp-src/include"
+   "${CMAKE_BINARY_DIR}/_deps/sqlpp11-src/include"
 )
 
 # Add static libs to the executable
 target_link_libraries(Telescope_Unit_Test PUBLIC
-   gtest_main
+   GTest::gtest_main
+   curlpp
+   sqlite3
+   sqlpp11
 )
+
+include(GoogleTest)
+gtest_discover_tests(Telescope_Unit_Test)
