@@ -67,7 +67,7 @@ public:
     * \param[in] elevation an elevation position relative to the WGS-84 GPS reference frame.
     * \return an ApiResponseEnum with value matching the result of the query. The response data is stored in the myProcessedQueryResults.
     */
-   ApiResponseEnum performApiQuery(std::string targetName, std::chrono::system_clock::time_point startTime, std::chrono::system_clock::time_point endTime, const std::chrono::seconds& timePeriod, double latitude, double longitude, double elevation);
+   ApiResponseEnum performApiQuery(std::string targetName, std::chrono::system_clock::time_point startTime, std::chrono::system_clock::time_point endTime, const std::chrono::milliseconds& timePeriod, double latitude, double longitude, double elevation);
    
    /*!
     * Get the vector of strings which contain either the datapoints from a successful query or 

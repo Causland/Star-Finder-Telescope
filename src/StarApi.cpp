@@ -1,7 +1,7 @@
 #include "StarApi.hpp"
 #include <iomanip>
 
-ApiResponseEnum StarApi::performApiQuery(std::string targetName, std::chrono::system_clock::time_point startTime, std::chrono::system_clock::time_point endTime, const std::chrono::seconds& timePeriod, double latitude, double longitude, double elevation)
+ApiResponseEnum StarApi::performApiQuery(std::string targetName, std::chrono::system_clock::time_point startTime, std::chrono::system_clock::time_point endTime, const std::chrono::milliseconds& timePeriod, double latitude, double longitude, double elevation)
 {
    myProcessedQueryResults.clear();
 
