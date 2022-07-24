@@ -4,7 +4,7 @@
 #include "CommandTerminal.hpp"
 #include "InformationDisplay.hpp"
 #include "Logger.hpp"
-#include "MotionController.hpp"
+#include "RPi3MotionController.hpp"
 #include "OpticsManager.hpp"
 #include "PositionManager.hpp"
 #include "StarDatabaseAdapter.hpp"
@@ -39,7 +39,6 @@ int main()
     std::vector<std::shared_ptr<ISubsystem>> subsystems;
     subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay", logger));
     subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", logger));
-    subsystems.emplace_back(std::make_shared<MotionController>("MotionController", logger));
     subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager", logger));
     subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", logger));
     subsystems.emplace_back(std::make_shared<CommandTerminal>("CommandTerminal", logger, exitSignal));

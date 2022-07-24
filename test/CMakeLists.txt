@@ -18,7 +18,7 @@ set(INFORMATION_DISPLAY_SRC
 
 # Motion Controller Test Files
 set(MOTION_CONTROLLER_SRC
-   "${CMAKE_SOURCE_DIR}/src/MotionController.cpp"
+   "${CMAKE_SOURCE_DIR}/src/RPi3MotionController.cpp"
    motion_controller/TestMotionController.cpp
 )
 
@@ -77,6 +77,7 @@ target_include_directories(Telescope_Unit_Test PUBLIC
    "${CMAKE_SOURCE_DIR}/test/star_tracker"
    "${CMAKE_BINARY_DIR}/_deps/curlpp-src/include"
    "${CMAKE_BINARY_DIR}/_deps/sqlpp11-src/include"
+   "${CMAKE_SOURCE_DIR}/lib/WiringPi/include"
 )
 
 # Add static libs to the executable
@@ -85,6 +86,7 @@ target_link_libraries(Telescope_Unit_Test PUBLIC
    curlpp
    sqlite3
    sqlpp11
+   "${CMAKE_SOURCE_DIR}/lib/WiringPi/libwiringPi.so.2.70"
 )
 
 include(GoogleTest)
