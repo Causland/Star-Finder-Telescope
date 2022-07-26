@@ -223,8 +223,8 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_MoveCommand)
       std::stringstream testCommand{"move " + std::to_string(theta) + " " + std::to_string(phi)};
 
       beginSubTest(testCommand);
-      ASSERT_EQ(theta, positionManager->myUserMoveCmd.myThetaInDeg);
-      ASSERT_EQ(phi, positionManager->myUserMoveCmd.myPhiInDeg);
+      ASSERT_EQ(theta, positionManager->myUpdatePositionCmd.myThetaInDeg);
+      ASSERT_EQ(phi, positionManager->myUpdatePositionCmd.myPhiInDeg);
       endSubTest();
    }
    // Invalid command -> missing param

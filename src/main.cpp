@@ -35,12 +35,15 @@ int main()
     std::string logFileName = oss.str();
     std::shared_ptr<Logger> logger = std::make_shared<Logger>(logFileName);
 
+    // Create supporting modules for various subsystems
+    std::shared_ptr<IMotionController> motionController = std::make_shared<RPi3MotionController>(); // Raspberry Pi 3 interface
+
     // Construct all subsystems with their name and logger and push to subsystem vector
     std::vector<std::shared_ptr<ISubsystem>> subsystems;
     subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay", logger));
     subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", logger));
     subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager", logger));
-    subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", logger));
+    subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", logger, motionController));
     subsystems.emplace_back(std::make_shared<CommandTerminal>("CommandTerminal", logger, exitSignal));
 
     // Update the subsystem interfaces before starting their thread loops

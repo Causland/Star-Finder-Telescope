@@ -232,7 +232,7 @@ bool CommandTerminal::interpretCommand(const std::string& command)
             return false;
          }
          auto positionManager = myPositionManager.lock();
-         positionManager->userChangePosition(CmdUserMove(theta, phi));
+         positionManager->updatePosition(CmdUpdatePosition(theta, phi));
       }
       else if (baseCommand == "focus")
       {

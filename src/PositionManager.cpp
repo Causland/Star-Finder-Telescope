@@ -38,25 +38,50 @@ void PositionManager::threadLoop()
 {
    while (!myExitingFlag)
    {
-      // Things for position manager to do
-      // - Listen for telescope position update commands from command interface
-      // - Listen for star position update commands from star tracker
-      // - Calculate motion required to move to new position
-      // - Command the motion controller for telescope pointing
+      myHeartbeatFlag = true;
+      std::unique_lock<std::mutex> lk(myMutex);
+      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return myTargetUpdateFlag; }))
+      {
+         continue; // Heartbeat update interval timeout
+      }
+      if (myExitingFlag)
+      {
+         break;
+      }
+
+      if (myInTrackingMode)
+      {
+         continue; //TODO - Implement tracking over series of points
+      }
+      else
+      {
+         auto motionController = myMotionController.lock();
+         motionController->moveHorizAngle(myTargetAzimuth);
+         motionController->moveVertAngle(myTargetElevation);
+         myTargetUpdateFlag = false;
+      }
    }
 }
 
-void PositionManager::userChangePosition(const CmdUserMove& cmd)
+void PositionManager::updatePosition(const CmdUpdatePosition& cmd)
 {
-
+   std::scoped_lock<std::mutex> lk(myMutex);
+   myInTrackingMode = false;
+   myTargetAzimuth = cmd.myThetaInDeg;
+   myTargetElevation = cmd.myPhiInDeg;
+   myTargetUpdateFlag = true;
+   myCondVar.notify_one();
 }
 
-void PositionManager::pointAtTarget(const CmdGoToTarget& cmd)
+void PositionManager::trackTarget(const PositionTable& positions)
 {
-   
+   std::scoped_lock<std::mutex> lk(myMutex);
+   myInTrackingMode = true;
+   myPositionTable = positions;
+   myTargetUpdateFlag = true;
+   myCondVar.notify_one();
 }
 
 void PositionManager::calibrate(const CmdCalibrate& cmd)
 {
-   
 }

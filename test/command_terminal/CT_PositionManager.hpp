@@ -3,14 +3,9 @@
 class CT_PositionManager : public MinPositionManager
 {
 public:
-   void userChangePosition(const CmdUserMove& cmd) override 
+   void updatePosition(const CmdUpdatePosition& cmd) override 
    {
-      myUserMoveCmd = cmd;
-      myCommandReceived = true;
-   }
-   void pointAtTarget(const CmdGoToTarget& cmd) override 
-   {
-      myGoToTargetCmd = cmd;
+      myUpdatePositionCmd = cmd;
       myCommandReceived = true;
    }
    void calibrate(const CmdCalibrate& cmd) override 
@@ -20,13 +15,12 @@ public:
    }
    void reset()
    {
-      myUserMoveCmd = CmdUserMove();
-      myGoToTargetCmd = CmdGoToTarget();
+      myUpdatePositionCmd = CmdUpdatePosition();
       myCalibrateCmd = CmdCalibrate();
       myCommandReceived = false;
    }
 
-   CmdUserMove myUserMoveCmd{};
+   CmdUpdatePosition myUpdatePositionCmd{};
    CmdGoToTarget myGoToTargetCmd{};
    CmdCalibrate myCalibrateCmd{};
    bool myCommandReceived{false};

@@ -4,8 +4,8 @@
 class MinPositionManager : public IPositionManager, public ISubsystem
 {
 public:
-   void userChangePosition(const CmdUserMove& cmd) override {}
-   void pointAtTarget(const CmdGoToTarget& cmd) override {}
+   void updatePosition(const CmdUpdatePosition& cmd) override {}
+   void trackTarget(const PositionTable& positions) override {}
    void calibrate(const CmdCalibrate& cmd) override {}
    void start() override {}
    void stop() override {}

@@ -9,7 +9,7 @@ enum class CommandTypeEnum
    TAKE_PHOTO,
    TAKE_VIDEO,
    TAKE_TIMELAPSE,
-   USER_MOVE,
+   UPDATE_POSITION,
    USER_FOCUS,
    FOLLOW_TARGET,
    GOTO_TARGET,
@@ -30,7 +30,7 @@ struct Command
          case CommandTypeEnum::TAKE_PHOTO: return "PHOTO";
          case CommandTypeEnum::TAKE_VIDEO: return "VIDEO";
          case CommandTypeEnum::TAKE_TIMELAPSE: return "TIMELAPSE";
-         case CommandTypeEnum::USER_MOVE: return "MOVE";
+         case CommandTypeEnum::UPDATE_POSITION: return "MOVE";
          case CommandTypeEnum::USER_FOCUS: return "FOCUS";
          case CommandTypeEnum::FOLLOW_TARGET: return "FOLLOW";
          case CommandTypeEnum::GOTO_TARGET: return "GOTO";
@@ -82,11 +82,11 @@ struct CmdTakeTimelapse : public Command
    std::chrono::time_point<std::chrono::system_clock> myStartTime;
 };
 
-struct CmdUserMove : public Command
+struct CmdUpdatePosition : public Command
 {
-   CmdUserMove() : Command(CommandTypeEnum::USER_MOVE) {}
-   CmdUserMove(const double& thetaInDeg, const double& phiInDeg) :
-      Command(CommandTypeEnum::USER_MOVE),
+   CmdUpdatePosition() : Command(CommandTypeEnum::UPDATE_POSITION) {}
+   CmdUpdatePosition(const double& thetaInDeg, const double& phiInDeg) :
+      Command(CommandTypeEnum::UPDATE_POSITION),
       myThetaInDeg(thetaInDeg),
       myPhiInDeg(phiInDeg) {}
 
