@@ -73,6 +73,15 @@ void StarTracker::threadLoop()
          case CommandTypeEnum::GOTO_TARGET:
          {
             auto command = static_cast<CmdGoToTarget&>(generalCommand);
+            double azimuth = 0.0;
+            double elevation = 0.0;
+            auto gpsModule = myGpsModule.lock();
+            gpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
+            auto starDatabase = myStarDatabase.lock();
+            auto result = starDatabase->queryTargetPointing(command.myTargetName, std::chrono::system_clock::now(),
+                                                               myGpsLong, myGpsLat, myGpsElev, &azimuth, &elevation);
+            auto positionManager = myPositionManager.lock();
+            positionManager->updatePosition(CmdUpdatePosition(azimuth, elevation));
             break;
          }
          case CommandTypeEnum::FOLLOW_TARGET:
@@ -92,25 +101,23 @@ void StarTracker::threadLoop()
          }
          }
       }
-      // Things for Star Tracker to do
-      // - Wait for particular star input
-      //         - If tracking mode, set update frequency and query database for position at Hz
-      //         - If position query mode, get the position from the database
-      // - Inform position manager of new coordinates
    }
 }
 
 void StarTracker::pointToTarget(const CmdGoToTarget& cmd)
 {
-
+   myCommandQueue.push(cmd);
+   myCondVar.notify_one();
 }
 
 void StarTracker::trackTarget(const CmdFollowTarget& cmd)
 {
-
+   myCommandQueue.push(cmd);
+   myCondVar.notify_one();  
 }
 
 void StarTracker::queryTarget(const CmdSearchTarget& cmd)
 {
-
+   myCommandQueue.push(cmd);
+   myCondVar.notify_one();
 }
