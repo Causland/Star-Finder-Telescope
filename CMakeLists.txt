@@ -12,6 +12,8 @@ set (GTEST_HAS_PTHREAD 1)
 
 # Add external libraries to the project
 include(FetchContent)
+include(ExternalProject)
+
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
@@ -34,6 +36,30 @@ FetchContent_Declare(
    CMAKE_ARGS -DBUILD_SQLITE3_CONNECTOR ON
 )
 FetchContent_MakeAvailable(sqlpp11)
+
+ExternalProject_Add(
+   wiringpi
+   GIT_REPOSITORY https://github.com/WiringPi/WiringPi.git
+   GIT_TAG 2.61-1
+   SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src
+   BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-build
+   CONFIGURE_COMMAND ""
+   BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src/ && ./build
+   INSTALL_COMMAND ""
+)
+set(CMAKE_INSTALL_RPATH "/usr/local/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+ExternalProject_Add(
+   servoblaster
+   GIT_REPOSITORY https://github.com/srcshelton/servoblaster.git
+   GIT_TAG master
+   SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src
+   BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-build
+   CONFIGURE_COMMAND ""
+   BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && make all
+   INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && make install
+)
 
 # Update the location of the executable
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)

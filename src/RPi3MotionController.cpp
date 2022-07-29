@@ -10,7 +10,7 @@ constexpr uint16_t FOCUS_SERVO_TEN_US_PER_DEG = 500;
 constexpr uint8_t BASE_HORIZ_SERVO_PIN = 1; 
 constexpr uint16_t BASE_HORIZ_SERVO_TEN_US_PER_DEG = 500;
 
-constexpr uint8_t BASE_VERT_SERVO_PIN = 2; 
+constexpr uint8_t BASE_VERT_SERVO_PIN = 0; 
 constexpr uint16_t BASE_VERT_SERVO_TEN_US_PER_DEG = 500;
 
 const std::string IMotionController::NAME{"RPi3MotionController"};
