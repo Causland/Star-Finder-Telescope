@@ -77,7 +77,7 @@ target_include_directories(Telescope_Unit_Test PUBLIC
    "${CMAKE_SOURCE_DIR}/test/star_tracker"
    "${CMAKE_BINARY_DIR}/_deps/curlpp-src/include"
    "${CMAKE_BINARY_DIR}/_deps/sqlpp11-src/include"
-   "${CMAKE_SOURCE_DIR}/lib/WiringPi/include"
+   "${CMAKE_BINARY_DIR}/_deps/wiringpi-src/wiringPi"
 )
 
 # Add static libs to the executable
@@ -86,7 +86,8 @@ target_link_libraries(Telescope_Unit_Test PUBLIC
    curlpp
    sqlite3
    sqlpp11
-   "${CMAKE_SOURCE_DIR}/lib/WiringPi/libwiringPi.so.2.70"
+   Threads::Threads
+   "${CMAKE_BINARY_DIR}/_deps/wiringpi-src/wiringPi/libwiringPi.so.2.61"
 )
 
 include(GoogleTest)
