@@ -2,21 +2,15 @@
 #define I_POSITION_MANAGER_HPP
 
 #include "CommandTypes.hpp"
+#include "Common.hpp"
 #include <chrono>
 #include <cmath>
 #include <string>
 #include <vector>
 
-struct Position
-{
-    double azimuth{0.0};
-    double elevation{0.0};
-    std::chrono::system_clock::time_point time;
-};
-
 struct PositionTable
 {
-    std::vector<Position> myPositions;
+    std::vector<Position> myPositions{};
 };
 
 class IPositionManager

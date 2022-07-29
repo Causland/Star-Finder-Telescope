@@ -79,7 +79,7 @@ void StarTracker::threadLoop()
             gpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
             auto starDatabase = myStarDatabase.lock();
             auto result = starDatabase->queryTargetPointing(command.myTargetName, std::chrono::system_clock::now(),
-                                                               myGpsLong, myGpsLat, myGpsElev, &azimuth, &elevation);
+                                                               myGpsLong, myGpsLat, myGpsElev);
             auto positionManager = myPositionManager.lock();
             positionManager->updatePosition(CmdUpdatePosition(azimuth, elevation));
             break;
