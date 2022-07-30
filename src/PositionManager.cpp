@@ -59,6 +59,7 @@ void PositionManager::threadLoop()
          motionController->moveHorizAngle(myTargetAzimuth);
          motionController->moveVertAngle(myTargetElevation);
          myTargetUpdateFlag = false;
+         myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Changing position to (" + std::to_string(myTargetAzimuth) + "," + std::to_string(myTargetElevation) + ")");
       }
    }
 }
@@ -71,6 +72,7 @@ void PositionManager::updatePosition(const CmdUpdatePosition& cmd)
    myTargetElevation = cmd.myPhiInDeg;
    myTargetUpdateFlag = true;
    myCondVar.notify_one();
+   myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Received move request: track=F (az,el)=(" + std::to_string(myTargetAzimuth) + "," + std::to_string(myTargetElevation) + ")");
 }
 
 void PositionManager::trackTarget(const PositionTable& positions)

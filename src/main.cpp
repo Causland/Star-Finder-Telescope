@@ -11,6 +11,7 @@
 #include "StarTracker.hpp"
 #include "interfaces/ISubsystem.hpp"
 #include <chrono>
+#include <exception>
 #include <iomanip>
 #include <memory>
 #include <sstream>
@@ -36,7 +37,16 @@ int main()
     std::shared_ptr<Logger> logger = std::make_shared<Logger>(logFileName);
 
     // Create supporting modules for various subsystems
-    std::shared_ptr<IMotionController> motionController = std::make_shared<RPi3MotionController>(); // Raspberry Pi 3 interface
+    std::shared_ptr<IMotionController> motionController;
+    try
+    {
+        motionController = std::make_shared<RPi3MotionController>(); // Raspberry Pi 3 interface
+    }
+    catch (const std::runtime_error& e)
+    {
+        logger->log("main", LogCodeEnum::ERROR, "Unable to create RPi3 Motion Controller");
+        return 1;
+    }
 
     // Construct all subsystems with their name and logger and push to subsystem vector
     std::vector<std::shared_ptr<ISubsystem>> subsystems;
