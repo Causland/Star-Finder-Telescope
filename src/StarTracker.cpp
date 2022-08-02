@@ -11,6 +11,7 @@ void StarTracker::start()
 void StarTracker::stop()
 {
    myExitingFlag = true;
+   myCondVar.notify_one();
    myThread.join();
 }
 
@@ -55,12 +56,14 @@ void StarTracker::threadLoop()
    {
       myHeartbeatFlag = true;
       std::unique_lock lk(myMutex);
-      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return !myCommandQueue.empty(); }))
+      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return !myCommandQueue.empty() || myExitingFlag; }))
       {
          continue; // Heartbeat update interval timeout
       }
       if (myExitingFlag)
+      {
          break;
+      }
 
       // Process each command and take the specified action
       while (!myCommandQueue.empty())
@@ -73,20 +76,42 @@ void StarTracker::threadLoop()
          case CommandTypeEnum::GOTO_TARGET:
          {
             auto command = static_cast<CmdGoToTarget&>(generalCommand);
-            double azimuth = 0.0;
-            double elevation = 0.0;
             auto gpsModule = myGpsModule.lock();
             gpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
             auto starDatabase = myStarDatabase.lock();
             auto result = starDatabase->queryTargetPointing(command.myTargetName, std::chrono::system_clock::now(),
                                                                myGpsLong, myGpsLat, myGpsElev);
-            auto positionManager = myPositionManager.lock();
-            positionManager->updatePosition(CmdUpdatePosition(azimuth, elevation));
+            if (result.myStatusCode == QueryResult::SUCCESS)
+            {
+               auto position = result.myPositionResults.front();
+               auto positionManager = myPositionManager.lock();
+               myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Issuing goto command for target=" + command.myTargetName + " (az,el)=(" + 
+                                                                  std::to_string(position.first.myAzimuth) + "," + std::to_string(position.first.myElevation) + ")");
+               positionManager->updatePosition(CmdUpdatePosition(position.first.myAzimuth, position.first.myElevation));
+            }
+            else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
+            {
+               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Goto Target Result: " + result.myLogStatement);
+            }
             break;
          }
          case CommandTypeEnum::FOLLOW_TARGET:
          {
             auto command = static_cast<CmdFollowTarget&>(generalCommand);
+            auto gpsModule = myGpsModule.lock();
+            gpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
+            auto starDatabase = myStarDatabase.lock();
+            auto result = starDatabase->queryTargetPointingTrajectory(command.myTargetName, command.myStartTime, command.myStartTime + command.myDuration,
+                                                                        myGpsLong, myGpsLat, myGpsElev);
+            if (result.myStatusCode == QueryResult::SUCCESS)
+            {
+               auto positionManager = myPositionManager.lock();
+               positionManager->trackTarget(result.myPositionResults);
+            }
+            else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
+            {
+               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Follow Target Result: " + result.myLogStatement);
+            }
             break;
          }
          case CommandTypeEnum::SEARCH_TARGET:

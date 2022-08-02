@@ -30,7 +30,7 @@ private:
     double myGpsLong{0.0};
     double myGpsLat{0.0};
     double myGpsElev{0.0};
-    std::queue<Command> myCommandQueue;
+    std::queue<Command> myCommandQueue{};
     std::weak_ptr<IStarDatabase> myStarDatabase;
     std::weak_ptr<IGpsModule> myGpsModule;
     std::weak_ptr<IInformationDisplay> myInformationDisplay;

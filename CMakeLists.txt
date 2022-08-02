@@ -57,8 +57,8 @@ ExternalProject_Add(
    SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src
    BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-build
    CONFIGURE_COMMAND ""
-   BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && make all
-   INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && make install
+   BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make all
+   INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make install
 )
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)

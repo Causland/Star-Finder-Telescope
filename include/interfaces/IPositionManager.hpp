@@ -6,18 +6,14 @@
 #include <chrono>
 #include <cmath>
 #include <string>
+#include <utility>
 #include <vector>
-
-struct PositionTable
-{
-    std::vector<Position> myPositions{};
-};
 
 class IPositionManager
 {
 public:
     virtual void updatePosition(const CmdUpdatePosition& cmd) = 0;
-    virtual void trackTarget(const PositionTable& positions) = 0;
+    virtual void trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions) = 0;
     virtual void calibrate(const CmdCalibrate& cmd) = 0;
 
     static const std::string NAME;

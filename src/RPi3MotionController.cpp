@@ -4,19 +4,6 @@
 #include <string>
 #include <wiringPi.h>
 
-constexpr uint8_t FOCUS_SERVO_PIN = 0;
-constexpr uint16_t FOCUS_SERVO_TEN_US_PER_DEG = 500;
-
-constexpr uint8_t BASE_HORIZ_SERVO_PIN = 1; 
-constexpr uint16_t BASE_HORIZ_SERVO_TEN_US_PER_DEG = 500;
-
-constexpr uint8_t BASE_VERT_SERVO_PIN = 0; 
-constexpr uint16_t BASE_VERT_SERVO_MIN_TEN_US = 60;
-constexpr uint16_t BASE_VERT_SERVO_MAX_TEN_US = 240;
-constexpr double BASE_VERT_SERVO_MOTION_RANGE_DEG = 270;
-constexpr double BASE_VERT_SERVO_TEN_US_PER_DEG = (BASE_VERT_SERVO_MAX_TEN_US - BASE_VERT_SERVO_MIN_TEN_US) 
-                                                         / BASE_VERT_SERVO_MOTION_RANGE_DEG;
-
 const std::string IMotionController::NAME{"RPi3MotionController"};
 
 RPi3MotionController::RPi3MotionController()
@@ -34,19 +21,43 @@ RPi3MotionController::~RPi3MotionController()
    myServoControlStream.close();
 }
 
-void RPi3MotionController::moveFocusKnob(double theta)
+void RPi3MotionController::moveFocusKnob(const double& theta, const double& theta_dot)
 {
+   // Convert theta_dot to rpm
+   auto theta_dot_rpm = theta_dot * DEGPERSEC_TO_ROTPERMIN;
+   auto numTenUs = (theta_dot_rpm - FOCUS_SERVO_RPM_INTERCEPT) / FOCUS_SERVO_RPM_PER_TEN_US;
+   if (numTenUs > FOCUS_SERVO_MAX_TEN_US)
+   {
+      numTenUs = FOCUS_SERVO_MAX_TEN_US;
+   }
+   else if (numTenUs < FOCUS_SERVO_MIN_TEN_US)
+   {
+      numTenUs = FOCUS_SERVO_MIN_TEN_US;
+   }
+
    // Write to servoblaster dev file to move focus servo
-   myServoControlStream << generateServoblasterFormat(FOCUS_SERVO_PIN, static_cast<uint16_t>(theta * FOCUS_SERVO_TEN_US_PER_DEG));
+   myServoControlStream << generateServoblasterFormat(FOCUS_SERVO_NUM, static_cast<uint16_t>(numTenUs));
 }
 
-void RPi3MotionController::moveHorizAngle(double theta)
+void RPi3MotionController::moveHorizAngle(const double& theta, const double& theta_dot)
 {
+   // Convert theta_dot to rpm
+   auto theta_dot_rpm = theta_dot * DEGPERSEC_TO_ROTPERMIN;
+   auto numTenUs = (theta_dot_rpm - BASE_HORIZ_SERVO_RPM_INTERCEPT) / BASE_HORIZ_SERVO_RPM_PER_TEN_US;
+   if (numTenUs > BASE_HORIZ_SERVO_MAX_TEN_US)
+   {
+      numTenUs = BASE_HORIZ_SERVO_MAX_TEN_US;
+   }
+   else if (numTenUs < BASE_HORIZ_SERVO_MIN_TEN_US)
+   {
+      numTenUs = BASE_HORIZ_SERVO_MIN_TEN_US;
+   }
+
    // Write to servoblaster dev file to move base servo
-   myServoControlStream << generateServoblasterFormat(BASE_HORIZ_SERVO_PIN, static_cast<uint16_t>(theta * BASE_HORIZ_SERVO_TEN_US_PER_DEG));
+   myServoControlStream << generateServoblasterFormat(BASE_HORIZ_SERVO_NUM, static_cast<uint16_t>(numTenUs));
 }
 
-void RPi3MotionController::moveVertAngle(double phi)
+void RPi3MotionController::moveVertAngle(const double& phi, const double& phi_dot)
 {
    uint16_t position = static_cast<uint16_t>(phi * BASE_VERT_SERVO_TEN_US_PER_DEG) + BASE_VERT_SERVO_MIN_TEN_US;
    if (position > BASE_VERT_SERVO_MAX_TEN_US)
@@ -55,11 +66,11 @@ void RPi3MotionController::moveVertAngle(double phi)
    }
 
    // Write to servoblaster dev file to move base servo
-   myServoControlStream << generateServoblasterFormat(BASE_VERT_SERVO_PIN, position);
+   myServoControlStream << generateServoblasterFormat(BASE_VERT_SERVO_NUM, position);
    myServoControlStream.flush();
 }
 
-std::string RPi3MotionController::generateServoblasterFormat(const uint8_t& pinNum, const uint16_t& posInUs)
+std::string RPi3MotionController::generateServoblasterFormat(const uint8_t& servoNum, const uint16_t& numTenUs)
 {
-   return std::to_string(pinNum) + "=" + std::to_string(posInUs) + "\n";
+   return std::to_string(servoNum) + "=" + std::to_string(numTenUs) + "\n";
 }

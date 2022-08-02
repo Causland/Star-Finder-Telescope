@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-static const std::chrono::duration<uint64_t, std::milli> HEARTBEAT_CHECK_INTERVAL_MS(2000);
-static const std::chrono::duration<uint64_t, std::milli> HEARTBEAT_UPDATE_INTERVAL_MS(HEARTBEAT_CHECK_INTERVAL_MS / 2);
+static const std::chrono::milliseconds HEARTBEAT_CHECK_INTERVAL_MS(2000);
+static const std::chrono::milliseconds HEARTBEAT_UPDATE_INTERVAL_MS(HEARTBEAT_CHECK_INTERVAL_MS / 2);
 
 class ISubsystem
 {

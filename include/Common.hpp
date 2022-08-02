@@ -6,14 +6,24 @@
 
 struct Position
 {
-   Position() = delete;
-   Position(const double& az, const double& el, const std::chrono::system_clock::time_point& tp) :
-      azimuth(az), elevation(el), time(tp)
+   Position() = default;
+   Position(const double& az, const double& el) :
+      myAzimuth(az), myElevation(el)
    {}
 
-   double azimuth{0.0};
-   double elevation{0.0};
-   std::chrono::system_clock::time_point time{};
+   double myAzimuth{0.0};
+   double myElevation{0.0};
+};
+
+struct Velocity
+{
+   Velocity() = default;
+   Velocity(const double& vAz, const double& vEl) :
+      myVelAzimuth(vAz), myVelElevation(vEl)
+   {}
+
+   double myVelAzimuth{0.0};
+   double myVelElevation{0.0};
 };
 
 #endif

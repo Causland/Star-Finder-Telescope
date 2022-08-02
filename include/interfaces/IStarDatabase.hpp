@@ -4,6 +4,7 @@
 #include "Common.hpp"
 #include <chrono>
 #include <string>
+#include <utility>
 #include <vector>
 
 struct QueryResult
@@ -16,10 +17,10 @@ struct QueryResult
       UNINITIALIZED,
    };
 
-   Status statusCode{UNINITIALIZED};
-   std::string logStatement{"None"};
-   std::vector<std::string> searchResults{};
-   std::vector<Position> positionResults{};
+   Status myStatusCode{UNINITIALIZED};
+   std::string myLogStatement{"None"};
+   std::vector<std::string> mySearchResults{};
+   std::vector<std::pair<Position, std::chrono::system_clock::time_point>> myPositionResults{};
 };
 
 class IStarDatabase

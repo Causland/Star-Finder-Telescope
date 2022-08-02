@@ -11,6 +11,7 @@ void InformationDisplay::start()
 void InformationDisplay::stop()
 {
    myExitingFlag = true;
+   myCondVar.notify_one();
    myThread.join();
 }
 
@@ -87,5 +88,15 @@ void InformationDisplay::threadLoop()
       // Query desired telemetry information from multiple subsystems
       // Display information in an easily viewable format
       // Select what information is displayed
+      myHeartbeatFlag = true;
+      std::unique_lock<std::mutex> lk(myMutex);
+      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return false || myExitingFlag; }))
+      {
+         continue; // Heartbeat update interval timeout
+      }
+      if (myExitingFlag)
+      {
+         break;
+      }
    }
 }

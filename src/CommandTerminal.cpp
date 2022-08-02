@@ -15,6 +15,7 @@ void CommandTerminal::start()
 void CommandTerminal::stop()
 {
    myExitingFlag = true;
+   myCondVar.notify_one();
    myInputWaitingThread.join();
    myThread.join();
 }
@@ -90,12 +91,14 @@ void CommandTerminal::threadLoop()
    {
       myHeartbeatFlag = true;
       std::unique_lock lk(myMutex);
-      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return !myCommandQueue.empty(); }))
+      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return !myCommandQueue.empty() || myExitingFlag; }))
       {
          continue; // Heartbeat update interval timeout
       }
       if (myExitingFlag)
+      {
          break;
+      }
 
       // Process each command and take the specified action
       while (!myCommandQueue.empty())
