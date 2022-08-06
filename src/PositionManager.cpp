@@ -9,6 +9,7 @@ const double PositionManager::TRAJECTORY_SAMPLE_PERIOD_IN_SEC{TRAJECTORY_SAMPLE_
 
 void PositionManager::start()
 {
+   myExitingFlag = false;
    myThread = std::thread(&PositionManager::threadLoop, this);
 }
 
@@ -39,6 +40,39 @@ void PositionManager::configureInterfaces(const std::vector<std::shared_ptr<ISub
    }
 }
 
+void PositionManager::updatePosition(const CmdUpdatePosition& cmd)
+{
+   std::scoped_lock<std::mutex> lk(myMutex);
+   // Create a position series vector with the current position and time and the target position with a small time offset
+   std::vector<std::pair<Position, std::chrono::system_clock::time_point>> positions;
+   positions.emplace_back(Position(myCurrentAzimuth, myCurrentElevation), std::chrono::system_clock::now());
+   positions.emplace_back(Position(cmd.myThetaInDeg, cmd.myPhiInDeg), std::chrono::system_clock::now() + MANUAL_MOVE_OFFSET);
+   calculateTrajectory(positions);
+   myTargetUpdateFlag = true;
+   myCondVar.notify_one();
+   myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Received move request: (az,el) | (" + std::to_string(myCurrentAzimuth) + "," + std::to_string(myCurrentElevation) + 
+                                                         ")->(" + std::to_string(cmd.myThetaInDeg) + "," + std::to_string(cmd.myPhiInDeg) + ")");
+}
+
+void PositionManager::trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions)
+{
+   std::scoped_lock<std::mutex> lk(myMutex);
+   // Insert the current position and time at the front of the position series vector.
+   const auto currentTime = std::chrono::system_clock::now();
+   const auto currentPosition = std::pair<Position, std::chrono::system_clock::time_point>(Position(myCurrentAzimuth, myCurrentElevation), currentTime);
+   positions.insert(positions.begin(), currentPosition);
+   calculateTrajectory(positions);
+   myTargetUpdateFlag = true;
+   myCondVar.notify_one();
+   myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Received target track request: points=" + std::to_string(positions.size()) + " start=(" + std::to_string(myCurrentAzimuth) +
+                                                          "," + std::to_string(myCurrentElevation) + ") end=(" + std::to_string(positions.rbegin()->first.myAzimuth) + 
+                                                          "," + std::to_string(positions.rbegin()->first.myElevation) + ")");
+}
+
+void PositionManager::calibrate(const CmdCalibrate& cmd)
+{
+}
+
 void PositionManager::threadLoop()
 {
    while (!myExitingFlag)
@@ -58,9 +92,9 @@ void PositionManager::threadLoop()
       {
          auto& tp = myTrajectory.front();
          auto currentTime = std::chrono::system_clock::now();
+         // If the current time is past the next trajectory point time, it is time to move the telescope
          if (currentTime >= tp.myTime)
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Changing position to (" + std::to_string(tp.myPosition.myAzimuth) + "," + std::to_string(tp.myPosition.myElevation) + ")");
             auto motionController = myMotionController.lock();
             motionController->moveHorizAngle(tp.myPosition.myAzimuth, tp.myVelocity.myVelAzimuth);
             motionController->moveVertAngle(tp.myPosition.myElevation, tp.myVelocity.myVelElevation);
@@ -70,43 +104,17 @@ void PositionManager::threadLoop()
          }
          else
          {
+            // Set the time interval to the next trajectory point to wake up the thread
             myTrajectoryUpdateInterval = std::chrono::duration_cast<std::chrono::milliseconds>(tp.myTime - currentTime);
          }
       }
       else
       {
+         // There are no more points along the trajectory. Resume waiting for another trajectory.
          myTargetUpdateFlag = false;
          myTrajectoryUpdateInterval = HEARTBEAT_UPDATE_INTERVAL_MS;
       }
    }
-}
-
-void PositionManager::updatePosition(const CmdUpdatePosition& cmd)
-{
-   std::scoped_lock<std::mutex> lk(myMutex);
-   std::vector<std::pair<Position, std::chrono::system_clock::time_point>> positions;
-   positions.emplace_back(Position(myCurrentAzimuth, myCurrentElevation), std::chrono::system_clock::now());
-   positions.emplace_back(Position(cmd.myThetaInDeg, cmd.myPhiInDeg), std::chrono::system_clock::now() + MANUAL_MOVE_OFFSET);
-   calculateTrajectory(positions);
-   myTargetUpdateFlag = true;
-   myCondVar.notify_one();
-   myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Received move request: (az,el) | (" + std::to_string(myCurrentAzimuth) + "," + std::to_string(myCurrentElevation) + 
-                                                         ")->(" + std::to_string(cmd.myThetaInDeg) + "," + std::to_string(cmd.myPhiInDeg) + ")");
-}
-
-void PositionManager::trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions)
-{
-   std::scoped_lock<std::mutex> lk(myMutex);
-   const auto currentTime = std::chrono::system_clock::now();
-   const auto currentPosition = std::pair<Position, std::chrono::system_clock::time_point>(Position(myCurrentAzimuth, myCurrentElevation), currentTime);
-   positions.insert(positions.begin(), currentPosition);
-   calculateTrajectory(positions);
-   myTargetUpdateFlag = true;
-   myCondVar.notify_one();
-}
-
-void PositionManager::calibrate(const CmdCalibrate& cmd)
-{
 }
 
 void PositionManager::calculateTrajectory(const std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions)
@@ -136,9 +144,9 @@ void PositionManager::calculateTrajectory(const std::vector<std::pair<Position, 
          auto diffInSec = timeDiff.count() * MICROSECONDS_TO_SECONDS;
          auto avgVelAz = 0.0;
          auto avgVelEl = 0.0;
+         // Set the final velocity target in the trajectory series to 0
          if (currIt + 1 == positions.end())
          {
-            // Set the final velocity target in the trajectory series to 0
             avgVelAz = 0;
             avgVelEl = 0;
          }
@@ -156,6 +164,7 @@ void PositionManager::calculateTrajectory(const std::vector<std::pair<Position, 
          double velEl = 0.0;
          auto mainTimePoint = prevIt->second;
          auto t = 0.0;
+         // Calculate the position and velocity of telescope at sub intervals between the position and time pairs
          while (mainTimePoint < currIt->second)
          {
             calculatePositionAndVelocity(t/diffInSec, aAz, bAz, cAz, dAz, eAz, fAz, &posAz, &velAz);
@@ -186,7 +195,7 @@ void PositionManager::calculateTrajectory(const std::vector<std::pair<Position, 
 void PositionManager::calculatePolynomialCoef(const double& prevPos, const double& currPos, const double& prevVel, const double& currVel,  
                                                 double* a, double* b, double* c, double* d, double* e, double* f)
 {
-   // Assuming accel is 0 at beginning and end of points
+   // Assuming accel is 0 at beginning and end points
    *a = (-6*prevPos + 6*currPos + -3*prevVel + -3*currVel);
    *b = (15*prevPos + -15*currPos + 8*prevVel + 7*currVel);
    *c = (-10*prevPos + 10*currPos + -6*prevVel + -4*currVel);

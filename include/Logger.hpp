@@ -77,10 +77,10 @@ struct LogMessage
       } 
    }
    
-   const std::string mySubsystemName; //!< Name of the subsystem creating the log
-   const LogCodeEnum myCode; //!< Code of the log
-   const std::string myMessage; //!< Message of the log
-   const std::chrono::time_point<std::chrono::system_clock> myTime; //!< Timestamp of when the log was created
+   const std::string mySubsystemName; //!< Name of the subsystem creating the log.
+   const LogCodeEnum myCode; //!< Code of the log.
+   const std::string myMessage; //!< Message of the log.
+   const std::chrono::time_point<std::chrono::system_clock> myTime; //!< Timestamp of when the log was created.
 };
 
 /*!
@@ -95,7 +95,7 @@ class Logger
 public:
    /*!
       * Creates a logger with a particular log file. The logging thread is started upon creation.
-      * \param[in] fileName a string of the relative path to the log file. The string is moved into the class
+      * \param[in] fileName a string of the relative path to the log file. The string is moved into the class.
       */
    explicit Logger(std::string fileName) : myFileName(std::move(fileName)) 
    {

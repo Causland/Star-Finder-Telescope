@@ -28,7 +28,7 @@ class CommandTerminal : public ICommandTerminal, public Subsystem
 {
 public:
     /*!
-     * Creates a Command Terminal subsystem object with a logger and pointer to the main forever loop controller.
+     * Creates a CommandTerminal subsystem object with a logger and pointer to the main forever loop controller.
      * \param[in] subsystemName a string of the subsystem name moved into the class.
      * \param[in] logger a shared pointer to a logger object used for logging within the subsystem.
      * \param[out] exitingSignal a shared pointer to an atomic bool used to signal that the application should close.
@@ -48,13 +48,13 @@ public:
 
     /*!
      * Set interface pointers for use throughout the subsystem.
-     \param[in] subsystems a list of subsystem interface pointers.
+     * \param[in] subsystems a list of subsystem interface pointers.
      */
     void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override;
 
 private:
     /*!
-     * The Command Terminal threadloop handles the processing of all incoming commands. It pops pending
+     * The CommandTerminal threadloop handles the processing of all incoming commands. It pops pending
      * commands from the command queue, interprets each input command string, validates the formatting of each
      * string, and passes the final command object to the cooresponding subsystem for further processing.
      */
