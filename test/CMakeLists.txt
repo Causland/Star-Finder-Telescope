@@ -17,10 +17,13 @@ set(INFORMATION_DISPLAY_SRC
 )
 
 # Motion Controller Test Files
-set(MOTION_CONTROLLER_SRC
-   "${CMAKE_SOURCE_DIR}/src/RPi3MotionController.cpp"
-   motion_controller/TestMotionController.cpp
-)
+if (BUILD_RASPBERRYPI)
+   set(MOTION_CONTROLLER_SRC
+      "${CMAKE_SOURCE_DIR}/src/RPi3MotionController.cpp"
+      motion_controller/TestMotionController.cpp
+   )
+endif()
+
 
 # Optics Manager Test Files
 set(OPTICS_MANAGER_SRC
@@ -59,11 +62,6 @@ add_executable(Telescope_Unit_Test
    "${LOGGER_SRC}"
 )
 
-# Specify unit test specific options
-target_compile_options(Telescope_Unit_Test PUBLIC
-   -DUNIT_TEST
-)
-
 # Add the include folder
 target_include_directories(Telescope_Unit_Test PUBLIC
    "${CMAKE_SOURCE_DIR}/include"
@@ -77,7 +75,6 @@ target_include_directories(Telescope_Unit_Test PUBLIC
    "${CMAKE_SOURCE_DIR}/test/star_tracker"
    "${CMAKE_BINARY_DIR}/_deps/curlpp-src/include"
    "${CMAKE_BINARY_DIR}/_deps/sqlpp11-src/include"
-   "${CMAKE_BINARY_DIR}/_deps/wiringpi-src/wiringPi"
 )
 
 # Add static libs to the executable
@@ -87,8 +84,18 @@ target_link_libraries(Telescope_Unit_Test PUBLIC
    sqlite3
    sqlpp11
    Threads::Threads
-   "${CMAKE_BINARY_DIR}/_deps/wiringpi-src/wiringPi/libwiringPi.so.2.61"
 )
+
+# Include and link any target specific folders and libraries
+if (BUILD_RASPBERRYPI)
+   target_include_directories(Telescope_Unit_Test PUBLIC
+      "${CMAKE_BINARY_DIR}/_deps/wiringpi-src/wiringPi"
+   )
+
+   target_link_libraries(Telescope_Unit_Test PUBLIC
+      "${CMAKE_BINARY_DIR}/_deps/wiringpi-src/wiringPi/libwiringPi.so.2.61"
+   )
+endif()
 
 include(GoogleTest)
 gtest_discover_tests(Telescope_Unit_Test)

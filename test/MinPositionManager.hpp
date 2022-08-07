@@ -5,7 +5,7 @@ class MinPositionManager : public IPositionManager, public ISubsystem
 {
 public:
    void updatePosition(const CmdUpdatePosition& cmd) override {}
-   void trackTarget(const PositionTable& positions) override {}
+   void trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions) override {};
    void calibrate(const CmdCalibrate& cmd) override {}
    void start() override {}
    void stop() override {}

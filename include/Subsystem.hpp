@@ -37,7 +37,7 @@ protected:
    std::thread myThread;
    std::condition_variable myCondVar;
    std::mutex myMutex;
-   std::atomic<bool> myHeartbeatFlag{false};
+   std::atomic<bool> myHeartbeatFlag{true};
    std::atomic<bool> myExitingFlag{false};
 };
 

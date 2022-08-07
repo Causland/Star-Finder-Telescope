@@ -4,12 +4,13 @@
 #include "CommandTerminal.hpp"
 #include "InformationDisplay.hpp"
 #include "Logger.hpp"
-#include "RPi3MotionController.hpp"
 #include "OpticsManager.hpp"
 #include "PositionManager.hpp"
+#include "RPi3MotionController.hpp"
 #include "StarDatabaseAdapter.hpp"
 #include "StarTracker.hpp"
 #include "interfaces/ISubsystem.hpp"
+#include "sim/SimMotionController.hpp"
 #include <chrono>
 #include <exception>
 #include <iomanip>
@@ -38,6 +39,7 @@ int main()
 
     // Create supporting modules for various subsystems
     std::shared_ptr<IMotionController> motionController;
+#ifdef RASPBERRY_PI
     try
     {
         motionController = std::make_shared<RPi3MotionController>(); // Raspberry Pi 3 interface
@@ -47,6 +49,9 @@ int main()
         logger->log("main", LogCodeEnum::ERROR, "Unable to create RPi3 Motion Controller");
         return 1;
     }
+#else
+    motionController = std::make_shared<SimMotionController>();
+#endif
 
     // Construct all subsystems with their name and logger and push to subsystem vector
     std::vector<std::shared_ptr<ISubsystem>> subsystems;

@@ -4,8 +4,6 @@
 #include <string>
 #include <wiringPi.h>
 
-const std::string IMotionController::NAME{"RPi3MotionController"};
-
 RPi3MotionController::RPi3MotionController()
 {
    wiringPiSetup();
@@ -59,7 +57,7 @@ void RPi3MotionController::moveHorizAngle(const double& theta, const double& the
 
 void RPi3MotionController::moveVertAngle(const double& phi, const double& phi_dot)
 {
-   uint16_t position = static_cast<uint16_t>(phi * BASE_VERT_SERVO_TEN_US_PER_DEG) + BASE_VERT_SERVO_MIN_TEN_US;
+   uint16_t position = static_cast<uint16_t>(phi * BASE_VERT_SERVO_TEN_US_PER_DEG + BASE_VERT_SERVO_MIN_TEN_US);
    if (position > BASE_VERT_SERVO_MAX_TEN_US)
    {
       position = BASE_VERT_SERVO_MAX_TEN_US;

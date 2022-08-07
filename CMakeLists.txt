@@ -37,29 +37,33 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(sqlpp11)
 
-ExternalProject_Add(
-   wiringpi
-   GIT_REPOSITORY https://github.com/WiringPi/WiringPi.git
-   GIT_TAG 2.61-1
-   SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src
-   BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-build
-   CONFIGURE_COMMAND ""
-   BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src/ && ./build
-   INSTALL_COMMAND ""
-)
-set(CMAKE_INSTALL_RPATH "/usr/local/lib")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# Only add the following if for a Raspberry Pi
+option (BUILD_RASPBERRYPI "Build in Raspberry Pi specific components" OFF)
+if (BUILD_RASPBERRYPI)
+   ExternalProject_Add(
+      wiringpi
+      GIT_REPOSITORY https://github.com/WiringPi/WiringPi.git
+      GIT_TAG 2.61-1
+      SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src
+      BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-build
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src/ && ./build
+      INSTALL_COMMAND ""
+   )
+   set(CMAKE_INSTALL_RPATH "/usr/local/lib")
+   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-ExternalProject_Add(
-   servoblaster
-   GIT_REPOSITORY https://github.com/srcshelton/servoblaster.git
-   GIT_TAG master
-   SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src
-   BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-build
-   CONFIGURE_COMMAND ""
-   BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make all
-   INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make install
-)
+   ExternalProject_Add(
+      servoblaster
+      GIT_REPOSITORY https://github.com/srcshelton/servoblaster.git
+      GIT_TAG master
+      SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src
+      BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-build
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make all
+      INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make install
+   )
+endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -69,6 +73,10 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # Set common compiler flags removed -Werror for now due to sqlpp
 set (CMAKE_CXX_FLAGS "-g3 -Os -fsanitize=address -pedantic -fno-common -Wall -Wextra -Wshadow -Wdouble-promotion -Wundef -Wconversion -Wno-unused-parameter")
+
+if (BUILD_RASPBERRYPI)
+   add_compile_options(-DRASPBERRY_PI)
+endif()
 
 # Add subdirectories for main application and unit tests
 add_subdirectory(src)

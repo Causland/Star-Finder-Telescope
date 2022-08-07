@@ -5,7 +5,7 @@ const std::string IPositionManager::NAME{"PositionManager"};
 
 const std::chrono::milliseconds PositionManager::MANUAL_MOVE_OFFSET{300};
 const std::chrono::milliseconds PositionManager::TRAJECTORY_SAMPLE_PERIOD_DURATION{10};
-const double PositionManager::TRAJECTORY_SAMPLE_PERIOD_IN_SEC{TRAJECTORY_SAMPLE_PERIOD_DURATION.count() * MILLISECONDS_TO_SECONDS};
+const double PositionManager::TRAJECTORY_SAMPLE_PERIOD_IN_SEC{static_cast<double>(TRAJECTORY_SAMPLE_PERIOD_DURATION.count()) * MILLISECONDS_TO_SECONDS};
 
 void PositionManager::start()
 {
@@ -141,7 +141,7 @@ void PositionManager::calculateTrajectory(const std::vector<std::pair<Position, 
       for (; currIt!=positions.end(); ++currIt)
       {
          auto timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currIt->second - prevIt->second);
-         auto diffInSec = timeDiff.count() * MICROSECONDS_TO_SECONDS;
+         auto diffInSec = static_cast<double>(timeDiff.count()) * MICROSECONDS_TO_SECONDS;
          auto avgVelAz = 0.0;
          auto avgVelEl = 0.0;
          // Set the final velocity target in the trajectory series to 0
@@ -175,7 +175,7 @@ void PositionManager::calculateTrajectory(const std::vector<std::pair<Position, 
             t += TRAJECTORY_SAMPLE_PERIOD_IN_SEC;
          }
          mainTimePoint = currIt->second;
-         t = timeDiff.count() * MICROSECONDS_TO_SECONDS;
+         t = static_cast<double>(timeDiff.count()) * MICROSECONDS_TO_SECONDS;
          calculatePositionAndVelocity(t/diffInSec, aAz, bAz, cAz, dAz, eAz, fAz, &posAz, &velAz);
          calculatePositionAndVelocity(t/diffInSec, aEl, bEl, cEl, dEl, eEl, fEl, &posEl, &velEl);
          TrajectoryPoint tp(posAz, posEl, velAz, velEl, mainTimePoint);
