@@ -1,4 +1,4 @@
-#include "sim/SimMotionController.hpp"
+#include "interfaces/sim/SimMotionController.hpp"
 
 void SimMotionController::moveFocusKnob(const double& theta, const double& theta_dot)
 {

@@ -6,11 +6,11 @@
 #include "Logger.hpp"
 #include "OpticsManager.hpp"
 #include "PositionManager.hpp"
-#include "RPi3MotionController.hpp"
+#include "interfaces/RPi3MotionController.hpp"
 #include "StarDatabaseAdapter.hpp"
 #include "StarTracker.hpp"
 #include "interfaces/ISubsystem.hpp"
-#include "sim/SimMotionController.hpp"
+#include "interfaces/sim/SimMotionController.hpp"
 #include <chrono>
 #include <exception>
 #include <iomanip>

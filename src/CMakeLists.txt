@@ -6,9 +6,9 @@ add_executable(Star_Finder_Telescope
    main.cpp
    OpticsManager.cpp
    PositionManager.cpp
-   StarDatabaseAdapter.cpp
+   interfaces/StarDatabaseAdapter.cpp
    StarTracker.cpp
-   sim/SimMotionController.cpp
+   interfaces/sim/SimMotionController.cpp
 )
 
 # Add the include folder

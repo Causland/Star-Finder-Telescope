@@ -19,7 +19,7 @@ set(INFORMATION_DISPLAY_SRC
 # Motion Controller Test Files
 if (BUILD_RASPBERRYPI)
    set(MOTION_CONTROLLER_SRC
-      "${CMAKE_SOURCE_DIR}/src/RPi3MotionController.cpp"
+      "${CMAKE_SOURCE_DIR}/src/interfaces/RPi3MotionController.cpp"
       motion_controller/TestMotionController.cpp
    )
 endif()
@@ -39,7 +39,7 @@ set(POSITION_MANAGER_SRC
 
 # Star Database Test Files
 set(STAR_DATABASE_SRC
-   "${CMAKE_SOURCE_DIR}/src/StarDatabaseAdapter.cpp"
+   "${CMAKE_SOURCE_DIR}/src/interfaces/StarDatabaseAdapter.cpp"
    star_database/TestStarDatabase.cpp
 )
 
