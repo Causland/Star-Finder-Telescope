@@ -1,7 +1,7 @@
 #ifndef RPI3_MOTION_CONTROLLER_HPP
 #define RPI3_MOTION_CONTROLLER_HPP
 
-#include "interfaces/IMotionController.hpp"
+#include "interfaces/MotionController/IMotionController.hpp"
 #include <fstream>
 #include <iostream>
 

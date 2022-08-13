@@ -6,11 +6,11 @@
 #include "Logger.hpp"
 #include "OpticsManager.hpp"
 #include "PositionManager.hpp"
-#include "interfaces/RPi3MotionController.hpp"
-#include "StarDatabaseAdapter.hpp"
 #include "StarTracker.hpp"
-#include "interfaces/ISubsystem.hpp"
-#include "interfaces/sim/SimMotionController.hpp"
+#include "Subsystem.hpp"
+#include "interfaces/MotionController/RPi3MotionController.hpp"
+#include "interfaces/MotionController/SimMotionController.hpp"
+#include "interfaces/StarDatabase/StarDatabaseAdapter.hpp"
 #include <chrono>
 #include <exception>
 #include <iomanip>
@@ -54,7 +54,7 @@ int main()
 #endif
 
     // Construct all subsystems with their name and logger and push to subsystem vector
-    std::vector<std::shared_ptr<ISubsystem>> subsystems;
+    std::vector<std::shared_ptr<Subsystem>> subsystems;
     subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay", logger));
     subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", logger));
     subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager", logger));
@@ -64,7 +64,7 @@ int main()
     // Update the subsystem interfaces before starting their thread loops
     for (auto& subsystem : subsystems)
     {
-        subsystem->configureInterfaces(subsystems);
+        subsystem->configureSubsystems(subsystems);
     }
         
     // Start all subsystems to begin functionality

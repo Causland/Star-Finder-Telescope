@@ -6,9 +6,9 @@ add_executable(Star_Finder_Telescope
    main.cpp
    OpticsManager.cpp
    PositionManager.cpp
-   interfaces/StarDatabaseAdapter.cpp
+   interfaces/StarDatabase/StarDatabaseAdapter.cpp
    StarTracker.cpp
-   interfaces/sim/SimMotionController.cpp
+   interfaces/MotionController/SimMotionController.cpp
 )
 
 # Add the include folder
@@ -29,7 +29,7 @@ target_link_libraries(Star_Finder_Telescope PUBLIC
 # Add, include, and link any target specific files, folders, and libraries
 if (BUILD_RASPBERRYPI)
    target_sources(Star_Finder_Telescope PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/RPi3MotionController.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/MotionController/RPi3MotionController.cpp
    )
 
    target_include_directories(Star_Finder_Telescope PUBLIC

@@ -1,7 +1,8 @@
+#include "InformationDisplay.hpp"
 #include "OpticsManager.hpp"
 #include <algorithm>
 
-const std::string IOpticsManager::NAME{"OpticsManager"};
+const std::string OpticsManager::NAME{"OpticsManager"};
 
 void OpticsManager::start()
 {
@@ -15,19 +16,19 @@ void OpticsManager::stop()
    myThread.join();
 }
 
-void OpticsManager::configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems)
+void OpticsManager::configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems)
 {
    // Find each subsystem from the vector and store in the respective pointer
-   // IInformationDisplay
+   // InformationDisplay
    auto it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == IInformationDisplay::NAME; });
+      [](auto& subsystem){ return subsystem->getName() == InformationDisplay::NAME; });
    if (it == subsystems.end())
    {
       myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
    }
    else
    {
-      myInformationDisplay = std::dynamic_pointer_cast<IInformationDisplay>(*it);
+      myInformationDisplay = std::dynamic_pointer_cast<InformationDisplay>(*it);
       if (myInformationDisplay.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");

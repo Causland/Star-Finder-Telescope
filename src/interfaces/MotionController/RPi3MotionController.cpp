@@ -1,4 +1,4 @@
-#include "RPi3MotionController.hpp"
+#include "interfaces/MotionController/RPi3MotionController.hpp"
 #include <algorithm>
 #include <exception>
 #include <string>

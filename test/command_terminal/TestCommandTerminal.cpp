@@ -11,23 +11,23 @@
 class TestFixtureCommandTerminal : public ::testing::Test
 {
 protected:
-   static void SetUpTestSuite()
+   TestFixtureCommandTerminal() :
+         logger(std::make_shared<Logger>("logs/CommandTerminalUnitTest.log")),
+         exitSignal(std::make_shared<std::atomic<bool>>(false)),
+         opticsManager(std::make_shared<CT_OpticsManager>()),
+         positionManager(std::make_shared<CT_PositionManager>()),
+         starTracker(std::make_shared<CT_StarTracker>()),
+         informationDisplay(std::make_shared<MinInformationDisplay>()),
+         commandTerminal(std::make_unique<CommandTerminal>("CommandTerminal", logger, exitSignal))
    {
-      // Create all required CommandTerminal objects
-      logger = std::make_shared<Logger>("logs/CommandTerminalUnitTest.log");
-      exitSignal = std::make_shared<std::atomic<bool>>(false);
-      opticsManager = std::make_shared<CT_OpticsManager>(CT_OpticsManager());
-      starTracker = std::make_shared<CT_StarTracker>(CT_StarTracker());
-      positionManager = std::make_shared<CT_PositionManager>(CT_PositionManager());
-      informationDisplay = std::make_shared<MinInformationDisplay>(MinInformationDisplay());
+      // Create the subsystems vector
       subsystems.emplace_back(opticsManager);
       subsystems.emplace_back(starTracker);
       subsystems.emplace_back(positionManager);
       subsystems.emplace_back(informationDisplay);
 
-      // Create the test subsystem
-      commandTerminal = std::make_unique<CommandTerminal>("CommandTerminal", logger, exitSignal);
-      commandTerminal->configureInterfaces(subsystems);
+      // Initialize the Command Terminal subsystem
+      commandTerminal->configureSubsystems(subsystems);
    }
 
    bool checkReceived()
@@ -53,25 +53,15 @@ protected:
       starTracker->reset();
    }
 
-   static std::shared_ptr<Logger> logger;
-   static std::shared_ptr<std::atomic<bool>> exitSignal;
-   static std::vector<std::shared_ptr<ISubsystem>> subsystems;
-   static std::shared_ptr<CT_OpticsManager> opticsManager;
-   static std::shared_ptr<CT_PositionManager> positionManager;
-   static std::shared_ptr<CT_StarTracker> starTracker;
-   static std::shared_ptr<MinInformationDisplay> informationDisplay;
-   static std::unique_ptr<CommandTerminal> commandTerminal;
+   std::shared_ptr<Logger> logger;
+   std::shared_ptr<std::atomic<bool>> exitSignal;
+   std::vector<std::shared_ptr<Subsystem>> subsystems;
+   std::shared_ptr<CT_OpticsManager> opticsManager;
+   std::shared_ptr<CT_PositionManager> positionManager;
+   std::shared_ptr<CT_StarTracker> starTracker;
+   std::shared_ptr<MinInformationDisplay> informationDisplay;
+   std::unique_ptr<CommandTerminal> commandTerminal;
 };
-
-// Define static member variables from test fixture
-std::shared_ptr<Logger> TestFixtureCommandTerminal::logger{};
-std::shared_ptr<std::atomic<bool>> TestFixtureCommandTerminal::exitSignal{};
-std::vector<std::shared_ptr<ISubsystem>> TestFixtureCommandTerminal::subsystems{};
-std::shared_ptr<CT_OpticsManager> TestFixtureCommandTerminal::opticsManager{};
-std::shared_ptr<CT_PositionManager> TestFixtureCommandTerminal::positionManager{};
-std::shared_ptr<CT_StarTracker> TestFixtureCommandTerminal::starTracker{};
-std::shared_ptr<MinInformationDisplay> TestFixtureCommandTerminal::informationDisplay{};
-std::unique_ptr<CommandTerminal> TestFixtureCommandTerminal::commandTerminal{};
 
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_PhotoCommand)
 {

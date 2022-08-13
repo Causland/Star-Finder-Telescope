@@ -1,12 +1,13 @@
 #ifndef OPTICS_MANAGER_HPP
 #define OPTICS_MANAGER_HPP
 
+#include "CommandTypes.hpp"
 #include "Subsystem.hpp"
-#include "interfaces/IInformationDisplay.hpp"
-#include "interfaces/IOpticsManager.hpp"
 #include <chrono>
 
-class OpticsManager : public IOpticsManager, public Subsystem
+class InformationDisplay;
+
+class OpticsManager : public Subsystem
 {
 public:
     OpticsManager(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
@@ -14,17 +15,18 @@ public:
     // Includes from ISubsystem
     void start() override;
     void stop() override;
-    void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override;
-    void threadLoop() override;
+    void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override;
 
-    // Includes from IOpticsManager
-    std::string takePhoto(const CmdTakePhoto& cmd) override;
-    std::string takeVideo(const CmdTakeVideo& cmd) override;
-    std::string takeTimelapse(const CmdTakeTimelapse& cmd) override;
-    void userChangeFocus(const CmdUserFocus& cmd) override;
+    virtual std::string takePhoto(const CmdTakePhoto& cmd);
+    virtual std::string takeVideo(const CmdTakeVideo& cmd);
+    virtual std::string takeTimelapse(const CmdTakeTimelapse& cmd);
+    virtual void userChangeFocus(const CmdUserFocus& cmd);
 
+    static const std::string NAME;
 private:
-    std::weak_ptr<IInformationDisplay> myInformationDisplay;
+    void threadLoop() override;
+    
+    std::weak_ptr<InformationDisplay> myInformationDisplay;
 };
 
 #endif

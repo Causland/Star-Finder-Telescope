@@ -3,17 +3,17 @@
 
 #include "CommandTypes.hpp"
 #include "Subsystem.hpp"
-#include "interfaces/ICommandTerminal.hpp"
-#include "interfaces/IInformationDisplay.hpp"
-#include "interfaces/IOpticsManager.hpp"
-#include "interfaces/IPositionManager.hpp"
-#include "interfaces/IStarTracker.hpp"
 #include <algorithm>
 #include <cstdarg>
 #include <iostream>
 #include <queue>
 #include <string>
 #include <type_traits>
+
+class InformationDisplay;
+class OpticsManager;
+class PositionManager;
+class StarTracker;
 
 /*!
  * The CommandTerminal subsystem is responsible for processing inputs from the user. There are
@@ -24,7 +24,7 @@
  * The command processing thread interprets and validates each command pushed onto the command queue.
  * The commands are passed to the proper subsystem for a coordinating action to occur.
  */
-class CommandTerminal : public ICommandTerminal, public Subsystem
+class CommandTerminal : public Subsystem
 {
 public:
     /*!
@@ -50,8 +50,9 @@ public:
      * Set interface pointers for use throughout the subsystem.
      * \param[in] subsystems a list of subsystem interface pointers.
      */
-    void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override;
+    void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override;
 
+    static const std::string NAME; //!< The name of the subsystem.
 private:
     /*!
      * The CommandTerminal threadloop handles the processing of all incoming commands. It pops pending
@@ -175,10 +176,10 @@ private:
     std::thread myInputWaitingThread{}; //!< The thread used for monitoring of std::cin.
     std::shared_ptr<std::atomic<bool>> myExitingSignal; //!< The flag used to control the lifetime of the application.
 
-    std::weak_ptr<IInformationDisplay> myInformationDisplay; //!< Weak pointer to the Information Display interface.
-    std::weak_ptr<IOpticsManager> myOpticsManager; //!< Weak pointer to the Optics Manager interface.
-    std::weak_ptr<IPositionManager> myPositionManager; //!< Weak pointer to the Position Manager interface.
-    std::weak_ptr<IStarTracker> myStarTracker; //!< Weak pointer to the Star Tracker interface.
+    std::weak_ptr<InformationDisplay> myInformationDisplay; //!< Weak pointer to the Information Display.
+    std::weak_ptr<OpticsManager> myOpticsManager; //!< Weak pointer to the Optics Manager.
+    std::weak_ptr<PositionManager> myPositionManager; //!< Weak pointer to the Position Manager.
+    std::weak_ptr<StarTracker> myStarTracker; //!< Weak pointer to the Star Tracker.
 };
 
 #endif

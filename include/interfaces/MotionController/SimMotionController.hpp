@@ -1,7 +1,7 @@
 #ifndef SIM_MOTION_CONTROLLER_HPP
 #define SIM_MOTION_CONTROLLER_HPP
 
-#include "interfaces/IMotionController.hpp"
+#include "interfaces/MotionController/IMotionController.hpp"
 
 class SimMotionController : public IMotionController
 {

@@ -1,12 +1,12 @@
-#include "interfaces/ICommandTerminal.hpp"
-#include "interfaces/ISubsystem.hpp"
+#include "CommandTerminal.hpp"
 
-class MinCommandTerminal : public ICommandTerminal, public ISubsystem
+class MinCommandTerminal : public CommandTerminal
 {
 public:
+   MinCommandTerminal() : CommandTerminal(NAME, nullptr, nullptr) {};
    void start() override {}
    void stop() override {}
-   void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override {}
-   bool checkHeartbeat() { return true; }
-   std::string getName() { return NAME; }
+   void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override {}
+   bool checkHeartbeat() override { return true; }
+   std::string getName() override { return NAME; }
 };

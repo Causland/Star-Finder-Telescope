@@ -1,15 +1,15 @@
-#include "interfaces/IStarTracker.hpp"
-#include "interfaces/ISubsystem.hpp"
+#include "StarTracker.hpp"
 
-class MinStarTracker : public IStarTracker, public ISubsystem
+class MinStarTracker : public StarTracker
 {
 public:
+   MinStarTracker() : StarTracker(NAME, nullptr) {}
    void pointToTarget(const CmdGoToTarget& cmd) override {}
    void trackTarget(const CmdFollowTarget& cmd) override {}
    void queryTarget(const CmdSearchTarget& cmd) override {}
    void start() override {}
    void stop() override {}
-   void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override {}
-   bool checkHeartbeat() { return true; }
-   std::string getName() { return NAME; }
+   void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override {}
+   bool checkHeartbeat() override { return true; }
+   std::string getName() override { return NAME; }
 };

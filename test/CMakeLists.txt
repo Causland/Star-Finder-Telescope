@@ -16,15 +16,6 @@ set(INFORMATION_DISPLAY_SRC
    information_display/TestInformationDisplay.cpp
 )
 
-# Motion Controller Test Files
-if (BUILD_RASPBERRYPI)
-   set(MOTION_CONTROLLER_SRC
-      "${CMAKE_SOURCE_DIR}/src/interfaces/RPi3MotionController.cpp"
-      motion_controller/TestMotionController.cpp
-   )
-endif()
-
-
 # Optics Manager Test Files
 set(OPTICS_MANAGER_SRC
    "${CMAKE_SOURCE_DIR}/src/OpticsManager.cpp"
@@ -35,12 +26,6 @@ set(OPTICS_MANAGER_SRC
 set(POSITION_MANAGER_SRC
    "${CMAKE_SOURCE_DIR}/src/PositionManager.cpp"
    position_manager/TestPositionManager.cpp
-)
-
-# Star Database Test Files
-set(STAR_DATABASE_SRC
-   "${CMAKE_SOURCE_DIR}/src/interfaces/StarDatabaseAdapter.cpp"
-   star_database/TestStarDatabase.cpp
 )
 
 # Star Tracker Test Files
@@ -54,10 +39,8 @@ enable_testing()
 add_executable(Telescope_Unit_Test
    "${COMMAND_TERMINAL_SRC}"
    "${INFORMATION_DISPLAY_SRC}"
-   "${MOTION_CONTROLLER_SRC}"
    "${OPTICS_MANAGER_SRC}"
    "${POSITION_MANAGER_SRC}"
-   "${STAR_DATABASE_SRC}"
    "${STAR_TRACKER_SRC}"
    "${LOGGER_SRC}"
 )
@@ -69,7 +52,6 @@ target_include_directories(Telescope_Unit_Test PUBLIC
    "${CMAKE_SOURCE_DIR}/test"
    "${CMAKE_SOURCE_DIR}/test/command_terminal"
    "${CMAKE_SOURCE_DIR}/test/information_display"
-   "${CMAKE_SOURCE_DIR}/test/motion_controller"
    "${CMAKE_SOURCE_DIR}/test/optics_manager"
    "${CMAKE_SOURCE_DIR}/test/position_manager"
    "${CMAKE_SOURCE_DIR}/test/star_tracker"

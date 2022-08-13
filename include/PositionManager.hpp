@@ -1,14 +1,16 @@
 #ifndef POSITION_MANAGER_HPP
 #define POSITION_MANAGER_HPP
 
+#include "CommandTypes.hpp"
+#include "Common.hpp"
 #include "Subsystem.hpp"
-#include "interfaces/IInformationDisplay.hpp"
-#include "interfaces/IMotionController.hpp"
-#include "interfaces/IPositionManager.hpp"
+#include "interfaces/MotionController/IMotionController.hpp"
 #include <chrono>
 #include <memory>
 #include <queue>
 #include <vector>
+
+class InformationDisplay;
 
 constexpr double MICROSECONDS_TO_SECONDS = 0.000001; //!< Conversion factor from us to s
 constexpr double MILLISECONDS_TO_SECONDS = 0.001; //!< Conversion factor from ms to s
@@ -60,7 +62,7 @@ struct TrajectoryPoint
  * in the trajectory and uses the MotionController interface to move to a position or
  * change the velocity.
  */
-class PositionManager : public IPositionManager, public Subsystem
+class PositionManager : public Subsystem
 {
 public:
    /*!
@@ -87,7 +89,7 @@ public:
     * Set interface pointers for use throughout the subsystem.
     * \param[in] subsystems a list of subsystem interface pointers.
     */
-   void configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems) override;
+   void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override;
 
    /*!
     * Move the telescope to a position over a fixed amount of time defined with the constant
@@ -96,7 +98,7 @@ public:
     * \param[in] cmd an update position command
     * \sa calculateTrajectory()
     */
-   void updatePosition(const CmdUpdatePosition& cmd) override;
+   virtual void updatePosition(const CmdUpdatePosition& cmd);
 
    /*!
     * Move the telescope to follow a series of positions over time. Creates a trajectory between each
@@ -104,14 +106,15 @@ public:
     * \param[in] positions a vector of position and time pairs to create a trajectory from.
     * \sa calculateTrajectory()
     */
-   void trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions) override;
+   virtual void trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions);
 
    /*!
     * Inform the MotionController to calibrate and update its stopping limits
     * \param[in] cmd a calibration command.
     */
-   void calibrate(const CmdCalibrate& cmd) override;
+   virtual void calibrate(const CmdCalibrate& cmd);
 
+   static const std::string NAME; //!< Name of the subsystem.
 private:
    /*!
     * The PositionManager threadloop handles changing the position of the telescope to follow
@@ -180,8 +183,8 @@ private:
    bool myTargetUpdateFlag{false}; //!< The flag used to determine when the telescope needs to be moved.
    std::chrono::milliseconds myTrajectoryUpdateInterval{HEARTBEAT_UPDATE_INTERVAL_MS}; //!< The time interval to the next trajectory point.
    std::queue<TrajectoryPoint> myTrajectory{}; //!< The queue which holds the points along a trajectory.
-   std::weak_ptr<IMotionController> myMotionController; //!< Weak pointer to the Motion Controller interface.
-   std::weak_ptr<IInformationDisplay> myInformationDisplay; //!< Weak pointer to the Information Display interface.
+   std::weak_ptr<IMotionController> myMotionController; //!< Weak pointer to the Motion Controller.
+   std::weak_ptr<InformationDisplay> myInformationDisplay; //!< Weak pointer to the Information Display.
 };
 
 #endif

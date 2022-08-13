@@ -1,9 +1,13 @@
 #include "CommandTerminal.hpp"
+#include "InformationDisplay.hpp"
+#include "OpticsManager.hpp"
+#include "PositionManager.hpp"
+#include "StarTracker.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 
-const std::string ICommandTerminal::NAME{"CommandTerminal"};
+const std::string CommandTerminal::NAME{"CommandTerminal"};
 
 void CommandTerminal::start()
 {
@@ -20,19 +24,19 @@ void CommandTerminal::stop()
    myThread.join();
 }
 
-void CommandTerminal::configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems)
+void CommandTerminal::configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems)
 {
    // Find each subsystem from the vector and store in the respective pointer
    // IInformationDisplay
    auto it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == IInformationDisplay::NAME; });
+      [](auto& subsystem){ return subsystem->getName() == InformationDisplay::NAME; });
    if (it == subsystems.end())
    {
       myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
    }
    else
    {
-      myInformationDisplay = std::dynamic_pointer_cast<IInformationDisplay>(*it);
+      myInformationDisplay = std::dynamic_pointer_cast<InformationDisplay>(*it);
       if (myInformationDisplay.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
@@ -40,14 +44,14 @@ void CommandTerminal::configureInterfaces(const std::vector<std::shared_ptr<ISub
    }
    // IOpticsManager
    it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == IOpticsManager::NAME; });
+      [](auto& subsystem){ return subsystem->getName() == OpticsManager::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Optics Manager interface pointer");
+      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Optics Manager pointer");
    }
    else
    {
-      myOpticsManager = std::dynamic_pointer_cast<IOpticsManager>(*it);
+      myOpticsManager = std::dynamic_pointer_cast<OpticsManager>(*it);
       if (myOpticsManager.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Optics Manager");
@@ -55,29 +59,29 @@ void CommandTerminal::configureInterfaces(const std::vector<std::shared_ptr<ISub
    }
    // IPositionManager
    it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == IPositionManager::NAME; });
+      [](auto& subsystem){ return subsystem->getName() == PositionManager::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Position Manager interface pointer");
+      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Position Manager pointer");
    }
    else
    {
-      myPositionManager = std::dynamic_pointer_cast<IPositionManager>(*it);
+      myPositionManager = std::dynamic_pointer_cast<PositionManager>(*it);
       if (myPositionManager.expired())
       {
-         myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Postion Manager");
+         myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Position Manager");
       }
    }
    // IStarTracker
    it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == IStarTracker::NAME; });
+      [](auto& subsystem){ return subsystem->getName() == StarTracker::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Star Tracker interface pointer");
+      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Star Tracker pointer");
    }
    else
    {
-      myStarTracker = std::dynamic_pointer_cast<IStarTracker>(*it);
+      myStarTracker = std::dynamic_pointer_cast<StarTracker>(*it);
       if (myStarTracker.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Star Tracker");

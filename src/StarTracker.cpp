@@ -1,7 +1,9 @@
+#include "InformationDisplay.hpp"
+#include "PositionManager.hpp"
 #include "StarTracker.hpp"
 #include <algorithm>
 
-const std::string IStarTracker::NAME{"StarTracker"};
+const std::string StarTracker::NAME{"StarTracker"};
 
 void StarTracker::start()
 {
@@ -15,34 +17,34 @@ void StarTracker::stop()
    myThread.join();
 }
 
-void StarTracker::configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems)
+void StarTracker::configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems)
 {
    // Find each subsystem from the vector and store in the respective pointer
-   // IInformationDisplay
+   // InformationDisplay
    auto it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == IInformationDisplay::NAME; });
+      [](auto& subsystem){ return subsystem->getName() == InformationDisplay::NAME; });
    if (it == subsystems.end())
    {
       myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
    }
    else
    {
-      myInformationDisplay = std::dynamic_pointer_cast<IInformationDisplay>(*it);
+      myInformationDisplay = std::dynamic_pointer_cast<InformationDisplay>(*it);
       if (myInformationDisplay.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
       }
    }
-   // IPositionManager
+   // PositionManager
    it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == IPositionManager::NAME; });
+      [](auto& subsystem){ return subsystem->getName() == PositionManager::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Position Manager interface pointer");
+      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Position Manager pointer");
    }
    else
    {
-      myPositionManager = std::dynamic_pointer_cast<IPositionManager>(*it);
+      myPositionManager = std::dynamic_pointer_cast<PositionManager>(*it);
       if (myPositionManager.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Position Manager");

@@ -1,7 +1,8 @@
+#include "InformationDisplay.hpp"
 #include "PositionManager.hpp"
 #include <algorithm>
 
-const std::string IPositionManager::NAME{"PositionManager"};
+const std::string PositionManager::NAME{"PositionManager"};
 
 const std::chrono::milliseconds PositionManager::MANUAL_MOVE_OFFSET{300};
 const std::chrono::milliseconds PositionManager::TRAJECTORY_SAMPLE_PERIOD_DURATION{10};
@@ -20,19 +21,19 @@ void PositionManager::stop()
    myThread.join();
 }
 
-void PositionManager::configureInterfaces(const std::vector<std::shared_ptr<ISubsystem>>& subsystems)
+void PositionManager::configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems)
 {
    // Find each subsystem from the vector and store in the respective pointer
-   // IInformationDisplay
+   // InformationDisplay
    auto it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == IInformationDisplay::NAME; });
+      [](auto& subsystem){ return subsystem->getName() == InformationDisplay::NAME; });
    if (it == subsystems.end())
    {
       myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
    }
    else
    {
-      myInformationDisplay = std::dynamic_pointer_cast<IInformationDisplay>(*it);
+      myInformationDisplay = std::dynamic_pointer_cast<InformationDisplay>(*it);
       if (myInformationDisplay.expired())
       {
          myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
