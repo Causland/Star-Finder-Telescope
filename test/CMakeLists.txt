@@ -55,8 +55,8 @@ target_include_directories(Telescope_Unit_Test PUBLIC
    "${CMAKE_SOURCE_DIR}/test/optics_manager"
    "${CMAKE_SOURCE_DIR}/test/position_manager"
    "${CMAKE_SOURCE_DIR}/test/star_tracker"
-   "${CMAKE_BINARY_DIR}/_deps/curlpp-src/include"
-   "${CMAKE_BINARY_DIR}/_deps/sqlpp11-src/include"
+   "${curlpp_SOURCE_DIR}/include"
+   "${sqlpp11_SOURCE_DIR}/include"
 )
 
 # Add static libs to the executable
@@ -71,11 +71,11 @@ target_link_libraries(Telescope_Unit_Test PUBLIC
 # Include and link any target specific folders and libraries
 if (BUILD_RASPBERRYPI)
    target_include_directories(Telescope_Unit_Test PUBLIC
-      "${CMAKE_BINARY_DIR}/_deps/wiringpi-src/wiringPi"
+      "${wiringpi_SOURCE_DIR}/wiringpi-src/wiringPi"
    )
 
    target_link_libraries(Telescope_Unit_Test PUBLIC
-      "${CMAKE_BINARY_DIR}/_deps/wiringpi-src/wiringPi/libwiringPi.so.2.61"
+      "${wiringpi_SOURCE_DIR}/_deps/wiringpi-src/wiringPi/libwiringPi.so.2.61"
    )
 endif()
 

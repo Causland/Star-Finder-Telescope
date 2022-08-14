@@ -47,7 +47,7 @@ if (BUILD_RASPBERRYPI)
       SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src
       BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-build
       CONFIGURE_COMMAND ""
-      BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src/ && ./build
+      BUILD_COMMAND cd ${wiringpi_SOURCE_DIR} && ./build
       INSTALL_COMMAND ""
    )
    set(CMAKE_INSTALL_RPATH "/usr/local/lib")
@@ -60,19 +60,35 @@ if (BUILD_RASPBERRYPI)
       SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src
       BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-build
       CONFIGURE_COMMAND ""
-      BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make all
-      INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make install
+      BUILD_COMMAND cd ${servoblaster_SOURCE_DIR} && sudo make all
+      INSTALL_COMMAND cd ${servoblaster_SOURCE_DIR} && sudo make install
    )
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# Update the location of the executable
+# Add a documentation target with Doxygen
+find_package(Doxygen 
+            REQUIRED dot
+            OPTIONAL_COMPONENTS mscgen dia)
+set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/docs)
+set(DOXYGEN_TAB_SIZE 3)
+set(DOXYGEN_EXTRACT_PRIVATE YES)
+set(DOXYGEN_EXTRACT_PRIV_VIRTUAL YES)
+set(DOXYGEN_EXTRACT_STATIC YES)
+set(DOXYGEN_FILE_PATTERNS *.c;*.cpp;*.c++;*.h;*.hxx;*.hpp;*.h++;*.markdown;*.md)
+doxygen_add_docs(docs
+   include/
+   src/
+   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+# Update the location of the output executables
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # Set common compiler flags removed -Werror for now due to sqlpp
-set (CMAKE_CXX_FLAGS "-g3 -Os -fsanitize=address -pedantic -fno-common -Wall -Wextra -Wshadow -Wdouble-promotion -Wundef -Wconversion -Wno-unused-parameter")
+set (CMAKE_CXX_FLAGS "-g3 -O1 -fsanitize=address -pedantic -fno-common -Wall -Wextra -Wshadow -Wdouble-promotion -Wundef -Wconversion -Wno-unused-parameter")
 
 if (BUILD_RASPBERRYPI)
    add_compile_options(-DRASPBERRY_PI)
