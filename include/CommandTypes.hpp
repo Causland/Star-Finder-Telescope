@@ -131,13 +131,15 @@ struct CmdGoToTarget : public Command
 struct CmdSearchTarget : public Command
 {
    CmdSearchTarget() : Command(CommandTypeEnum::SEARCH_TARGET) {}
-   CmdSearchTarget(std::string targetName, const double& searchRadiusInLightYears) :
+   CmdSearchTarget(std::string targetName, const double& searchRadiusInLightYears, const double& searchLuminosityInWatts) :
       Command(CommandTypeEnum::SEARCH_TARGET),
       myTargetName(std::move(targetName)),
-      mySearchRadiusInLightYears(searchRadiusInLightYears) {}
+      mySearchRadiusInLightYears(searchRadiusInLightYears),
+      mySearchLuminosityInWatts(searchLuminosityInWatts) {}
 
    std::string myTargetName{"None"};
-   double mySearchRadiusInLightYears{0.0};
+   double mySearchRadiusInLightYears{-1.0};
+   double mySearchLuminosityInWatts{-1.0};
 };
 
 struct CmdCalibrate : public Command

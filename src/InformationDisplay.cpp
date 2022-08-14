@@ -84,6 +84,11 @@ void InformationDisplay::configureSubsystems(const std::vector<std::shared_ptr<S
    }
 }
 
+void InformationDisplay::displaySearchResults(const std::string& displayString)
+{
+   std::cout << displayString << "\n";
+}
+
 void InformationDisplay::threadLoop()
 {
    while (!myExitingFlag)

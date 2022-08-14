@@ -295,7 +295,7 @@ bool CommandTerminal::interpretCommand(const std::string& command)
       }
       else if (baseCommand == "search")
       {
-         // Search can be used with range or name option which are then followed by parameters
+         // Search can be used with range, name, brightness option which are then followed by parameters
          pos = params.find(' ');
          std::string option = params.substr(0, pos);
          if (pos == std::string::npos)
@@ -309,6 +309,7 @@ bool CommandTerminal::interpretCommand(const std::string& command)
          // Do processing based on option
          CmdSearchTarget cmd;
          double range = 0.0;
+         double luminosity = 0.0;
          std::string name = "None";
          if (option == "range")
          {
@@ -328,6 +329,15 @@ bool CommandTerminal::interpretCommand(const std::string& command)
                return false;
             }
          }
+         else if (option == "brightness")
+         {
+            // Format -> search brightness <brightness>
+            if (!validateParameters(params, luminosity))
+            {
+               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search range command");
+               return false;
+            }
+         }
          else
          {
             myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unknown option for search command: " + command);
@@ -339,7 +349,7 @@ bool CommandTerminal::interpretCommand(const std::string& command)
             return false;
          }
          auto starTracker = myStarTracker.lock();
-         starTracker->queryTarget(CmdSearchTarget(name, range));   
+         starTracker->searchForTargets(CmdSearchTarget(name, range, luminosity));   
       }
       else if (baseCommand == "calibrate")
       {

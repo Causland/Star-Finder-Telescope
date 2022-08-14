@@ -6,7 +6,8 @@ add_executable(Star_Finder_Telescope
    main.cpp
    OpticsManager.cpp
    PositionManager.cpp
-   interfaces/StarDatabase/StarDatabaseAdapter.cpp
+   interfaces/StarDatabase/SimStarDatabase.cpp
+   interfaces/GpsModule/SimGpsModule.cpp
    StarTracker.cpp
    interfaces/MotionController/SimMotionController.cpp
 )

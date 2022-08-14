@@ -8,9 +8,10 @@
 #include "PositionManager.hpp"
 #include "StarTracker.hpp"
 #include "Subsystem.hpp"
+#include "interfaces/GpsModule/SimGpsModule.hpp"
 #include "interfaces/MotionController/RPi3MotionController.hpp"
 #include "interfaces/MotionController/SimMotionController.hpp"
-#include "interfaces/StarDatabase/StarDatabaseAdapter.hpp"
+#include "interfaces/StarDatabase/SimStarDatabase.hpp"
 #include <chrono>
 #include <exception>
 #include <iomanip>
@@ -53,10 +54,13 @@ int main()
     motionController = std::make_shared<SimMotionController>();
 #endif
 
+    std::shared_ptr<IGpsModule> gpsModule = std::make_shared<SimGpsModule>();
+    std::shared_ptr<IStarDatabase> starDatabase = std::make_shared<SimStarDatabase>();
+
     // Construct all subsystems with their name and logger and push to subsystem vector
     std::vector<std::shared_ptr<Subsystem>> subsystems;
     subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay", logger));
-    subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", logger));
+    subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", logger, starDatabase, gpsModule));
     subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager", logger));
     subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", logger, motionController));
     subsystems.emplace_back(std::make_shared<CommandTerminal>("CommandTerminal", logger, exitSignal));

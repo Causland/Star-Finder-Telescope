@@ -409,6 +409,43 @@ TEST_F(TestFixtureCommandTerminal, CommandProcessing_SearchRangeCommand)
    }
 }
 
+TEST_F(TestFixtureCommandTerminal, CommandProcessing_SearchBrightnessCommand)
+{
+   // Valid command
+   {
+      const double brightness{5032.64};
+      std::stringstream testCommand{"search brightness " + std::to_string(brightness)};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(brightness, starTracker->mySearchTargetCmd.mySearchLuminosityInWatts);
+      endSubTest();
+   }
+   // Invalid command -> missing param
+   {
+      std::stringstream testCommand{"search brightness"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+   // Invalid command -> bad double conversion
+   {
+      std::stringstream testCommand{"search brightness invalid"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }   
+   // Invalid command -> extra param
+   {
+      std::stringstream testCommand{"search brightness 4.7 extra"};
+
+      beginSubTest(testCommand);
+      ASSERT_EQ(false, checkReceived());
+      endSubTest();
+   }
+}
+
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_SearchNameCommand)
 {
    // Valid command

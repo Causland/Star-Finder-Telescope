@@ -3,10 +3,10 @@
 class MinStarTracker : public StarTracker
 {
 public:
-   MinStarTracker() : StarTracker(NAME, nullptr) {}
+   MinStarTracker() : StarTracker(NAME, nullptr, nullptr, nullptr) {}
    void pointToTarget(const CmdGoToTarget& cmd) override {}
    void trackTarget(const CmdFollowTarget& cmd) override {}
-   void queryTarget(const CmdSearchTarget& cmd) override {}
+   void searchForTargets(const CmdSearchTarget& cmd) override {}
    void start() override {}
    void stop() override {}
    void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override {}

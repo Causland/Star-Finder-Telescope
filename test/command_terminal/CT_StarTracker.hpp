@@ -13,7 +13,7 @@ public:
       myFollowTargetCmd = cmd;
       myCommandReceived = true;
    }
-   void queryTarget(const CmdSearchTarget& cmd) override 
+   void searchForTargets(const CmdSearchTarget& cmd) override 
    {
       mySearchTargetCmd = cmd;
       myCommandReceived = true;

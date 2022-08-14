@@ -14,7 +14,9 @@ class PositionManager;
 class StarTracker : public Subsystem
 {
 public:
-    StarTracker(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
+    StarTracker(std::string subsystemName,  std::shared_ptr<Logger> logger, 
+                    std::shared_ptr<IStarDatabase> starDatabase, std::shared_ptr<IGpsModule> gpsModule) : 
+                    Subsystem(subsystemName, logger), myStarDatabase(starDatabase), myGpsModule(gpsModule) {}
 
     // Includes from ISubsystem
     void start() override;
@@ -23,7 +25,7 @@ public:
 
     virtual void pointToTarget(const CmdGoToTarget& cmd);
     virtual void trackTarget(const CmdFollowTarget& cmd);
-    virtual void queryTarget(const CmdSearchTarget& cmd);
+    virtual void searchForTargets(const CmdSearchTarget& cmd);
     
     static const std::string NAME;
 private:
@@ -33,8 +35,8 @@ private:
     double myGpsLat{0.0};
     double myGpsElev{0.0};
     std::queue<Command> myCommandQueue{};
-    std::weak_ptr<IStarDatabase> myStarDatabase;
-    std::weak_ptr<IGpsModule> myGpsModule;
+    std::shared_ptr<IStarDatabase> myStarDatabase;
+    std::shared_ptr<IGpsModule> myGpsModule;
     std::weak_ptr<InformationDisplay> myInformationDisplay;
     std::weak_ptr<PositionManager> myPositionManager;
 };

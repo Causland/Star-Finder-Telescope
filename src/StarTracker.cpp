@@ -70,81 +70,141 @@ void StarTracker::threadLoop()
       // Process each command and take the specified action
       while (!myCommandQueue.empty())
       {
-         auto generalCommand = myCommandQueue.front();
-         myCommandQueue.pop();
-
+         auto& generalCommand = myCommandQueue.front();
          switch (generalCommand.myCommandType)
          {
-         case CommandTypeEnum::GOTO_TARGET:
-         {
-            auto command = static_cast<CmdGoToTarget&>(generalCommand);
-            auto gpsModule = myGpsModule.lock();
-            gpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
-            auto starDatabase = myStarDatabase.lock();
-            auto result = starDatabase->queryTargetPointing(command.myTargetName, std::chrono::system_clock::now(),
-                                                               myGpsLong, myGpsLat, myGpsElev);
-            if (result.myStatusCode == QueryResult::SUCCESS)
+            case CommandTypeEnum::GOTO_TARGET:
             {
-               auto position = result.myPositionResults.front();
-               auto positionManager = myPositionManager.lock();
-               myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Issuing goto command for target=" + command.myTargetName + " (az,el)=(" + 
-                                                                  std::to_string(position.first.myAzimuth) + "," + std::to_string(position.first.myElevation) + ")");
-               positionManager->updatePosition(CmdUpdatePosition(position.first.myAzimuth, position.first.myElevation));
+               auto& command = static_cast<CmdGoToTarget&>(generalCommand);
+               myGpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
+               auto result = myStarDatabase->queryTargetPointing(command.myTargetName, std::chrono::system_clock::now(),
+                                                                  myGpsLong, myGpsLat, myGpsElev);
+               if (result.myStatusCode == QueryResult::SUCCESS)
+               {
+                  auto position = result.myPositionResults.front();
+                  auto positionManager = myPositionManager.lock();
+                  myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Issuing goto command for target=" + command.myTargetName + " (az,el)=(" + 
+                                                                     std::to_string(position.first.myAzimuth) + "," + std::to_string(position.first.myElevation) + ")");
+                  positionManager->updatePosition(CmdUpdatePosition(position.first.myAzimuth, position.first.myElevation));
+               }
+               else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
+               {
+                  myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Goto Target Result: " + result.myLogStatement);
+               }
+               break;
             }
-            else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
+            case CommandTypeEnum::FOLLOW_TARGET:
             {
-               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Goto Target Result: " + result.myLogStatement);
+               auto& command = static_cast<CmdFollowTarget&>(generalCommand);
+               myGpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
+               auto result = myStarDatabase->queryTargetPointingTrajectory(command.myTargetName, command.myStartTime, command.myStartTime + command.myDuration,
+                                                                           myGpsLong, myGpsLat, myGpsElev);
+               if (result.myStatusCode == QueryResult::SUCCESS)
+               {
+                  auto positionManager = myPositionManager.lock();
+                  positionManager->trackTarget(result.myPositionResults);
+               }
+               else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
+               {
+                  myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Follow Target Result: " + result.myLogStatement);
+               }
+               break;
             }
-            break;
-         }
-         case CommandTypeEnum::FOLLOW_TARGET:
-         {
-            auto command = static_cast<CmdFollowTarget&>(generalCommand);
-            auto gpsModule = myGpsModule.lock();
-            gpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
-            auto starDatabase = myStarDatabase.lock();
-            auto result = starDatabase->queryTargetPointingTrajectory(command.myTargetName, command.myStartTime, command.myStartTime + command.myDuration,
-                                                                        myGpsLong, myGpsLat, myGpsElev);
-            if (result.myStatusCode == QueryResult::SUCCESS)
+            case CommandTypeEnum::SEARCH_TARGET:
             {
-               auto positionManager = myPositionManager.lock();
-               positionManager->trackTarget(result.myPositionResults);
+               auto& command = static_cast<CmdSearchTarget&>(generalCommand);
+               QueryResult searchResult;
+               if (command.myTargetName != "None")
+               {
+                  myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Searching for " + command.myTargetName);
+                  searchResult = myStarDatabase->searchTargetsByName(command.myTargetName);
+               }
+               else if (command.mySearchRadiusInLightYears > 0)
+               {
+                  myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Searching for " + std::to_string(command.mySearchRadiusInLightYears));
+                  searchResult = myStarDatabase->searchTargetsByRange(command.mySearchRadiusInLightYears);
+               }
+               else if (command.mySearchLuminosityInWatts > 0)
+               {
+                  myLogger->log(mySubsystemName, LogCodeEnum::INFO, "Searching for " + std::to_string(command.mySearchLuminosityInWatts));
+                  searchResult = myStarDatabase->searchTargetsByLuminosity(command.mySearchLuminosityInWatts);
+               }
+               else
+               {
+                  myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Invalid parameters for search. Given: name=" + 
+                                                                        command.myTargetName + " radius=" + 
+                                                                        std::to_string(command.mySearchRadiusInLightYears) + " luminosity=" +
+                                                                        std::to_string(command.mySearchLuminosityInWatts));
+               }
+
+               // Check the status code and display the search results to the user
+               auto informationDisplay = myInformationDisplay.lock();
+               switch(searchResult.myStatusCode)
+               {
+                  case QueryResult::SUCCESS:
+                  {
+                     // Each entry of the result vector is the name of a target. Format the
+                     // results as a comma seperated list.
+                     auto it = searchResult.mySearchResults.begin();
+                     std::string displayString = *it++;
+                     for (; it != searchResult.mySearchResults.end(); ++it)
+                     {
+                        displayString += ", ";
+                        displayString += *it;
+                     }
+                     informationDisplay->displaySearchResults(displayString);
+                     break;
+                  }
+                  case QueryResult::FAILURE:
+                  case QueryResult::INVALID_PARAM:
+                  {
+                     myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Search failed with log: " + searchResult.myLogStatement);
+                     informationDisplay->displaySearchResults("Search returned: " + searchResult.myLogStatement);
+                     break;
+                  }
+                  case QueryResult::NO_MATCH:
+                  {
+                     myLogger->log(mySubsystemName, LogCodeEnum::WARNING, "No search matches returned from database");
+                     informationDisplay->displaySearchResults("Search returned: No Matches");
+                     break;
+                  }
+                  case QueryResult::UNINITIALIZED:
+                  {
+                     myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "QueryResult is uninitialized");
+                     informationDisplay->displaySearchResults("Unable to search database");
+                     break;
+                  }
+               }
+               break;
             }
-            else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
+            default:
             {
-               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Follow Target Result: " + result.myLogStatement);
+               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Invalid command in queue: " + generalCommand.toString());
+               break;
             }
-            break;
          }
-         case CommandTypeEnum::SEARCH_TARGET:
-         {
-            auto command = static_cast<CmdSearchTarget&>(generalCommand);
-            break;
-         }
-         default:
-         {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Invalid command in queue: " + generalCommand.toString());
-            break;
-         }
-         }
+         myCommandQueue.pop();
       }
    }
 }
 
 void StarTracker::pointToTarget(const CmdGoToTarget& cmd)
 {
+   std::scoped_lock lk(myMutex);
    myCommandQueue.push(cmd);
    myCondVar.notify_one();
 }
 
 void StarTracker::trackTarget(const CmdFollowTarget& cmd)
 {
+   std::scoped_lock lk(myMutex);
    myCommandQueue.push(cmd);
    myCondVar.notify_one();  
 }
 
-void StarTracker::queryTarget(const CmdSearchTarget& cmd)
+void StarTracker::searchForTargets(const CmdSearchTarget& cmd)
 {
+   std::scoped_lock lk(myMutex);
    myCommandQueue.push(cmd);
    myCondVar.notify_one();
 }

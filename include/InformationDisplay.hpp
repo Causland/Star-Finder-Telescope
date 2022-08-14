@@ -18,6 +18,8 @@ public:
     void stop() override;
     void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override;
 
+    void displaySearchResults(const std::string& displayString);
+
     static const std::string NAME;
 private:
     void threadLoop() override;
