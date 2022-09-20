@@ -37,6 +37,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(sqlpp11)
 
+FetchContent_Declare(
+   tomlplusplus
+   GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+   GIT_TAG v3.2.0
+)
+FetchContent_MakeAvailable(tomlplusplus)
+
 # Only add the following if for a Raspberry Pi
 option (BUILD_RASPBERRYPI "Build in Raspberry Pi specific components" OFF)
 if (BUILD_RASPBERRYPI)

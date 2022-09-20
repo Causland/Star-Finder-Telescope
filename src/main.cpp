@@ -6,6 +6,7 @@
 #include "Logger.hpp"
 #include "OpticsManager.hpp"
 #include "PositionManager.hpp"
+#include "PropertyManager.hpp"
 #include "StarTracker.hpp"
 #include "Subsystem.hpp"
 #include "interfaces/GpsModule/SimGpsModule.hpp"
@@ -30,13 +31,21 @@ int main()
     // is entered by the user.
     std::shared_ptr<std::atomic<bool>> exitSignal = std::make_shared<std::atomic<bool>>(false);
 
-    // Create logger(s) to pass to the constructor of each subsystem
+    // Create logger to pass to the constructor of each subsystem
     // Use the current date and time to name the log file
     std::ostringstream oss;
     std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     oss << "logs/" << std::put_time(std::localtime(&t), "%m-%d-%Y-%I-%M%p") << ".log";
     std::string logFileName = oss.str();
     std::shared_ptr<Logger> logger = std::make_shared<Logger>(logFileName);
+
+    // Create the properties manager for use across all subsystems
+    PropertyManager propManager;
+    if (!propManager.initialize("properties.toml"))
+    {
+        logger->log("main", LogCodeEnum::ERROR, "Unable to initialize the property manager");
+        return 1;
+    }
 
     // Create supporting modules for various subsystems
     std::shared_ptr<IMotionController> motionController;
@@ -97,6 +106,8 @@ int main()
         logger->log(subsystem->getName(), LogCodeEnum::INFO, "Stopping");
         subsystem->stop();
     }
+
+    propManager.terminate();
     
     return 0;
 }

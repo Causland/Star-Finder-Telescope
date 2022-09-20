@@ -10,6 +10,7 @@ add_executable(Star_Finder_Telescope
    interfaces/GpsModule/SimGpsModule.cpp
    StarTracker.cpp
    interfaces/MotionController/SimMotionController.cpp
+   PropertyManager.cpp
 )
 
 # Add the include folder
@@ -17,6 +18,7 @@ target_include_directories(Star_Finder_Telescope PUBLIC
    "${CMAKE_SOURCE_DIR}/include"
    "${curlpp_SOURCE_DIR}/include"
    "${sqlpp11_SOURCE_DIR}/include"
+   "${tomlplusplus_SOURCE_DIR}/include"
 )
 
 # Add static libs to the executable
