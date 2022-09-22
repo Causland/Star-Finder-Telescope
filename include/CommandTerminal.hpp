@@ -2,6 +2,7 @@
 #define COMMAND_TERMINAL_HPP
 
 #include "CommandTypes.hpp"
+#include "Logger.hpp"
 #include "Subsystem.hpp"
 #include <algorithm>
 #include <cstdarg>
@@ -30,11 +31,10 @@ public:
     /*!
      * Creates a CommandTerminal subsystem object with a logger and pointer to the main forever loop controller.
      * \param[in] subsystemName a string of the subsystem name moved into the class.
-     * \param[in] logger a shared pointer to a logger object used for logging within the subsystem.
      * \param[out] exitingSignal a shared pointer to an atomic bool used to signal that the application should close.
      */
-    CommandTerminal(const std::string& subsystemName, std::shared_ptr<Logger> logger, std::shared_ptr<std::atomic<bool>> exitingSignal) : 
-        Subsystem(std::move(subsystemName), logger), myExitingSignal(exitingSignal) {}
+    CommandTerminal(const std::string& subsystemName, std::shared_ptr<std::atomic<bool>> exitingSignal) : 
+        Subsystem(subsystemName), myExitingSignal(exitingSignal) {}
 
     /*!
      * Initialize the subsystem and start the threads.
@@ -88,7 +88,7 @@ private:
     {
         if (!input.empty())
         {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Too many parameters provided for the command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Too many parameters provided for the command");
             return false;
         }
         return true;
@@ -119,7 +119,7 @@ private:
     {
         if (input.empty())
         {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Not enough parameters provided for command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Not enough parameters provided for command");
             return false;
         }
         auto pos = input.find(' ');
@@ -146,7 +146,7 @@ private:
             uint64_t temp = strtoul(val.c_str(), &end, BASE_TEN);
             if (end == val.c_str() || *end != '\0')
             {
-                myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Parameter " + val + " cannot be converted to long integer type");
+                Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Parameter " + val + " cannot be converted to long integer type");
                 return false;
             }
             currParam = temp;
@@ -157,14 +157,14 @@ private:
             double temp = strtod(val.c_str(), &end);
             if (end == val.c_str() || *end != '\0')
             {
-                myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Parameter " + val + " cannot be converted to double type");
+                Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Parameter " + val + " cannot be converted to double type");
                 return false;
             }
             currParam = temp;
         }
         else
         {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unsupported type " + std::string(typeid(currParam).name()) + " passed into command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unsupported type " + std::string(typeid(currParam).name()) + " passed into command");
             return false;
         }
 

@@ -14,9 +14,9 @@ class PositionManager;
 class StarTracker : public Subsystem
 {
 public:
-    StarTracker(std::string subsystemName,  std::shared_ptr<Logger> logger, 
+    StarTracker(const std::string& subsystemName, 
                     std::shared_ptr<IStarDatabase> starDatabase, std::shared_ptr<IGpsModule> gpsModule) : 
-                    Subsystem(subsystemName, logger), myStarDatabase(starDatabase), myGpsModule(gpsModule) {}
+                    Subsystem(subsystemName), myStarDatabase(starDatabase), myGpsModule(gpsModule) {}
 
     // Includes from ISubsystem
     void start() override;

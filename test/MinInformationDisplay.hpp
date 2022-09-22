@@ -3,7 +3,7 @@
 class MinInformationDisplay : public InformationDisplay
 {
 public:
-   MinInformationDisplay() : InformationDisplay(NAME, nullptr) {};
+   MinInformationDisplay() : InformationDisplay(NAME) {};
    void start() override {}
    void stop() override {}
    void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override {}

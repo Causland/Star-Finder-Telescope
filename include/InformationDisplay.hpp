@@ -11,7 +11,7 @@ class StarTracker;
 class InformationDisplay : public Subsystem
 {
 public:
-    InformationDisplay(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
+    InformationDisplay(std::string subsystemName) : Subsystem(subsystemName) {}
 
     // Includes from ISubsystem
     void start() override;

@@ -84,7 +84,7 @@ struct LogMessage
 };
 
 /*!
- * The Logger class defines a simple logger for storing information about different events
+ * The Logger class defines a simple static logger for storing information about different events
  * within the system. The logger is intended to be used for tracking specific information, warnings about
  * system performance, or to indicate if problems have occured. The logger uses a synchronized
  * queue to collect logs from multiple threads and writes them to the target log file. The log file
@@ -93,75 +93,68 @@ struct LogMessage
 class Logger
 {
 public:
-   /*!
-      * Creates a logger with a particular log file. The logging thread is started upon creation.
-      * \param[in] fileName a string of the relative path to the log file. The string is moved into the class.
-      */
-   explicit Logger(std::string fileName) : myFileName(std::move(fileName)) 
-   {
-      myThread = std::thread(&Logger::threadLoop, this);
-   }
-
-   /*!
-      * Destroys a logger by signaling the condition variable to terminate the thread loop. The destructor
-      * blocks on the thread join and writes the last remaining logs to the file.
-      * \sa processLogs()
-      */
-   ~Logger()
-   {
-      myExitingFlag = true;
-      myLogsAvailableFlag = true;
-      myCondVar.notify_one();
-      myThread.join();
-      processLogs();
-   }
-
+   Logger() = default;
+   ~Logger() = default;
    Logger(const Logger&) = delete;
    Logger(Logger&&) = delete;
    void operator=(const Logger&) = delete;
    void operator=(Logger&&) = delete;
 
    /*!
-      * Add a new log to the logging queue with the subsystem name, the log code, and a specific message.
-      * \param[in] subsystemName a constant string of the subsystem name.
-      * \param[in] code a constant LogCodeEnum code.
-      * \param[in] message a constant string of the message to be logged.
-      */
-   void log(const std::string& subsystemName, const LogCodeEnum& code, const std::string& message);
+    * Initializes the logger with a particular log file. The logging thread is started upon initialization.
+    * and is only stopped when terminate() is called.
+    * \param[in] fileName a string of the relative path to the log file.
+    */
+   static void initialize(const std::string& fileName);
+
+   /*!
+    * Terminates a logger by signaling the condition variable to stop the thread loop. The function
+    * blocks on the thread join and writes any remaining logs to the file.
+    * \sa processLogs()
+    */
+   static void terminate();
+
+   /*!
+    * Add a new log to the logging queue with the subsystem name, the log code, and a specific message.
+    * \param[in] subsystemName a constant string of the subsystem name.
+    * \param[in] code a constant LogCodeEnum code.
+    * \param[in] message a constant string of the message to be logged.
+    */
+   static void log(const std::string& subsystemName, const LogCodeEnum& code, const std::string& message);
 
 private:
    /*!
-      * The logging thread is signaled when a new log is added to the logging queue. The thread removes each log from
-      * the queue and concatenates it to an output string. The string is then written to the log file. The
-      * mutex is only held while reading from the queue to copy to the output string. This prevents other threads from
-      * waiting for the file IO operation.
-      * \sa processLogs(), writeToLog()
-      */
-   void threadLoop();
+    * The logging thread is signaled when a new log is added to the logging queue. The thread removes each log from
+    * the queue and concatenates it to an output string. The string is then written to the log file. The
+    * mutex is only held while reading from the queue to copy to the output string. This prevents other threads from
+    * waiting for the file IO operation.
+    * \sa processLogs(), writeToLog()
+    */
+   static void threadLoop();
 
    /*!
-      * This function removes pending log strings from the log queue and appends them to the output string.
-      * The output string is used to write directly to the log file. Once emptied, the condition variable is
-      * reset to block the thread until a new log is added.
-      * \sa writeToLog()
-      */
-   void processLogs();
+    * This function removes pending log strings from the log queue and appends them to the output string.
+    * The output string is used to write directly to the log file. Once emptied, the condition variable is
+    * reset to block the thread until a new log is added.
+    * \sa writeToLog()
+    */
+   static void processLogs();
 
    /*!
-      * This function writes the output string to the log file. The file is opened and closed to allow the user
-      * to view the changes as the application is running. The output string is cleared after the write.
-      */
-   void writeToLog();
+    * This function writes the output string to the log file. The file is opened and closed to allow the user
+    * to view the changes as the application is running. The output string is cleared after the write.
+    */
+   static void writeToLog();
 
-   const std::string myFileName; //!< Relative path to the log file.
-   std::ofstream myOutputFile; //!< The output file stream to write to the log file.
-   std::string myLogToWrite; //!< The output string used to write to the log file.
-   bool myLogsAvailableFlag{false}; //!< The flag used to release the condition variable in the logger thread loop.
-   bool myExitingFlag{false}; //!< The flag used to control the thread loop. True when object is begin destroyed.
-   std::condition_variable myCondVar; //!< The condition variable used to block thread until logs are available for processing.
-   std::mutex myMutex; //!< The mutex used to guard the log queue during access by subsystem threads and logging thread.
-   std::thread myThread; //!< The thread for the logger.
-   std::queue<std::string> myLogsToRecord; //!< The queue which holds the pending log strings to write to the log file.
+   static std::string theFileName; //!< Relative path to the log file.
+   static std::ofstream theOutputFile; //!< The output file stream to write to the log file.
+   static std::string theLogToWrite; //!< The output string used to write to the log file.
+   static bool theLogsAvailableFlag; //!< The flag used to release the condition variable in the logger thread loop.
+   static bool theExitingFlag; //!< The flag used to control the thread loop. True when object is begin destroyed.
+   static std::condition_variable theCondVar; //!< The condition variable used to block thread until logs are available for processing.
+   static std::mutex theMutex; //!< The mutex used to guard the log queue during access by subsystem threads and logging thread.
+   static std::thread theThread; //!< The thread for the logger.
+   static std::queue<std::string> theLogsToRecord; //!< The queue which holds the pending log strings to write to the log file.
 };
 
 #endif

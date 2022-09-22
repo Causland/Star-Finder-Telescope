@@ -3,7 +3,7 @@
 class MinStarTracker : public StarTracker
 {
 public:
-   MinStarTracker() : StarTracker(NAME, nullptr, nullptr, nullptr) {}
+   MinStarTracker() : StarTracker(NAME, nullptr, nullptr) {}
    void pointToTarget(const CmdGoToTarget& cmd) override {}
    void trackTarget(const CmdFollowTarget& cmd) override {}
    void searchForTargets(const CmdSearchTarget& cmd) override {}

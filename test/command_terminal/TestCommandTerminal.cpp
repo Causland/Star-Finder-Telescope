@@ -12,13 +12,12 @@ class TestFixtureCommandTerminal : public ::testing::Test
 {
 protected:
    TestFixtureCommandTerminal() :
-         logger(std::make_shared<Logger>("logs/CommandTerminalUnitTest.log")),
          exitSignal(std::make_shared<std::atomic<bool>>(false)),
          opticsManager(std::make_shared<CT_OpticsManager>()),
          positionManager(std::make_shared<CT_PositionManager>()),
          starTracker(std::make_shared<CT_StarTracker>()),
          informationDisplay(std::make_shared<MinInformationDisplay>()),
-         commandTerminal(std::make_unique<CommandTerminal>("CommandTerminal", logger, exitSignal))
+         commandTerminal(std::make_unique<CommandTerminal>("CommandTerminal", exitSignal))
    {
       // Create the subsystems vector
       subsystems.emplace_back(opticsManager);
@@ -28,6 +27,16 @@ protected:
 
       // Initialize the Command Terminal subsystem
       commandTerminal->configureSubsystems(subsystems);
+   }
+
+   static void SetUpTestSuite()
+   {
+      Logger::initialize("logs/CommandTerminalUnitTest.log");
+   }
+
+   static void TearDownTestSuite()
+   {
+      Logger::terminate();
    }
 
    bool checkReceived()
@@ -53,7 +62,7 @@ protected:
       starTracker->reset();
    }
 
-   std::shared_ptr<Logger> logger;
+   static Logger logger;
    std::shared_ptr<std::atomic<bool>> exitSignal;
    std::vector<std::shared_ptr<Subsystem>> subsystems;
    std::shared_ptr<CT_OpticsManager> opticsManager;
@@ -62,6 +71,9 @@ protected:
    std::shared_ptr<MinInformationDisplay> informationDisplay;
    std::unique_ptr<CommandTerminal> commandTerminal;
 };
+
+Logger TestFixtureCommandTerminal::logger{};
+
 
 TEST_F(TestFixtureCommandTerminal, CommandProcessing_PhotoCommand)
 {

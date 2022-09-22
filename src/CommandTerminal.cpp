@@ -32,14 +32,14 @@ void CommandTerminal::configureSubsystems(const std::vector<std::shared_ptr<Subs
       [](auto& subsystem){ return subsystem->getName() == InformationDisplay::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
    }
    else
    {
       myInformationDisplay = std::dynamic_pointer_cast<InformationDisplay>(*it);
       if (myInformationDisplay.expired())
       {
-         myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
+         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
       }
    }
    // IOpticsManager
@@ -47,14 +47,14 @@ void CommandTerminal::configureSubsystems(const std::vector<std::shared_ptr<Subs
       [](auto& subsystem){ return subsystem->getName() == OpticsManager::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Optics Manager pointer");
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Optics Manager pointer");
    }
    else
    {
       myOpticsManager = std::dynamic_pointer_cast<OpticsManager>(*it);
       if (myOpticsManager.expired())
       {
-         myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Optics Manager");
+         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Optics Manager");
       }
    }
    // IPositionManager
@@ -62,14 +62,14 @@ void CommandTerminal::configureSubsystems(const std::vector<std::shared_ptr<Subs
       [](auto& subsystem){ return subsystem->getName() == PositionManager::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Position Manager pointer");
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Position Manager pointer");
    }
    else
    {
       myPositionManager = std::dynamic_pointer_cast<PositionManager>(*it);
       if (myPositionManager.expired())
       {
-         myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Position Manager");
+         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Position Manager");
       }
    }
    // IStarTracker
@@ -77,14 +77,14 @@ void CommandTerminal::configureSubsystems(const std::vector<std::shared_ptr<Subs
       [](auto& subsystem){ return subsystem->getName() == StarTracker::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Star Tracker pointer");
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Star Tracker pointer");
    }
    else
    {
       myStarTracker = std::dynamic_pointer_cast<StarTracker>(*it);
       if (myStarTracker.expired())
       {
-         myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Star Tracker");
+         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Star Tracker");
       }
    }
 }
@@ -125,7 +125,7 @@ void CommandTerminal::cinWaitThreadLoop()
       std::getline(std::cin, input);
       if (!input.empty())
       {
-         myLogger->log(mySubsystemName, LogCodeEnum::INFO, "User input: " + input);
+         Logger::log(mySubsystemName, LogCodeEnum::INFO, "User input: " + input);
          // Commands can be delimited by semicolons for sequential inputs
          std::istringstream iss(input);
          std::string command;
@@ -175,12 +175,12 @@ bool CommandTerminal::interpretCommand(const std::string& command)
          std::string name;
          if (!validateParameters(params, name))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process photo command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process photo command");
             return false;
          }
          if (myOpticsManager.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
             return false;
          }
          auto opticsManager = myOpticsManager.lock();
@@ -193,12 +193,12 @@ bool CommandTerminal::interpretCommand(const std::string& command)
          uint64_t duration;
          if (!validateParameters(params, name, duration))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process video command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process video command");
             return false;
          }
          if (myOpticsManager.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
             return false;
          }
          auto opticsManager = myOpticsManager.lock();
@@ -212,12 +212,12 @@ bool CommandTerminal::interpretCommand(const std::string& command)
          double rate;
          if (!validateParameters(params, name, duration, rate))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process timelapse command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process timelapse command");
             return false;
          }
          if (myOpticsManager.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
             return false;
          }
          auto opticsManager = myOpticsManager.lock();
@@ -230,12 +230,12 @@ bool CommandTerminal::interpretCommand(const std::string& command)
          double phi;
          if (!validateParameters(params, theta, phi))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process move command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process move command");
             return false;
          }
          if (myPositionManager.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "PositionManager pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "PositionManager pointer has expired");
             return false;
          }
          auto positionManager = myPositionManager.lock();
@@ -247,12 +247,12 @@ bool CommandTerminal::interpretCommand(const std::string& command)
          double theta;
          if (!validateParameters(params, theta))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process focus command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process focus command");
             return false;
          }
          if (myOpticsManager.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "OpticsManager pointer has expired");
             return false;
          }
          auto opticsManager = myOpticsManager.lock();
@@ -265,12 +265,12 @@ bool CommandTerminal::interpretCommand(const std::string& command)
          uint64_t duration;
          if (!validateParameters(params, name, duration))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process follow command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process follow command");
             return false;
          }
          if (myStarTracker.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
             return false;
          }
          auto starTracker = myStarTracker.lock();
@@ -282,12 +282,12 @@ bool CommandTerminal::interpretCommand(const std::string& command)
          std::string name;
          if (!validateParameters(params, name))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process goto command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process goto command");
             return false;
          }
          if (myStarTracker.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
             return false;
          }
          auto starTracker = myStarTracker.lock();
@@ -316,7 +316,7 @@ bool CommandTerminal::interpretCommand(const std::string& command)
             // Format -> search range <range>
             if (!validateParameters(params, range))
             {
-               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search range command");
+               Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search range command");
                return false;
             }
          }
@@ -325,7 +325,7 @@ bool CommandTerminal::interpretCommand(const std::string& command)
             // Format -> search name <name>
             if (!validateParameters(params, name))
             {
-               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search name command");
+               Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search name command");
                return false;
             }
          }
@@ -334,18 +334,18 @@ bool CommandTerminal::interpretCommand(const std::string& command)
             // Format -> search brightness <brightness>
             if (!validateParameters(params, luminosity))
             {
-               myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search range command");
+               Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process search range command");
                return false;
             }
          }
          else
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unknown option for search command: " + command);
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unknown option for search command: " + command);
             return false;
          }
          if (myStarTracker.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "StarTracker pointer has expired");
             return false;
          }
          auto starTracker = myStarTracker.lock();
@@ -355,12 +355,12 @@ bool CommandTerminal::interpretCommand(const std::string& command)
       {
          if (!validateParameters(params))
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process calibrate command");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to process calibrate command");
             return false;
          }
          if (myPositionManager.expired())
          {
-            myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "PositionManager pointer has expired");
+            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "PositionManager pointer has expired");
             return false;
          }
          auto positionManager = myPositionManager.lock();
@@ -368,13 +368,13 @@ bool CommandTerminal::interpretCommand(const std::string& command)
       }
       else
       {
-         myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unknown command " + command);
+         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unknown command " + command);
          return false;
       }
    }
    else
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Attempted to process empty command");
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Attempted to process empty command");
       return false;
    }
    return true;

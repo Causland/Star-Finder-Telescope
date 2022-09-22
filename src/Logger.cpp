@@ -1,28 +1,53 @@
 #include "Logger.hpp"
 #include <iostream>
 
+std::string Logger::theFileName{};
+std::ofstream Logger::theOutputFile{};
+std::string Logger::theLogToWrite{};
+bool Logger::theLogsAvailableFlag{false};
+bool Logger::theExitingFlag{false};
+std::condition_variable Logger::theCondVar{};
+std::mutex Logger::theMutex{};
+std::thread Logger::theThread{};
+std::queue<std::string> Logger::theLogsToRecord{};
+
+void Logger::initialize(const std::string& fileName)
+{
+   theFileName = fileName;
+   theThread = std::thread(Logger::threadLoop);
+}
+
+void Logger::terminate()
+{
+   theExitingFlag = true;
+   theLogsAvailableFlag = true;
+   theCondVar.notify_one();
+   theThread.join();
+   processLogs();
+}
+
 void Logger::log(const std::string& subsystemName, const LogCodeEnum& code, const std::string& message)
 {
    // Create the log message and get the string representation
    LogMessage messageToLog(subsystemName, code, message);
    std::string logString = messageToLog.toString();
    {
-      std::scoped_lock<std::mutex> lk(myMutex);
-      myLogsToRecord.push(logString);
-      myLogsAvailableFlag = true;
+      std::scoped_lock<std::mutex> lk(theMutex);
+      theLogsToRecord.push(logString);
+      theLogsAvailableFlag = true;
    }
    // Signal to the condition variable to wake up the logging thread
-   myCondVar.notify_one();
+   theCondVar.notify_one();
 }
 
 void Logger::threadLoop()
 {
-   while (!myExitingFlag)
+   while (!theExitingFlag)
    {
       // Wait until log is written into the queue
-      std::unique_lock<std::mutex> lk(myMutex);
-      myCondVar.wait(lk, [this]{ return myLogsAvailableFlag; });
-      if (myExitingFlag) // If signaled by the destructor, need to exit immediately
+      std::unique_lock<std::mutex> lk(theMutex);
+      theCondVar.wait(lk, [&]{ return theLogsAvailableFlag; });
+      if (theExitingFlag) // If signaled by the destructor, need to exit immediately
          break;
 
       // Access logs queue and append new information to output string
@@ -38,23 +63,23 @@ void Logger::threadLoop()
 
 void Logger::processLogs()
 {
-   while (!myLogsToRecord.empty())
+   while (!theLogsToRecord.empty())
    {
       // Append each log to the output string for writing to log file
-      myLogToWrite += myLogsToRecord.front();
-      myLogsToRecord.pop();
+      theLogToWrite += theLogsToRecord.front();
+      theLogsToRecord.pop();
    }
-   myLogsAvailableFlag = false;
+   theLogsAvailableFlag = false;
 }
 
 void Logger::writeToLog()
 {
-   if (!myLogToWrite.empty())
+   if (!theLogToWrite.empty())
    {
       // Open file, write, and close so that user can view update
-      myOutputFile.open(myFileName, std::ios::app);
-      myOutputFile << myLogToWrite;
-      myOutputFile.close();
+      theOutputFile.open(theFileName, std::ios::app);
+      theOutputFile << theLogToWrite;
+      theOutputFile.close();
    }
-   myLogToWrite.clear();
+   theLogToWrite.clear();
 }

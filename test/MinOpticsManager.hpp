@@ -3,7 +3,7 @@
 class MinOpticsManager : public OpticsManager
 {
 public:
-   MinOpticsManager() : OpticsManager(NAME, nullptr) {}
+   MinOpticsManager() : OpticsManager(NAME) {}
    std::string takePhoto(const CmdTakePhoto& cmd) override { return ""; }
    std::string takeVideo(const CmdTakeVideo& cmd) override { return ""; } 
    std::string takeTimelapse(const CmdTakeTimelapse& cmd) override { return ""; }

@@ -69,11 +69,10 @@ public:
     * Creates a PositionManager subsystem object with a logger and a pointer to the MotionController use to
     * move the telescope.
     * \param[in] subsystemName a string of the subsystem name moved into the class.
-    * \param[in] logger a shared pointer to a logger object used for logging within the subsystem.
     * \param[in] motionController a shared pointer to a MotionController interface.
     */
-   PositionManager(std::string subsystemName,  std::shared_ptr<Logger> logger, std::shared_ptr<IMotionController> motionController) : 
-                        Subsystem(subsystemName, logger), myMotionController(motionController) {}
+   PositionManager(std::string subsystemName, std::shared_ptr<IMotionController> motionController) : 
+                        Subsystem(subsystemName), myMotionController(motionController) {}
 
    /*!
     * Initialize the subsystem and start the thread.

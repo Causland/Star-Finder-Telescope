@@ -1,4 +1,5 @@
 #include "InformationDisplay.hpp"
+#include "Logger.hpp"
 #include "OpticsManager.hpp"
 #include <algorithm>
 
@@ -24,14 +25,14 @@ void OpticsManager::configureSubsystems(const std::vector<std::shared_ptr<Subsys
       [](auto& subsystem){ return subsystem->getName() == InformationDisplay::NAME; });
    if (it == subsystems.end())
    {
-      myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
    }
    else
    {
       myInformationDisplay = std::dynamic_pointer_cast<InformationDisplay>(*it);
       if (myInformationDisplay.expired())
       {
-         myLogger->log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
+         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
       }
    }
 }

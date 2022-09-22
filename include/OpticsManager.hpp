@@ -10,7 +10,7 @@ class InformationDisplay;
 class OpticsManager : public Subsystem
 {
 public:
-    OpticsManager(std::string subsystemName,  std::shared_ptr<Logger> logger) : Subsystem(subsystemName, logger) {}
+    OpticsManager(std::string subsystemName) : Subsystem(subsystemName) {}
 
     // Includes from ISubsystem
     void start() override;

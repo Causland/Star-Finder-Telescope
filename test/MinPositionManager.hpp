@@ -3,7 +3,7 @@
 class MinPositionManager : public PositionManager
 {
 public:
-   MinPositionManager() : PositionManager(NAME, nullptr, nullptr) {}
+   MinPositionManager() : PositionManager(NAME, nullptr) {}
    void updatePosition(const CmdUpdatePosition& cmd) override {}
    void trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions) override {};
    void calibrate(const CmdCalibrate& cmd) override {}

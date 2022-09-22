@@ -31,19 +31,18 @@ int main()
     // is entered by the user.
     std::shared_ptr<std::atomic<bool>> exitSignal = std::make_shared<std::atomic<bool>>(false);
 
-    // Create logger to pass to the constructor of each subsystem
+    // Initialize the logger to be used throughout the program.
     // Use the current date and time to name the log file
     std::ostringstream oss;
     std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     oss << "logs/" << std::put_time(std::localtime(&t), "%m-%d-%Y-%I-%M%p") << ".log";
     std::string logFileName = oss.str();
-    std::shared_ptr<Logger> logger = std::make_shared<Logger>(logFileName);
+    Logger::initialize(logFileName);
 
-    // Create the properties manager for use across all subsystems
-    PropertyManager propManager;
-    if (!propManager.initialize("properties.toml"))
+    // Initialize the properties manager for use across all subsystems
+    if (!PropertyManager::initialize("properties.toml"))
     {
-        logger->log("main", LogCodeEnum::ERROR, "Unable to initialize the property manager");
+        Logger::log("main", LogCodeEnum::ERROR, "Unable to initialize the property manager");
         return 1;
     }
 
@@ -68,11 +67,11 @@ int main()
 
     // Construct all subsystems with their name and logger and push to subsystem vector
     std::vector<std::shared_ptr<Subsystem>> subsystems;
-    subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay", logger));
-    subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", logger, starDatabase, gpsModule));
-    subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager", logger));
-    subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", logger, motionController));
-    subsystems.emplace_back(std::make_shared<CommandTerminal>("CommandTerminal", logger, exitSignal));
+    subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay"));
+    subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", starDatabase, gpsModule));
+    subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager"));
+    subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", motionController));
+    subsystems.emplace_back(std::make_shared<CommandTerminal>("CommandTerminal", exitSignal));
 
     // Update the subsystem interfaces before starting their thread loops
     for (auto& subsystem : subsystems)
@@ -83,7 +82,7 @@ int main()
     // Start all subsystems to begin functionality
     for (auto& subsystem : subsystems)
     {
-        logger->log(subsystem->getName(), LogCodeEnum::INFO, "Starting");
+        Logger::log(subsystem->getName(), LogCodeEnum::INFO, "Starting");
         subsystem->start();
     }
 
@@ -94,7 +93,7 @@ int main()
         {
             if (!subsystem->checkHeartbeat())
             {
-                logger->log(subsystem->getName(), LogCodeEnum::ERROR, "Heartbeat failure");
+                Logger::log(subsystem->getName(), LogCodeEnum::ERROR, "Heartbeat failure");
             }
         }
         std::this_thread::sleep_for(HEARTBEAT_CHECK_INTERVAL_MS);
@@ -103,11 +102,12 @@ int main()
     // Stop all subsystems
     for (auto& subsystem : subsystems)
     {
-        logger->log(subsystem->getName(), LogCodeEnum::INFO, "Stopping");
+        Logger::log(subsystem->getName(), LogCodeEnum::INFO, "Stopping");
         subsystem->stop();
     }
 
-    propManager.terminate();
+    PropertyManager::terminate();
+    Logger::terminate();
     
     return 0;
 }

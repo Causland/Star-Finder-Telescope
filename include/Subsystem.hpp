@@ -7,7 +7,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
-#include "Logger.hpp"
+#include <vector>
 
 constexpr std::chrono::milliseconds HEARTBEAT_CHECK_INTERVAL_MS(2000);
 constexpr std::chrono::milliseconds HEARTBEAT_UPDATE_INTERVAL_MS(HEARTBEAT_CHECK_INTERVAL_MS / 2);
@@ -15,9 +15,7 @@ constexpr std::chrono::milliseconds HEARTBEAT_UPDATE_INTERVAL_MS(HEARTBEAT_CHECK
 class Subsystem
 {
 public:
-   Subsystem(std::string subsystemName,  std::shared_ptr<Logger> logger) : 
-            mySubsystemName(std::move(subsystemName)), 
-            myLogger(logger) {}
+   explicit Subsystem(std::string subsystemName) : mySubsystemName(std::move(subsystemName)) {}
    
    virtual void start() = 0;
    virtual void stop() = 0;
@@ -39,7 +37,6 @@ protected:
    virtual void threadLoop() = 0;
 
    std::string mySubsystemName;
-   std::shared_ptr<Logger> myLogger;
    std::thread myThread;
    std::condition_variable myCondVar;
    std::mutex myMutex;
