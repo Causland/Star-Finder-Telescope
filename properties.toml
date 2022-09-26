@@ -1,2 +1,3 @@
-version = 0.0
-test = 'test'
+# Position Manager Properties
+manual_move_time_offset_ms = 300
+trajectory_sample_period_ms = 10

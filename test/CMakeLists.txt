@@ -25,6 +25,7 @@ set(OPTICS_MANAGER_SRC
 # Position Manager Test Files
 set(POSITION_MANAGER_SRC
    "${CMAKE_SOURCE_DIR}/src/PositionManager.cpp"
+   "${CMAKE_SOURCE_DIR}/src/PropertyManager.cpp"
    position_manager/TestPositionManager.cpp
 )
 
@@ -57,6 +58,7 @@ target_include_directories(Telescope_Unit_Test PUBLIC
    "${CMAKE_SOURCE_DIR}/test/star_tracker"
    "${curlpp_SOURCE_DIR}/include"
    "${sqlpp11_SOURCE_DIR}/include"
+   "${tomlplusplus_SOURCE_DIR}/include"
 )
 
 # Add static libs to the executable

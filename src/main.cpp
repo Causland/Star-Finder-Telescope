@@ -55,7 +55,7 @@ int main()
     }
     catch (const std::runtime_error& e)
     {
-        logger->log("main", LogCodeEnum::ERROR, "Unable to create RPi3 Motion Controller");
+        Logger::log("main", LogCodeEnum::ERROR, "Unable to create RPi3 Motion Controller");
         return 1;
     }
 #else

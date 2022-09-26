@@ -173,9 +173,9 @@ private:
    void calculatePositionAndVelocity(const double& t, const double& a, const double& b, const double& c, const double& d,
                                        const double& e, const double& f, double* pos, double* vel);
 
-   static const std::chrono::milliseconds MANUAL_MOVE_OFFSET; //!< The constant used to offset the time for manually moving the telescope to a specific position.
-   static const std::chrono::milliseconds TRAJECTORY_SAMPLE_PERIOD_DURATION; //!< The constant used to generate sub-points within a trajectory in milliseconds.
-   static const double TRAJECTORY_SAMPLE_PERIOD_IN_SEC; //!< The constant used to generate sub-points within a trajectory in seconds.
+   static std::chrono::milliseconds MANUAL_MOVE_TIME_OFFSET; //!< The time used to offset the time for manually moving the telescope to a specific position.
+   static std::chrono::milliseconds TRAJECTORY_SAMPLE_PERIOD_DURATION; //!< The time used to generate sub-points within a trajectory in milliseconds.
+   static double TRAJECTORY_SAMPLE_PERIOD_IN_SEC; //!< The time used to generate sub-points within a trajectory in seconds.
 
    double myCurrentAzimuth{0.0}; //!< The current pointing azimuth of the telescope.
    double myCurrentElevation{0.0}; //!< The current pointing elevation of the telescope.

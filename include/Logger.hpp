@@ -155,6 +155,7 @@ private:
    static std::mutex theMutex; //!< The mutex used to guard the log queue during access by subsystem threads and logging thread.
    static std::thread theThread; //!< The thread for the logger.
    static std::queue<std::string> theLogsToRecord; //!< The queue which holds the pending log strings to write to the log file.
+   static bool theInitializedFlag; //!< Indicates that the logger is initialized.
 };
 
 #endif

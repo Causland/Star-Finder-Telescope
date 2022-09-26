@@ -10,11 +10,16 @@ std::condition_variable Logger::theCondVar{};
 std::mutex Logger::theMutex{};
 std::thread Logger::theThread{};
 std::queue<std::string> Logger::theLogsToRecord{};
+bool Logger::theInitializedFlag{false};
 
 void Logger::initialize(const std::string& fileName)
 {
-   theFileName = fileName;
-   theThread = std::thread(Logger::threadLoop);
+   if (!theInitializedFlag) // Only allow initialization once unless terminated
+   {
+      theInitializedFlag = true;
+      theFileName = fileName;
+      theThread = std::thread(Logger::threadLoop);
+   }
 }
 
 void Logger::terminate()
@@ -24,6 +29,7 @@ void Logger::terminate()
    theCondVar.notify_one();
    theThread.join();
    processLogs();
+   theInitializedFlag = false;
 }
 
 void Logger::log(const std::string& subsystemName, const LogCodeEnum& code, const std::string& message)

@@ -1,16 +1,43 @@
 #include "InformationDisplay.hpp"
 #include "Logger.hpp"
 #include "PositionManager.hpp"
+#include "PropertyManager.hpp"
 #include <algorithm>
 
 const std::string PositionManager::NAME{"PositionManager"};
 
-const std::chrono::milliseconds PositionManager::MANUAL_MOVE_OFFSET{300};
-const std::chrono::milliseconds PositionManager::TRAJECTORY_SAMPLE_PERIOD_DURATION{10};
-const double PositionManager::TRAJECTORY_SAMPLE_PERIOD_IN_SEC{static_cast<double>(TRAJECTORY_SAMPLE_PERIOD_DURATION.count()) * MILLISECONDS_TO_SECONDS};
+std::chrono::milliseconds PositionManager::MANUAL_MOVE_TIME_OFFSET{300};
+std::chrono::milliseconds PositionManager::TRAJECTORY_SAMPLE_PERIOD_DURATION{10};
+double PositionManager::TRAJECTORY_SAMPLE_PERIOD_IN_SEC{static_cast<double>(TRAJECTORY_SAMPLE_PERIOD_DURATION.count()) * MILLISECONDS_TO_SECONDS};
 
 void PositionManager::start()
 {
+   // Get all properties from the properties manager
+   int64_t timeOffset = 0;
+   int64_t trajectorySamplePeriod = 0;
+   if (PropertyManager::getProperty("manual_move_time_offset_ms", &timeOffset))
+   {
+      MANUAL_MOVE_TIME_OFFSET = std::chrono::milliseconds(timeOffset);
+   }
+   else
+   {
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, 
+                     "Unable to set property: manual_move_time_offset_ms. Using default " + std::to_string(MANUAL_MOVE_TIME_OFFSET.count()));
+   }
+   if (PropertyManager::getProperty("trajectory_sample_period_ms", &trajectorySamplePeriod))
+   {
+      TRAJECTORY_SAMPLE_PERIOD_DURATION = std::chrono::milliseconds(trajectorySamplePeriod);
+   }
+   else
+   {
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, 
+                     "Unable to set property: trajectory_sample_period_ms. Using default " + std::to_string(TRAJECTORY_SAMPLE_PERIOD_DURATION.count()));
+   }
+
+   // Set any calculated properties
+   TRAJECTORY_SAMPLE_PERIOD_IN_SEC = static_cast<double>(TRAJECTORY_SAMPLE_PERIOD_DURATION.count()) * MILLISECONDS_TO_SECONDS;
+
+   // Start the thread loop to begin subsystem behavior
    myExitingFlag = false;
    myThread = std::thread(&PositionManager::threadLoop, this);
 }
@@ -48,7 +75,7 @@ void PositionManager::updatePosition(const CmdUpdatePosition& cmd)
    // Create a position series vector with the current position and time and the target position with a small time offset
    std::vector<std::pair<Position, std::chrono::system_clock::time_point>> positions;
    positions.emplace_back(Position(myCurrentAzimuth, myCurrentElevation), std::chrono::system_clock::now());
-   positions.emplace_back(Position(cmd.myThetaInDeg, cmd.myPhiInDeg), std::chrono::system_clock::now() + MANUAL_MOVE_OFFSET);
+   positions.emplace_back(Position(cmd.myThetaInDeg, cmd.myPhiInDeg), std::chrono::system_clock::now() + MANUAL_MOVE_TIME_OFFSET);
    calculateTrajectory(positions);
    myTargetUpdateFlag = true;
    myCondVar.notify_one();
