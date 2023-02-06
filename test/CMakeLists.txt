@@ -73,11 +73,11 @@ target_link_libraries(Telescope_Unit_Test PUBLIC
 # Include and link any target specific folders and libraries
 if (BUILD_RASPBERRYPI)
    target_include_directories(Telescope_Unit_Test PUBLIC
-      "${wiringpi_SOURCE_DIR}/wiringpi-src/wiringPi"
+      "${wiringpi_SOURCE_DIR}/wiringPi"
    )
 
    target_link_libraries(Telescope_Unit_Test PUBLIC
-      "${wiringpi_SOURCE_DIR}/_deps/wiringpi-src/wiringPi/libwiringPi.so.2.61"
+      "/usr/local/lib/libwiringPi.so.2.61"
    )
 endif()
 

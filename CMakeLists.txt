@@ -54,7 +54,7 @@ if (BUILD_RASPBERRYPI)
       SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src
       BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-build
       CONFIGURE_COMMAND ""
-      BUILD_COMMAND cd ${wiringpi_SOURCE_DIR} && ./build
+      BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src && ./build
       INSTALL_COMMAND ""
    )
    set(CMAKE_INSTALL_RPATH "/usr/local/lib")
@@ -67,8 +67,8 @@ if (BUILD_RASPBERRYPI)
       SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src
       BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-build
       CONFIGURE_COMMAND ""
-      BUILD_COMMAND cd ${servoblaster_SOURCE_DIR} && sudo make all
-      INSTALL_COMMAND cd ${servoblaster_SOURCE_DIR} && sudo make install
+      BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make all
+      INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make install
    )
 endif()
 

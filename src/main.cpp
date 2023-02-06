@@ -9,6 +9,7 @@
 #include "PropertyManager.hpp"
 #include "StarTracker.hpp"
 #include "Subsystem.hpp"
+#include "interfaces/GpsModule/Bn180Gps/Bn180GpsModule.hpp"
 #include "interfaces/GpsModule/SimGpsModule.hpp"
 #include "interfaces/MotionController/RPi3MotionController.hpp"
 #include "interfaces/MotionController/SimMotionController.hpp"
@@ -48,21 +49,23 @@ int main()
 
     // Create supporting modules for various subsystems
     std::shared_ptr<IMotionController> motionController;
+    std::shared_ptr<IGpsModule> gpsModule;
 #ifdef RASPBERRY_PI
     try
     {
-        motionController = std::make_shared<RPi3MotionController>(); // Raspberry Pi 3 interface
+        motionController = std::make_shared<RPi3MotionController>();
+        gpsModule = std::make_shared<Bn180GpsModule>("/dev/ttyS0");
     }
     catch (const std::runtime_error& e)
     {
-        Logger::log("main", LogCodeEnum::ERROR, "Unable to create RPi3 Motion Controller");
+        Logger::log("main", LogCodeEnum::ERROR, "Unable to create RPI3 interface module: " + std::string(e.what()));
         return 1;
     }
 #else
     motionController = std::make_shared<SimMotionController>();
+    gpsModule = std::make_shared<SimGpsModule>();
 #endif
 
-    std::shared_ptr<IGpsModule> gpsModule = std::make_shared<SimGpsModule>();
     std::shared_ptr<IStarDatabase> starDatabase = std::make_shared<SimStarDatabase>();
 
     // Construct all subsystems with their name and logger and push to subsystem vector

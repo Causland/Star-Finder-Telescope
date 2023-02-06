@@ -6,10 +6,7 @@ add_executable(Star_Finder_Telescope
    main.cpp
    OpticsManager.cpp
    PositionManager.cpp
-   interfaces/StarDatabase/SimStarDatabase.cpp
-   interfaces/GpsModule/SimGpsModule.cpp
    StarTracker.cpp
-   interfaces/MotionController/SimMotionController.cpp
    PropertyManager.cpp
 )
 
@@ -33,6 +30,8 @@ target_link_libraries(Star_Finder_Telescope PUBLIC
 if (BUILD_RASPBERRYPI)
    target_sources(Star_Finder_Telescope PUBLIC
       ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/MotionController/RPi3MotionController.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/GpsModule/Bn180Gps/Bn180GpsModule.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/StarDatabase/SimStarDatabase.cpp
    )
 
    target_include_directories(Star_Finder_Telescope PUBLIC
@@ -40,6 +39,12 @@ if (BUILD_RASPBERRYPI)
    )
 
    target_link_libraries(Star_Finder_Telescope PUBLIC
-      "${wiringpi_SOURCE_DIR}/wiringPi/libwiringPi.so.2.61"
+      "/usr/local/lib/libwiringPi.so.2.61"
    )
+else()
+   target_sources(Star_Finder_Telescope PUBLIC
+      ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/StarDatabase/SimStarDatabase.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/GpsModule/SimGpsModule.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/MotionController/SimMotionController.cpp
+   )  
 endif()
