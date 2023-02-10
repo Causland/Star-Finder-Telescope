@@ -1,3 +1,7 @@
 # Position Manager Properties
 manual_move_time_offset_ms = 300
 trajectory_sample_period_ms = 10
+
+# Bn180GpsModule Properties
+gps_serial_timeout_ds = 50
+gps_lookup_period_s = 30

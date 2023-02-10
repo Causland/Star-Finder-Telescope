@@ -2,11 +2,9 @@
 #include <algorithm>
 #include <exception>
 #include <string>
-#include <wiringPi.h>
 
 RPi3MotionController::RPi3MotionController()
 {
-   wiringPiSetup();
    myServoControlStream.open(myServoControlFilePath);
    if (!myServoControlStream.is_open())
    {

@@ -13,6 +13,7 @@ add_executable(Star_Finder_Telescope
 # Add the include folder
 target_include_directories(Star_Finder_Telescope PUBLIC
    "${CMAKE_SOURCE_DIR}/include"
+   "${PROJECT_SOURCE_DIR}/util"
    "${curlpp_SOURCE_DIR}/include"
    "${sqlpp11_SOURCE_DIR}/include"
    "${tomlplusplus_SOURCE_DIR}/include"
@@ -32,14 +33,7 @@ if (BUILD_RASPBERRYPI)
       ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/MotionController/RPi3MotionController.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/GpsModule/Bn180Gps/Bn180GpsModule.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/StarDatabase/SimStarDatabase.cpp
-   )
-
-   target_include_directories(Star_Finder_Telescope PUBLIC
-      "${wiringpi_SOURCE_DIR}/wiringPi"
-   )
-
-   target_link_libraries(Star_Finder_Telescope PUBLIC
-      "/usr/local/lib/libwiringPi.so.2.61"
+      ${PROJECT_SOURCE_DIR}/util/serial/Serial.cpp
    )
 else()
    target_sources(Star_Finder_Telescope PUBLIC

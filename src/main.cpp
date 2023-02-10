@@ -51,10 +51,23 @@ int main()
     std::shared_ptr<IMotionController> motionController;
     std::shared_ptr<IGpsModule> gpsModule;
 #ifdef RASPBERRY_PI
+    int64_t gpsTimeout{0};
+    int64_t gpsLookupPeriod{0};
+    if (!PropertyManager::getProperty("gps_serial_timeout_ds", &gpsTimeout))
+    {
+        Logger::log("main", LogCodeEnum::WARNING, "Unable to read property gps_serial_timeout_ds. Using default of 10");
+        gpsTimeout = 10;
+    }
+    if (!PropertyManager::getProperty("gps_lookup_period_s", &gpsLookupPeriod))
+    {
+        Logger::log("main", LogCodeEnum::WARNING, "unable to read property gps_lookup_period_s. Using default 60");
+        gpsLookupPeriod = 60;
+    }
+
     try
     {
         motionController = std::make_shared<RPi3MotionController>();
-        gpsModule = std::make_shared<Bn180GpsModule>("/dev/ttyS0");
+        gpsModule = std::make_shared<Bn180GpsModule>("/dev/serial0", static_cast<uint8_t>(gpsTimeout), static_cast<uint32_t>(gpsLookupPeriod));
     }
     catch (const std::runtime_error& e)
     {
@@ -68,7 +81,7 @@ int main()
 
     std::shared_ptr<IStarDatabase> starDatabase = std::make_shared<SimStarDatabase>();
 
-    // Construct all subsystems with their name and logger and push to subsystem vector
+    // Construct all subsystems with their name and needed modules and push to subsystem vector
     std::vector<std::shared_ptr<Subsystem>> subsystems;
     subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay"));
     subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", starDatabase, gpsModule));

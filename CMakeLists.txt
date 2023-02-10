@@ -48,19 +48,6 @@ FetchContent_MakeAvailable(tomlplusplus)
 option (BUILD_RASPBERRYPI "Build in Raspberry Pi specific components" OFF)
 if (BUILD_RASPBERRYPI)
    ExternalProject_Add(
-      wiringpi
-      GIT_REPOSITORY https://github.com/WiringPi/WiringPi.git
-      GIT_TAG 2.61-1
-      SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src
-      BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-build
-      CONFIGURE_COMMAND ""
-      BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/wiringpi-src && ./build
-      INSTALL_COMMAND ""
-   )
-   set(CMAKE_INSTALL_RPATH "/usr/local/lib")
-   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-   ExternalProject_Add(
       servoblaster
       GIT_REPOSITORY https://github.com/srcshelton/servoblaster.git
       GIT_TAG master
