@@ -1,26 +1,45 @@
 cmake_minimum_required(VERSION 3.10)
 
+###########################################################
+# Define options
+###########################################################
+option (BUILD_RASPBERRYPI "Build for Raspberry Pi with specific components" OFF)
+option (UNIT_TEST "Build unit tests" OFF)
+
+
+###########################################################
 # Set the project name
+###########################################################
 project(Star_Finder_Telescope)
 
-# Specify the C++ Standard
+
+###########################################################
+# Set compiler options and build settings
+###########################################################
+# unset(CMAKE_CXX_COMPILER CACHE) # Pick a compiler option each time we build
+# if (BUILD_RASPBERRYPI)
+#    set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc)
+#    set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++)
+# else()
+#    set(CMAKE_C_COMPILER /usr/bin/gcc)
+#    set(CMAKE_CXX_COMPILER /usr/bin/g++)
+# endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Configure gtest environment variables
-set (GTEST_HAS_PTHREAD 1)
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-# Add external libraries to the project
+if (BUILD_RASPBERRYPI)
+   add_compile_options(-DRASPBERRY_PI)
+endif()
+
+
+###########################################################
+# Fetch common external libraries
+###########################################################
 include(FetchContent)
 include(ExternalProject)
-
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG release-1.12.1
-)
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
 
 FetchContent_Declare(
    curlpp
@@ -44,8 +63,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tomlplusplus)
 
-# Only add the following if for a Raspberry Pi
-option (BUILD_RASPBERRYPI "Build in Raspberry Pi specific components" OFF)
 if (BUILD_RASPBERRYPI)
    ExternalProject_Add(
       servoblaster
@@ -59,10 +76,26 @@ if (BUILD_RASPBERRYPI)
    )
 endif()
 
+if (UNIT_TEST)
+   # Configure gtest environment variables
+   set (GTEST_HAS_PTHREAD 1)
+
+   FetchContent_Declare(
+      googletest
+      GIT_REPOSITORY https://github.com/google/googletest.git
+      GIT_TAG release-1.12.1
+   )
+   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+   FetchContent_MakeAvailable(googletest)
+endif()
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+
+###########################################################
 # Add a documentation target with Doxygen
+###########################################################
 find_package(Doxygen 
             REQUIRED dot
             OPTIONAL_COMPONENTS mscgen dia)
@@ -78,16 +111,30 @@ doxygen_add_docs(docs
    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-# Update the location of the output executables
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-# Set common compiler flags removed -Werror for now due to sqlpp
+###########################################################
+# Set compiler flags after building fetched includes to 
+# minimize warnings from external library code
+###########################################################
 set (CMAKE_CXX_FLAGS "-g3 -O1 -fsanitize=address -pedantic -fno-common -Wall -Wextra -Wshadow -Wdouble-promotion -Wundef -Wconversion -Wno-unused-parameter")
 
-if (BUILD_RASPBERRYPI)
-   add_compile_options(-DRASPBERRY_PI)
+
+###########################################################
+# Add the source directory
+###########################################################
+add_subdirectory(src)
+
+
+###########################################################
+# Add the unit test directory
+###########################################################
+if (UNIT_TEST)
+   add_subdirectory(test)
 endif()
 
-# Add subdirectories for main application and unit tests
-add_subdirectory(src)
-add_subdirectory(test)
+
+###########################################################
+# Remove options from cache to force reconfiguration of CMake
+###########################################################
+unset(UNIT_TEST CACHE)
+unset(BUILD_RASPBERRYPI CACHE)
