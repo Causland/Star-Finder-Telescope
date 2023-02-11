@@ -103,7 +103,7 @@ void StarTracker::threadLoop()
                if (result.myStatusCode == QueryResult::SUCCESS)
                {
                   auto positionManager = myPositionManager.lock();
-                  positionManager->trackTarget(result.myPositionResults);
+                  positionManager->trackTarget(&result.myPositionResults);
                }
                else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
                {

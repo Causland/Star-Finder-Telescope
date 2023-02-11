@@ -12,8 +12,10 @@
 
 class InformationDisplay;
 
-constexpr double MICROSECONDS_TO_SECONDS = 0.000001; //!< Conversion factor from us to s
-constexpr double MILLISECONDS_TO_SECONDS = 0.001; //!< Conversion factor from ms to s
+constexpr double MICROSECONDS_TO_SECONDS{0.000001}; //!< Conversion factor from us to s
+constexpr double MILLISECONDS_TO_SECONDS{0.001}; //!< Conversion factor from ms to s
+constexpr uint32_t DEFAULT_MANUAL_MOVE_TIME_OFFSET{300};
+constexpr uint32_t DEFAULT_TRAJECTORY_SAMPLE_PERIOD{10};
 
 /*!
  * Structure to hold information about a specific point along a trajectory path. Each point is has a
@@ -49,9 +51,9 @@ struct TrajectoryPoint
                      myPosition(pos), myVelocity(vel), myTime(tp)
    {}
 
-   Position myPosition{}; //!< The pointing position of the telescope.
-   Velocity myVelocity{}; //!< The instantaneous velocity of the telescope.
-   std::chrono::system_clock::time_point myTime{}; //!< The point in time.
+   Position myPosition; //!< The pointing position of the telescope.
+   Velocity myVelocity; //!< The instantaneous velocity of the telescope.
+   std::chrono::system_clock::time_point myTime; //!< The point in time.
 };
 
 /*!
@@ -102,10 +104,10 @@ public:
    /*!
     * Move the telescope to follow a series of positions over time. Creates a trajectory between each
     * position in the series to smoothly follow the path.
-    * \param[in] positions a vector of position and time pairs to create a trajectory from.
+    * \param[in] positions a pointer to a vector of position and time pairs to create a trajectory from.
     * \sa calculateTrajectory()
     */
-   virtual void trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions);
+   virtual void trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>* positions);
 
    /*!
     * Inform the MotionController to calibrate and update its stopping limits
@@ -151,7 +153,7 @@ private:
     * \param[out] e coefficient e
     * \param[out] f coefficient f  
     */
-   void calculatePolynomialCoef(const double& prevVal, const double& currVal, const double& prevVel, const double& currVel, 
+   static void calculatePolynomialCoef(const double& prevVal, const double& currVal, const double& prevVel, const double& currVel, 
                                  double* a, double* b, double* c, double* d, double* e, double* f);
 
    /*!
@@ -170,19 +172,17 @@ private:
     * \param[out] pos the calculated position
     * \param[out] vel the calculated instantaneous velocity
     */
-   void calculatePositionAndVelocity(const double& t, const double& a, const double& b, const double& c, const double& d,
+   static void calculatePositionAndVelocity(const double& t, const double& a, const double& b, const double& c, const double& d,
                                        const double& e, const double& f, double* pos, double* vel);
-
-   static std::chrono::milliseconds MANUAL_MOVE_TIME_OFFSET; //!< The time used to offset the time for manually moving the telescope to a specific position.
-   static std::chrono::milliseconds TRAJECTORY_SAMPLE_PERIOD_DURATION; //!< The time used to generate sub-points within a trajectory in milliseconds.
-   static double TRAJECTORY_SAMPLE_PERIOD_IN_SEC; //!< The time used to generate sub-points within a trajectory in seconds.
 
    double myCurrentAzimuth{0.0}; //!< The current pointing azimuth of the telescope.
    double myCurrentElevation{0.0}; //!< The current pointing elevation of the telescope.
    bool myTargetUpdateFlag{false}; //!< The flag used to determine when the telescope needs to be moved.
+   std::chrono::milliseconds myManualMoveTimeOffset{DEFAULT_MANUAL_MOVE_TIME_OFFSET}; //!< The time used to offset the time for manually moving the telescope to a specific position.
+   std::chrono::milliseconds myTrajectorySamplePeriod{DEFAULT_TRAJECTORY_SAMPLE_PERIOD}; //!< The time used to generate sub-points within a trajectory in milliseconds.
    std::chrono::milliseconds myTrajectoryUpdateInterval{HEARTBEAT_UPDATE_INTERVAL_MS}; //!< The time interval to the next trajectory point.
-   std::queue<TrajectoryPoint> myTrajectory{}; //!< The queue which holds the points along a trajectory.
-   std::weak_ptr<IMotionController> myMotionController; //!< Weak pointer to the Motion Controller.
+   std::queue<TrajectoryPoint> myTrajectory; //!< The queue which holds the points along a trajectory.
+   std::shared_ptr<IMotionController> myMotionController; //!< Shared pointer to the Motion Controller.
    std::weak_ptr<InformationDisplay> myInformationDisplay; //!< Weak pointer to the Information Display.
 };
 

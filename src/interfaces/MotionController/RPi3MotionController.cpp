@@ -20,15 +20,38 @@ RPi3MotionController::~RPi3MotionController()
 void RPi3MotionController::moveFocusKnob(const double& theta, const double& theta_dot)
 {
    // Convert theta_dot to rpm
-   auto theta_dot_rpm = theta_dot * DEGPERSEC_TO_ROTPERMIN;
-   auto numTenUs = (theta_dot_rpm - FOCUS_SERVO_RPM_INTERCEPT) / FOCUS_SERVO_RPM_PER_TEN_US;
-   if (numTenUs > FOCUS_SERVO_MAX_TEN_US)
+   auto rpm{theta_dot * DEGPERSEC_TO_ROTPERMIN};
+   double numTenUs{(FOCUS_SERVO_MAX_TEN_US - FOCUS_SERVO_MIN_TEN_US) / 2 + FOCUS_SERVO_MIN_TEN_US}; 
+   
+   if (rpm > 0.0)
    {
-      numTenUs = FOCUS_SERVO_MAX_TEN_US;
+      // CW rotation
+      numTenUs = (-0.0082*rpm*rpm) - (0.4462*rpm) + 144.17;
+
+      // Adjust to keep within min and max
+      if (numTenUs >= FOCUS_SERVO_CW_DEADZONE_TEN_US)
+      {
+         numTenUs = FOCUS_SERVO_CW_DEADZONE_TEN_US - 1;
+      }
+      else if (numTenUs < FOCUS_SERVO_MIN_TEN_US)
+      {
+         numTenUs = FOCUS_SERVO_MIN_TEN_US;
+      }
    }
-   else if (numTenUs < FOCUS_SERVO_MIN_TEN_US)
+   else if (rpm < 0.0)
    {
-      numTenUs = FOCUS_SERVO_MIN_TEN_US;
+      // CCW rotation
+      numTenUs = (0.0084*rpm*rpm) - (0.4103*rpm) + 154.06;
+
+      // Adjust to keep within min and max
+      if (numTenUs <= FOCUS_SERVO_CCW_DEADZONE_TEN_US)
+      {
+         numTenUs = FOCUS_SERVO_CCW_DEADZONE_TEN_US + 1;
+      }
+      else if (numTenUs > FOCUS_SERVO_MAX_TEN_US)
+      {
+         numTenUs = FOCUS_SERVO_MAX_TEN_US;
+      }
    }
 
    // Write to servoblaster dev file to move focus servo
@@ -38,15 +61,38 @@ void RPi3MotionController::moveFocusKnob(const double& theta, const double& thet
 void RPi3MotionController::moveHorizAngle(const double& theta, const double& theta_dot)
 {
    // Convert theta_dot to rpm
-   auto theta_dot_rpm = theta_dot * DEGPERSEC_TO_ROTPERMIN;
-   auto numTenUs = (theta_dot_rpm - BASE_HORIZ_SERVO_RPM_INTERCEPT) / BASE_HORIZ_SERVO_RPM_PER_TEN_US;
-   if (numTenUs > BASE_HORIZ_SERVO_MAX_TEN_US)
+   auto rpm{theta_dot * DEGPERSEC_TO_ROTPERMIN};
+   double numTenUs{(BASE_HORIZ_SERVO_MAX_TEN_US - BASE_HORIZ_SERVO_MIN_TEN_US) / 2 + BASE_HORIZ_SERVO_MIN_TEN_US}; 
+   
+   if (rpm > 0.0)
    {
-      numTenUs = BASE_HORIZ_SERVO_MAX_TEN_US;
+      // CW rotation
+      numTenUs = (-0.0082*rpm*rpm) - (0.4462*rpm) + 144.17;
+
+      // Adjust to keep within min and max
+      if (numTenUs >= BASE_HORIZ_SERVO_CW_DEADZONE_TEN_US)
+      {
+         numTenUs = BASE_HORIZ_SERVO_CW_DEADZONE_TEN_US - 1;
+      }
+      else if (numTenUs < BASE_HORIZ_SERVO_MIN_TEN_US)
+      {
+         numTenUs = BASE_HORIZ_SERVO_MIN_TEN_US;
+      }
    }
-   else if (numTenUs < BASE_HORIZ_SERVO_MIN_TEN_US)
+   else if (rpm < 0.0)
    {
-      numTenUs = BASE_HORIZ_SERVO_MIN_TEN_US;
+      // CCW rotation
+      numTenUs = (0.0084*rpm*rpm) - (0.4103*rpm) + 154.06;
+
+      // Adjust to keep within min and max
+      if (numTenUs <= BASE_HORIZ_SERVO_CCW_DEADZONE_TEN_US)
+      {
+         numTenUs = BASE_HORIZ_SERVO_CCW_DEADZONE_TEN_US + 1;
+      }
+      else if (numTenUs > BASE_HORIZ_SERVO_MAX_TEN_US)
+      {
+         numTenUs = BASE_HORIZ_SERVO_MAX_TEN_US;
+      }
    }
 
    // Write to servoblaster dev file to move base servo
@@ -55,14 +101,18 @@ void RPi3MotionController::moveHorizAngle(const double& theta, const double& the
 
 void RPi3MotionController::moveVertAngle(const double& phi, const double& phi_dot)
 {
-   uint16_t position = static_cast<uint16_t>(phi * BASE_VERT_SERVO_TEN_US_PER_DEG + BASE_VERT_SERVO_MIN_TEN_US);
-   if (position > BASE_VERT_SERVO_MAX_TEN_US)
+   double numTenUs{phi * BASE_VERT_SERVO_TEN_US_PER_DEG + BASE_VERT_SERVO_MIN_TEN_US};
+   if (numTenUs > BASE_VERT_SERVO_MAX_TEN_US)
    {
-      position = BASE_VERT_SERVO_MAX_TEN_US;
+      numTenUs = BASE_VERT_SERVO_MAX_TEN_US;
+   }
+   else if (numTenUs < BASE_VERT_SERVO_MIN_TEN_US)
+   {
+      numTenUs = BASE_VERT_SERVO_MIN_TEN_US;
    }
 
    // Write to servoblaster dev file to move base servo
-   myServoControlStream << generateServoblasterFormat(BASE_VERT_SERVO_NUM, position);
+   myServoControlStream << generateServoblasterFormat(BASE_VERT_SERVO_NUM, static_cast<uint16_t>(numTenUs));
    myServoControlStream.flush();
 }
 

@@ -17,14 +17,15 @@ constexpr double BASE_VERT_SERVO_TEN_US_PER_DEG = (BASE_VERT_SERVO_MAX_TEN_US - 
 constexpr uint8_t BASE_HORIZ_SERVO_NUM = 1; // GPIO 17, PIN 11
 constexpr uint16_t BASE_HORIZ_SERVO_MIN_TEN_US = 100;
 constexpr uint16_t BASE_HORIZ_SERVO_MAX_TEN_US = 200;
-constexpr double BASE_HORIZ_SERVO_RPM_PER_TEN_US = 1.0905;
-constexpr double BASE_HORIZ_SERVO_RPM_INTERCEPT = -162.34;
+constexpr double BASE_HORIZ_SERVO_CW_DEADZONE_TEN_US = 144; 
+constexpr double BASE_HORIZ_SERVO_CCW_DEADZONE_TEN_US = 154;
 
 constexpr uint8_t FOCUS_SERVO_NUM = 2; // GPIO 18, PIN 12
 constexpr uint16_t FOCUS_SERVO_MIN_TEN_US = 100;
 constexpr uint16_t FOCUS_SERVO_MAX_TEN_US = 200;
-constexpr double FOCUS_SERVO_RPM_PER_TEN_US = 1.0905;
-constexpr double FOCUS_SERVO_RPM_INTERCEPT = -162.34;
+constexpr double FOCUS_SERVO_CW_DEADZONE_TEN_US = 144; 
+constexpr double FOCUS_SERVO_CCW_DEADZONE_TEN_US = 154;
+
 class RPi3MotionController : public IMotionController
 {
 public:

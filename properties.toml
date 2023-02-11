@@ -1,5 +1,5 @@
 # Position Manager Properties
-manual_move_time_offset_ms = 300
+manual_move_time_offset_ms = 1500
 trajectory_sample_period_ms = 10
 
 # Bn180GpsModule Properties
