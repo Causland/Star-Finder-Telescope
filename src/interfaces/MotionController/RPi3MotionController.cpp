@@ -21,7 +21,7 @@ void RPi3MotionController::moveFocusKnob(const double& theta, const double& thet
 {
    // Convert theta_dot to rpm
    auto rpm{theta_dot * DEGPERSEC_TO_ROTPERMIN};
-   double numTenUs{(FOCUS_SERVO_MAX_TEN_US - FOCUS_SERVO_MIN_TEN_US) / 2 + FOCUS_SERVO_MIN_TEN_US}; 
+   double numTenUs{(FOCUS_SERVO_MAX_TEN_US - FOCUS_SERVO_MIN_TEN_US) / 2.0 + FOCUS_SERVO_MIN_TEN_US}; 
    
    if (rpm > 0.0)
    {
@@ -62,7 +62,7 @@ void RPi3MotionController::moveHorizAngle(const double& theta, const double& the
 {
    // Convert theta_dot to rpm
    auto rpm{theta_dot * DEGPERSEC_TO_ROTPERMIN};
-   double numTenUs{(BASE_HORIZ_SERVO_MAX_TEN_US - BASE_HORIZ_SERVO_MIN_TEN_US) / 2 + BASE_HORIZ_SERVO_MIN_TEN_US}; 
+   double numTenUs{(BASE_HORIZ_SERVO_MAX_TEN_US - BASE_HORIZ_SERVO_MIN_TEN_US) / 2.0 + BASE_HORIZ_SERVO_MIN_TEN_US}; 
    
    if (rpm > 0.0)
    {
