@@ -46,6 +46,12 @@ public:
     */
    bool getGpsPosition(double* latitude, double* longitude, double* elevation) override;
 
+   /*!
+    * Get information to display on the screen about the GPS module.
+    * \return a formatted string of information to display.
+    */
+   std::string getDisplayInfo() override;
+
 private:
    /*!
     * At the provided GPS lookup period, read all available data from the serial port and

@@ -83,7 +83,7 @@ int main()
 
     // Construct all subsystems with their name and needed modules and push to subsystem vector
     std::vector<std::shared_ptr<Subsystem>> subsystems;
-    subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay"));
+    subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay", starDatabase, gpsModule, motionController));
     subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", starDatabase, gpsModule));
     subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager"));
     subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", motionController));

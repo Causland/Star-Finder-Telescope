@@ -116,6 +116,11 @@ void RPi3MotionController::moveVertAngle(const double& phi, const double& phi_do
    myServoControlStream.flush();
 }
 
+std::string RPi3MotionController::getDisplayInfo()
+{
+   return "";
+}
+
 std::string RPi3MotionController::generateServoblasterFormat(const uint8_t& servoNum, const uint16_t& numTenUs)
 {
    return std::to_string(servoNum) + "=" + std::to_string(numTenUs) + "\n";

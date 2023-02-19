@@ -126,6 +126,11 @@ void CommandTerminal::cinWaitThreadLoop()
       if (!input.empty())
       {
          Logger::log(mySubsystemName, LogCodeEnum::INFO, "User input: " + input);
+         auto infoDisp = myInformationDisplay.lock();
+         if (infoDisp != nullptr)
+         {
+            infoDisp->updateLastCommand(input);
+         }
          // Commands can be delimited by semicolons for sequential inputs
          std::istringstream iss(input);
          std::string command;

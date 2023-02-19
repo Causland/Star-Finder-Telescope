@@ -140,6 +140,10 @@ void StarTracker::threadLoop()
 
                // Check the status code and display the search results to the user
                auto informationDisplay = myInformationDisplay.lock();
+               if (informationDisplay == nullptr)
+               {
+                  break;
+               }
                switch(searchResult.myStatusCode)
                {
                   case QueryResult::SUCCESS:
@@ -153,26 +157,26 @@ void StarTracker::threadLoop()
                         displayString += ", ";
                         displayString += *it;
                      }
-                     informationDisplay->displaySearchResults(displayString);
+                     informationDisplay->updateSearchResults(displayString);
                      break;
                   }
                   case QueryResult::FAILURE:
                   case QueryResult::INVALID_PARAM:
                   {
                      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Search failed with log: " + searchResult.myLogStatement);
-                     informationDisplay->displaySearchResults("Search returned: " + searchResult.myLogStatement);
+                     informationDisplay->updateSearchResults(searchResult.myLogStatement);
                      break;
                   }
                   case QueryResult::NO_MATCH:
                   {
                      Logger::log(mySubsystemName, LogCodeEnum::WARNING, "No search matches returned from database");
-                     informationDisplay->displaySearchResults("Search returned: No Matches");
+                     informationDisplay->updateSearchResults("No Matches");
                      break;
                   }
                   case QueryResult::UNINITIALIZED:
                   {
                      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "QueryResult is uninitialized");
-                     informationDisplay->displaySearchResults("Unable to search database");
+                     informationDisplay->updateSearchResults("Unable to search database");
                      break;
                   }
                }

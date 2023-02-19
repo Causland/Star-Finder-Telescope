@@ -7,10 +7,11 @@ class SimGpsModule : public IGpsModule
 {
 public:
    bool getGpsPosition(double* latitude, double* longitude, double* elevation) override;
+   std::string getDisplayInfo() override;
 
 private:
    double myLatitude{28.4186};
-   double myLongitude{81.5812};
+   double myLongitude{-81.5812};
    double myElevation{15};
 };
 

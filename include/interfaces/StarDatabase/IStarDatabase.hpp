@@ -37,6 +37,7 @@ public:
    virtual QueryResult queryTargetPointingTrajectory(const std::string& targetName, const std::chrono::system_clock::time_point& startTime, 
                                                       const std::chrono::system_clock::time_point& endTime, const double& gpsLong,
                                                       const double& gpsLat, const double& gpsElev) = 0;
+   virtual std::string getDisplayInfo() = 0;
 };
 
 #endif

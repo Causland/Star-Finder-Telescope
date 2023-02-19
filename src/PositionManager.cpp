@@ -122,6 +122,13 @@ void PositionManager::threadLoop()
             myMotionController->moveVertAngle(tp.myPosition.myElevation, tp.myVelocity.myVelElevation);
             myCurrentAzimuth = tp.myPosition.myAzimuth;
             myCurrentElevation = tp.myPosition.myElevation;
+            
+            auto infoDisp = myInformationDisplay.lock();
+            if (infoDisp != nullptr)
+            {
+               infoDisp->updateMotion(tp.myPosition, tp.myVelocity);
+            }
+
             myTrajectory.pop();
          }
          else

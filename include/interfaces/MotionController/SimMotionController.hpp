@@ -9,6 +9,7 @@ public:
    void moveFocusKnob(const double& theta, const double& theta_dot) override;
    void moveHorizAngle(const double& theta, const double& theta_dot) override;
    void moveVertAngle(const double& phi, const double& phi_dot) override;
+   std::string getDisplayInfo() override;
 };
 
 #endif

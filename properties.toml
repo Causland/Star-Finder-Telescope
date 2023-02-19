@@ -1,3 +1,6 @@
+# Information Display Properties
+display_refresh_rate_ms = 200
+
 # Position Manager Properties
 manual_move_time_offset_ms = 1500
 trajectory_sample_period_ms = 10

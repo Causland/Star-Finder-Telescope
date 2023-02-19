@@ -76,6 +76,12 @@ public:
     */
    void moveVertAngle(const double& phi, const double& phi_dot) override;
 
+   /*!
+    * Get information to display on the screen about the motion controller.
+    * \return a formatted string of information to display.
+    */
+   std::string getDisplayInfo() override;
+
 private:
    /*!
     * Create a string in the servoblaster output format using the provided servo number

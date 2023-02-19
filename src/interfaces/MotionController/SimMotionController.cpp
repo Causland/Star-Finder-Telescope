@@ -11,3 +11,8 @@ void SimMotionController::moveHorizAngle(const double& theta, const double& thet
 void SimMotionController::moveVertAngle(const double& phi, const double& phi_dot)
 {
 }
+
+std::string SimMotionController::getDisplayInfo()
+{
+   return "";
+}

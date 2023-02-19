@@ -68,7 +68,7 @@ class PositionManager : public Subsystem
 {
 public:
    /*!
-    * Creates a PositionManager subsystem object with a logger and a pointer to the MotionController use to
+    * Creates a PositionManager subsystem object with a pointer to the MotionController use to
     * move the telescope.
     * \param[in] subsystemName a string of the subsystem name moved into the class.
     * \param[in] motionController a shared pointer to a MotionController interface.

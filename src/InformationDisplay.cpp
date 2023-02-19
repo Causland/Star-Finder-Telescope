@@ -1,15 +1,27 @@
-#include "CommandTerminal.hpp"
 #include "InformationDisplay.hpp"
 #include "Logger.hpp"
-#include "OpticsManager.hpp"
-#include "PositionManager.hpp"
-#include "StarTracker.hpp"
+#include "PropertyManager.hpp"
 #include <algorithm>
+#include <exception>
+#include <iomanip>
 
+constexpr uint32_t SEC_PER_MIN{60};
 const std::string InformationDisplay::NAME{"InformationDisplay"};
 
 void InformationDisplay::start()
 {
+   // Get display refresh rate from the properties manager
+   int64_t refreshRate{0};
+   if (PropertyManager::getProperty("display_refresh_rate_ms", &refreshRate))
+   {
+      myRefreshRate = std::chrono::milliseconds(refreshRate);
+   }
+   else
+   {
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, 
+                     "Unable to set property: display_refresh_rate_ms. Using default " + std::to_string(myRefreshRate.count()));
+   }
+
    myThread = std::thread(&InformationDisplay::threadLoop, this);
 }
 
@@ -20,93 +32,96 @@ void InformationDisplay::stop()
    myThread.join();
 }
 
-void InformationDisplay::configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems)
+void InformationDisplay::updateMotion(const Position& pos, const Velocity& vel)
 {
-   // Find each subsystem from the vector and store in the respective pointer
-   // ICommandTerminal
-   auto it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == CommandTerminal::NAME; });
-   if (it == subsystems.end())
-   {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Command Terminal pointer");
-   }
-   else
-   {
-      myCommandTerminal = std::dynamic_pointer_cast<CommandTerminal>(*it);
-      if (myCommandTerminal.expired())
-      {
-         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Command Terminal");
-      }
-   }
-   // IOpticsManager
-   it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == OpticsManager::NAME; });
-   if (it == subsystems.end())
-   {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Optics Manager pointer");
-   }
-   else
-   {
-      myOpticsManager = std::dynamic_pointer_cast<OpticsManager>(*it);
-      if (myOpticsManager.expired())
-      {
-         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Optics Manager");
-      }
-   }
-   // IPositionManager
-   it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == PositionManager::NAME; });
-   if (it == subsystems.end())
-   {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Position Manager pointer");
-   }
-   else
-   {
-      myPositionManager = std::dynamic_pointer_cast<PositionManager>(*it);
-      if (myPositionManager.expired())
-      {
-         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Position Manager");
-      }
-   }
-   // IStarTracker
-   it = std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == StarTracker::NAME; });
-   if (it == subsystems.end())
-   {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Star Tracker pointer");
-   }
-   else
-   {
-      myStarTracker = std::dynamic_pointer_cast<StarTracker>(*it);
-      if (myStarTracker.expired())
-      {
-         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Star Tracker");
-      }
-   }
+   std::scoped_lock lk{myMutex};
+   myPosition = pos;
+   myVelocity = vel;
+   myCondVar.notify_one();   
 }
 
-void InformationDisplay::displaySearchResults(const std::string& displayString)
+void InformationDisplay::updateSearchResults(const std::string& searchResults)
 {
-   std::cout << displayString << "\n";
+   std::scoped_lock lk{myMutex};
+   mySearchResults = searchResults;
+   myCondVar.notify_one();   
+}
+
+void InformationDisplay::updateLastCommand(const std::string& command)
+{
+   std::scoped_lock lk{myMutex};
+   myLastCommand = command;
+   myCondVar.notify_one();   
 }
 
 void InformationDisplay::threadLoop()
 {
    while (!myExitingFlag)
    {
-      // Things for information display to do
-      // Query desired telemetry information from multiple subsystems
-      // Display information in an easily viewable format
-      // Select what information is displayed
       myHeartbeatFlag = true;
       std::unique_lock<std::mutex> lk(myMutex);
-      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return false || myExitingFlag; }))
+      if (!myCondVar.wait_for(lk, std::min(myTimeToRefresh, HEARTBEAT_UPDATE_INTERVAL_MS), [this](){ return myExitingFlag.load(); }))
       {
-         continue; // Heartbeat update interval timeout
+         const auto now{std::chrono::system_clock::now()};
+         const auto timeSinceRefresh{std::chrono::duration_cast<std::chrono::milliseconds>(now - myLastRefreshTime)};
+         if (timeSinceRefresh >= myRefreshRate)
+         {
+            // We need to update the screen with new data
+            updateDisplay();
+            myLastRefreshTime = now;
+         }
+         myTimeToRefresh = myRefreshRate - timeSinceRefresh;
+         continue;
       }
       if (myExitingFlag)
       {
          break;
       }
    }
+}
+
+void InformationDisplay::updateDisplay()
+{
+   myDisplayFile.open(DISPLAY_OUTPUT_FILE);
+   if (!myDisplayFile.is_open())
+   {
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to open display for writing");
+      return;
+   }
+
+   auto now{std::chrono::system_clock::now()};
+   auto uptime{std::chrono::duration_cast<std::chrono::seconds>(now - myStartTime)};
+
+   // Format all the data and write to output file
+   myDisplayFile << "=======================================\n"
+                 << "    Star Finder Telescope Telemetry    \n"
+                 << "=======================================\n"
+                 << std::setfill('0')
+                 << "Uptime: " << std::setw(2) << uptime.count() / SEC_PER_MIN << ":" 
+                 << std::setw(2) << uptime.count() % SEC_PER_MIN << "\n"
+                 << "---------------------------------------\n"
+                 << "           Position Manager            \n"
+                 << std::setfill(' ') << std::fixed << std::internal
+                 << "    Az: " << std::setprecision(2) << std::setw(7) << myPosition.myAzimuth 
+                 <<    "(deg)       El: " << std::setprecision(2) << std::setw(7) << myPosition.myElevation << "(deg)\n"
+                 << "Vel_Az: " << std::setprecision(2) << std::setw(7) << myVelocity.myVelAzimuth 
+                 << "(deg/s) Vel_El: " << std::setprecision(2) << std::setw(7) << myVelocity.myVelElevation << "(deg/s)\n"
+                 << "---------------------------------------\n"
+                 << "           Motion Controller           \n"
+                 << myMotionController->getDisplayInfo() << "\n"
+                 << "---------------------------------------\n"
+                 << "              GPS Module               \n"
+                 << myGpsModule->getDisplayInfo() << "\n"
+                 << "---------------------------------------\n"
+                 << "             Star Database             \n"
+                 << myStarDatabase->getDisplayInfo() << "\n"
+                 << "Last Search Result: " << mySearchResults << "\n"
+                 << "---------------------------------------\n"
+                 << "           Command Terminal            \n"
+                 << "Last Command: " << myLastCommand << "\n"
+                 << "---------------------------------------\n";
+
+   // Flush the file and close
+   myDisplayFile.flush();
+   myDisplayFile.close();
 }

@@ -16,7 +16,7 @@ public:
    QueryResult queryTargetPointingTrajectory(const std::string& targetName, const std::chrono::system_clock::time_point& startTime, 
                                                       const std::chrono::system_clock::time_point& endTime, const double& gpsLong,
                                                       const double& gpsLat, const double& gpsElev) override;
-
+   std::string getDisplayInfo() override { return ""; };
 private:
    QueryResult myResult{};
 };

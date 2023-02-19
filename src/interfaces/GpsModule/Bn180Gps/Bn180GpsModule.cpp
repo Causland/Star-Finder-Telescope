@@ -2,7 +2,8 @@
 #include "Logger.hpp"
 #include <cerrno>
 #include <cstring>
-#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 constexpr double MINUTES_PER_DEGREE{60.0};
 constexpr uint32_t LATITUDE_FIELD_SIZE{10};
@@ -35,6 +36,18 @@ bool Bn180GpsModule::getGpsPosition(double* latitude, double* longitude, double*
    *longitude = myLongitude;
    *elevation = myElevation;
    return myGpsLockFlag;
+}
+
+std::string Bn180GpsModule::getDisplayInfo()
+{
+   std::scoped_lock lk(myMutex);
+   std::stringstream ss;
+   ss << std::fixed << std::internal
+      << "GPS: " << std::setprecision(4) << myLatitude
+      << "(deg), " << std::setprecision(4) << myLongitude
+      << "(deg), " << std::setprecision(2) << myElevation
+      << "(m)";
+   return ss.str();
 }
 
 void Bn180GpsModule::threadLoop()
