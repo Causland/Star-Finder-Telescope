@@ -35,19 +35,22 @@ public:
    void operator=(Serial&&) = delete;
 
    /*!
-    * Read characters from the serial port up to MAX_SERIAL_READ or end of available.
-    * \sa MAX_SERIAL_READ
-    * \param[out] strOut a string to store the output.
-    * \return true if successful read.
+    * Read data from the serial port up to len or end of available.
+    * Note that this function assumes data can fit all the data requested.
+    * \param[out] data a byte array to store the data.
+    * \param[in] len a number of bytes to read.
+    * \return number of bytes read.
     */
-   bool readFromSerial(std::string* strOut);
+   ssize_t readFromSerial(uint8_t* data, const size_t& len);
 
    /*!
-    * Write a string to the serial port.
-    * \param[in] msg a message string to write.
-    * \return true if successful write.
+    * Write data to the serial port. Note that this function assumes
+    * data contains all data to send up to len.
+    * \param[in] data a byte array to write.
+    * \param[in] len a number of bytes to write.
+    * \return number of bytes written.
     */
-   bool writeToSerial(const std::string& msg);
+   ssize_t writeToSerial(uint8_t const* data, const size_t& len);
 
 private:
    int fd{-1}; //!< File descriptor of the port.

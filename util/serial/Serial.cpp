@@ -6,8 +6,6 @@
 #include <exception>
 #include <iostream>
 
-constexpr uint32_t MAX_SERIAL_READ{1024};
-
 Serial::Serial(const std::string& serialDevice, const int& fcntlMode, const uint32_t& baudRate, const uint8_t& timeoutds)
 {
    // Open the port using the serial device and mode
@@ -64,23 +62,12 @@ Serial::~Serial()
    close(fd);
 }
 
-bool Serial::readFromSerial(std::string* strOut)
+ssize_t Serial::readFromSerial(uint8_t* data, const size_t& len)
 {
-   char readBuf[MAX_SERIAL_READ];
-   // Read the buffer less 1 byte for a null terminator
-   auto bytes = read(fd, &readBuf, sizeof(readBuf) - 1);
-   if (bytes != -1)
-   {
-      // Make sure the string terminates
-      readBuf[bytes] = '\0';
-      *strOut = std::string(readBuf);
-      return true;
-   }
-   return false;
+   return read(fd, data, len);
 }
 
-bool Serial::writeToSerial(const std::string& msg)
+ssize_t Serial::writeToSerial(uint8_t const* data, const size_t& len)
 {
-   // Write string to serial
-   return write(fd, msg.c_str(), msg.size()) != -1;
+   return write(fd, data, len);
 }

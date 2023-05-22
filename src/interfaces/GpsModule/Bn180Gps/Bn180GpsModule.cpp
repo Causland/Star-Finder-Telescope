@@ -59,8 +59,8 @@ void Bn180GpsModule::threadLoop()
       {
          myLastLookupTime = now;
          // Read the serial input for GPS data
-         std::string serialOut;
-         if (!mySerial.readFromSerial(&serialOut))
+         int readBytes = mySerial.readFromSerial(myRawSerialData.data(), myRawSerialData.size());
+         if (readBytes == -1)
          {
             Logger::log("GpsParser", LogCodeEnum::ERROR, 
                            "Check for serial data failed: errno=" + std::to_string(errno) + 
@@ -68,9 +68,10 @@ void Bn180GpsModule::threadLoop()
          }
          else
          {
-            if (!serialOut.empty())
+            if (readBytes > 0)
             {
                // We got some text from the serial port so start processing
+               std::string serialOut(myRawSerialData.begin(), myRawSerialData.begin() + readBytes);
                bool endsWithNewline = (serialOut.back() == '\n');
                if (endsWithNewline)
                {

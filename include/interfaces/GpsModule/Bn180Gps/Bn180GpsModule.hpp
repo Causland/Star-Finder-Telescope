@@ -9,6 +9,8 @@
 #include <sstream>
 #include <thread>
 
+constexpr uint16_t MAX_GPS_MSG_LEN{1024};
+
 /*!
  * The BN180 GPS module gathers data from GPS satellites and provides a series of NMEA messages 
  * over serial to the connected device. This class is responsible for reading
@@ -98,6 +100,7 @@ private:
    std::atomic<bool> myExitFlag{false}; //!< The flag used to control the lifetime of the thread loop.
    std::thread myThread; //!< The GPS processing thread.
    std::mutex myMutex; //!< The mutex for accessing position data external to module.
+   std::array<uint8_t, MAX_GPS_MSG_LEN> myRawSerialData; //! The array to hold raw data from the serial device.
    std::string myLeftoverChars; //!< The characters from the serial device left over from last processing loop.
    Serial mySerial; //!< The serial device controller.
    const std::chrono::seconds myLookupPeriod{60}; //!< The period to look for new GPS data.
