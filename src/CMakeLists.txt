@@ -30,7 +30,7 @@ target_link_libraries(Star_Finder_Telescope PUBLIC
 # Add, include, and link any target specific files, folders, and libraries
 if (BUILD_RASPBERRYPI)
    target_sources(Star_Finder_Telescope PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/MotionController/RPi3MotionController.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/MotionController/AVRMotionController.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/GpsModule/Bn180Gps/Bn180GpsModule.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/StarDatabase/SimStarDatabase.cpp
       ${PROJECT_SOURCE_DIR}/util/serial/Serial.cpp

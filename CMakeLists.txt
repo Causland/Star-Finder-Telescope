@@ -63,19 +63,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tomlplusplus)
 
-if (BUILD_RASPBERRYPI)
-   ExternalProject_Add(
-      servoblaster
-      GIT_REPOSITORY https://github.com/srcshelton/servoblaster.git
-      GIT_TAG master
-      SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src
-      BINARY_DIR ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-build
-      CONFIGURE_COMMAND ""
-      BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make all
-      INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make install
-   )
-endif()
-
 if (UNIT_TEST)
    # Configure gtest environment variables
    set (GTEST_HAS_PTHREAD 1)

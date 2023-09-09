@@ -11,7 +11,7 @@
 #include "Subsystem.hpp"
 #include "interfaces/GpsModule/Bn180Gps/Bn180GpsModule.hpp"
 #include "interfaces/GpsModule/SimGpsModule.hpp"
-#include "interfaces/MotionController/RPi3MotionController.hpp"
+#include "interfaces/MotionController/AVRMotionController.hpp"
 #include "interfaces/MotionController/SimMotionController.hpp"
 #include "interfaces/StarDatabase/SimStarDatabase.hpp"
 #include <chrono>
@@ -66,7 +66,7 @@ int main()
 
     try
     {
-        motionController = std::make_shared<RPi3MotionController>();
+        motionController = std::make_shared<AVRMotionController>("/dev/serial1");
         gpsModule = std::make_shared<Bn180GpsModule>("/dev/serial0", static_cast<uint8_t>(gpsTimeout), static_cast<uint32_t>(gpsLookupPeriod));
     }
     catch (const std::runtime_error& e)
