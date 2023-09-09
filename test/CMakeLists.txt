@@ -70,16 +70,5 @@ target_link_libraries(Telescope_Unit_Test PUBLIC
    Threads::Threads
 )
 
-# Include and link any target specific folders and libraries
-if (BUILD_RASPBERRYPI)
-   target_include_directories(Telescope_Unit_Test PUBLIC
-      "${wiringpi_SOURCE_DIR}/wiringPi"
-   )
-
-   target_link_libraries(Telescope_Unit_Test PUBLIC
-      "/usr/local/lib/libwiringPi.so.2.61"
-   )
-endif()
-
 include(GoogleTest)
 gtest_discover_tests(Telescope_Unit_Test)

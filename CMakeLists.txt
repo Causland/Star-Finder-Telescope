@@ -74,12 +74,6 @@ if (BUILD_RASPBERRYPI)
       BUILD_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make all
       INSTALL_COMMAND cd ${CMAKE_SOURCE_DIR}/build/_deps/servoblaster-src && sudo make install
    )
-
-   FetchContent_Declare(
-      wiringpi
-      GIT_REPOSITORY https://github.com/Causland/WiringPi.git
-      GIT_TAG master
-   )
 endif()
 
 if (UNIT_TEST)
