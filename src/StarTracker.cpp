@@ -27,14 +27,14 @@ void StarTracker::configureSubsystems(const std::array<std::shared_ptr<Subsystem
                                     subsystems[static_cast<int>(SubsystemEnum::INFORMATION_DISPLAY)]);
    if (myInformationDisplay.expired())
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
+      LOG_ERROR("Could not cast to Information Display");
    }
    // PositionManager
    myPositionManager = std::dynamic_pointer_cast<PositionManager>(
                                  subsystems[static_cast<int>(SubsystemEnum::POSITION_MANAGER)]);
    if (myPositionManager.expired())
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Position Manager");
+      LOG_ERROR("Could not cast to Position Manager");
    }
 }
 
@@ -69,13 +69,13 @@ void StarTracker::threadLoop()
                {
                   auto position = result.myPositionResults.front();
                   auto positionManager = myPositionManager.lock();
-                  Logger::log(mySubsystemName, LogCodeEnum::INFO, "Issuing goto command for target=" + command.myTargetName + " (az,el)=(" + 
+                  LOG_INFO("Issuing goto command for target=" + command.myTargetName + " (az,el)=(" + 
                                                                      std::to_string(position.first.myAzimuth) + "," + std::to_string(position.first.myElevation) + ")");
                   positionManager->updatePosition(CmdUpdatePosition(position.first.myAzimuth, position.first.myElevation));
                }
                else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
                {
-                  Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Goto Target Result: " + result.myLogStatement);
+                  LOG_ERROR("Goto Target Result: " + result.myLogStatement);
                }
                break;
             }
@@ -92,7 +92,7 @@ void StarTracker::threadLoop()
                }
                else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
                {
-                  Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Follow Target Result: " + result.myLogStatement);
+                  LOG_ERROR("Follow Target Result: " + result.myLogStatement);
                }
                break;
             }
@@ -102,22 +102,22 @@ void StarTracker::threadLoop()
                QueryResult searchResult;
                if (command.myTargetName != "None")
                {
-                  Logger::log(mySubsystemName, LogCodeEnum::INFO, "Searching for " + command.myTargetName);
+                  LOG_INFO("Searching for " + command.myTargetName);
                   searchResult = myStarDatabase->searchTargetsByName(command.myTargetName);
                }
                else if (command.mySearchRadiusInLightYears > 0)
                {
-                  Logger::log(mySubsystemName, LogCodeEnum::INFO, "Searching for " + std::to_string(command.mySearchRadiusInLightYears));
+                  LOG_INFO("Searching for " + std::to_string(command.mySearchRadiusInLightYears));
                   searchResult = myStarDatabase->searchTargetsByRange(command.mySearchRadiusInLightYears);
                }
                else if (command.mySearchLuminosityInWatts > 0)
                {
-                  Logger::log(mySubsystemName, LogCodeEnum::INFO, "Searching for " + std::to_string(command.mySearchLuminosityInWatts));
+                  LOG_INFO("Searching for " + std::to_string(command.mySearchLuminosityInWatts));
                   searchResult = myStarDatabase->searchTargetsByLuminosity(command.mySearchLuminosityInWatts);
                }
                else
                {
-                  Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Invalid parameters for search. Given: name=" + 
+                  LOG_ERROR("Invalid parameters for search. Given: name=" + 
                                                                         command.myTargetName + " radius=" + 
                                                                         std::to_string(command.mySearchRadiusInLightYears) + " luminosity=" +
                                                                         std::to_string(command.mySearchLuminosityInWatts));
@@ -148,19 +148,19 @@ void StarTracker::threadLoop()
                   case QueryResult::FAILURE:
                   case QueryResult::INVALID_PARAM:
                   {
-                     Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Search failed with log: " + searchResult.myLogStatement);
+                     LOG_ERROR("Search failed with log: " + searchResult.myLogStatement);
                      informationDisplay->updateSearchResults(searchResult.myLogStatement);
                      break;
                   }
                   case QueryResult::NO_MATCH:
                   {
-                     Logger::log(mySubsystemName, LogCodeEnum::WARNING, "No search matches returned from database");
+                     LOG_WARN("No search matches returned from database");
                      informationDisplay->updateSearchResults("No Matches");
                      break;
                   }
                   case QueryResult::UNINITIALIZED:
                   {
-                     Logger::log(mySubsystemName, LogCodeEnum::ERROR, "QueryResult is uninitialized");
+                     LOG_ERROR("QueryResult is uninitialized");
                      informationDisplay->updateSearchResults("Unable to search database");
                      break;
                   }
@@ -169,7 +169,7 @@ void StarTracker::threadLoop()
             }
             default:
             {
-               Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Invalid command in queue: " + generalCommand.toString());
+               LOG_ERROR("Invalid command in queue: " + generalCommand.toString());
                break;
             }
          }

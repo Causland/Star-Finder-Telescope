@@ -62,7 +62,7 @@ void Bn180GpsModule::threadLoop()
          int readBytes = mySerial.readFromSerial(myRawSerialData.data(), myRawSerialData.size());
          if (readBytes == -1)
          {
-            Logger::log("GpsParser", LogCodeEnum::ERROR, 
+            LOG_ERROR(
                            "Check for serial data failed: errno=" + std::to_string(errno) + 
                            " " + std::string(std::strerror(errno)));
          }
@@ -148,7 +148,7 @@ bool Bn180GpsModule::parseNmeaGGA(const std::string& messageStr)
    std::getline(message, fieldVal, ',');
    if (fieldVal.size() != LATITUDE_FIELD_SIZE) // ddmm.mmmmm
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, "Invalid size lat field: " + fieldVal);
+      LOG_ERROR("Invalid size lat field: " + fieldVal);
       return false;
    }
    double latitude = 0.0;
@@ -161,7 +161,7 @@ bool Bn180GpsModule::parseNmeaGGA(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to convert deg/min into latitude. deg=" 
                      + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
@@ -178,7 +178,7 @@ bool Bn180GpsModule::parseNmeaGGA(const std::string& messageStr)
    std::getline(message, fieldVal, ',');
    if (fieldVal.size() != LONGITUDE_FIELD_SIZE) // dddmm.mmmmm
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, "Invalid size long field: " + fieldVal);
+      LOG_ERROR("Invalid size long field: " + fieldVal);
       return false;
    }
    double longitude = 0.0;
@@ -191,7 +191,7 @@ bool Bn180GpsModule::parseNmeaGGA(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to convert deg/min into longitude. deg=" 
                      + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
@@ -222,7 +222,7 @@ bool Bn180GpsModule::parseNmeaGGA(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to convert altitude into double. alt=" 
                      + fieldVal + " exception=" + e.what());
       return false;
@@ -253,7 +253,7 @@ bool Bn180GpsModule::parseNmeaRMC(const std::string& messageStr)
    std::getline(message, fieldVal, ',');
    if (fieldVal != "A")
    {
-      Logger::log("GpsParser", LogCodeEnum::WARNING, 
+      LOG_WARN(
                      "RMC status not indicating valid");
       return false;
    }
@@ -262,7 +262,7 @@ bool Bn180GpsModule::parseNmeaRMC(const std::string& messageStr)
    std::getline(message, fieldVal, ',');
    if (fieldVal.size() != LATITUDE_FIELD_SIZE) // ddmm.mmmmm
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, "Invalid size lat field: " + fieldVal);
+      LOG_ERROR("Invalid size lat field: " + fieldVal);
       return false;
    }
    double latitude = 0.0;
@@ -275,7 +275,7 @@ bool Bn180GpsModule::parseNmeaRMC(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to convert deg/min into latitude. deg=" 
                      + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
@@ -292,7 +292,7 @@ bool Bn180GpsModule::parseNmeaRMC(const std::string& messageStr)
    std::getline(message, fieldVal, ',');
    if (fieldVal.size() != LONGITUDE_FIELD_SIZE) // dddmm.mmmmm
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, "Invalid size long field: " + fieldVal);
+      LOG_ERROR("Invalid size long field: " + fieldVal);
       return false;
    }
    double longitude = 0.0;
@@ -305,7 +305,7 @@ bool Bn180GpsModule::parseNmeaRMC(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to convert deg/min into longitude. deg=" 
                      + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
@@ -339,7 +339,7 @@ bool Bn180GpsModule::parseNmeaGLL(const std::string& messageStr)
    std::getline(message, fieldVal, ',');
    if (fieldVal.size() != LATITUDE_FIELD_SIZE) // ddmm.mmmmm
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, "Invalid size lat field: " + fieldVal);
+      LOG_ERROR("Invalid size lat field: " + fieldVal);
       return false;
    }
    double latitude = 0.0;
@@ -352,7 +352,7 @@ bool Bn180GpsModule::parseNmeaGLL(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to convert deg/min into latitude. deg=" 
                      + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
@@ -369,7 +369,7 @@ bool Bn180GpsModule::parseNmeaGLL(const std::string& messageStr)
    std::getline(message, fieldVal, ',');
    if (fieldVal.size() != LONGITUDE_FIELD_SIZE) // dddmm.mmmmm
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, "Invalid size long field: " + fieldVal);
+      LOG_ERROR("Invalid size long field: " + fieldVal);
       return false;
    }
    double longitude = 0.0;
@@ -382,7 +382,7 @@ bool Bn180GpsModule::parseNmeaGLL(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      Logger::log("GpsParser", LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to convert deg/min into longitude. deg=" 
                      + degStr + " min=" + minStr + " exception=" + e.what());
       return false;

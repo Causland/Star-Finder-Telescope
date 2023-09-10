@@ -44,7 +44,7 @@ int main()
    // Initialize the properties manager for use across all subsystems
    if (!PropertyManager::initialize("properties.toml"))
    {
-      Logger::log("main", LogCodeEnum::ERROR, "Unable to initialize the property manager");
+      LOG_ERROR("Unable to initialize the property manager");
       return 1;
    }
 
@@ -56,12 +56,12 @@ int main()
    int64_t gpsLookupPeriod{0};
    if (!PropertyManager::getProperty("gps_serial_timeout_ds", &gpsTimeout))
    {
-      Logger::log("main", LogCodeEnum::WARNING, "Unable to read property gps_serial_timeout_ds. Using default of 10");
+      LOG_WARN("Unable to read property gps_serial_timeout_ds. Using default of 10");
       gpsTimeout = 10;
    }
    if (!PropertyManager::getProperty("gps_lookup_period_s", &gpsLookupPeriod))
    {
-      Logger::log("main", LogCodeEnum::WARNING, "unable to read property gps_lookup_period_s. Using default 60");
+      LOG_WARN("unable to read property gps_lookup_period_s. Using default 60");
       gpsLookupPeriod = 60;
    }
 
@@ -72,7 +72,7 @@ int main()
    }
    catch (const std::runtime_error& e)
    {
-      Logger::log("main", LogCodeEnum::ERROR, "Unable to create RPI3 interface module: " + std::string(e.what()));
+      LOG_ERROR("Unable to create RPI3 interface module: " + std::string(e.what()));
       return 1;
    }
 #else
@@ -104,7 +104,7 @@ int main()
    // Start all subsystems to begin functionality
    for (auto& subsystem : subsystems)
    {
-      Logger::log(subsystem->getName(), LogCodeEnum::INFO, "Starting");
+      LOG_INFO("Starting");
       subsystem->start();
    }
 
@@ -115,7 +115,7 @@ int main()
       {
          if (!subsystem->checkHeartbeat())
          {
-            Logger::log(subsystem->getName(), LogCodeEnum::ERROR, "Heartbeat failure");
+            LOG_ERROR("Heartbeat failure");
          }
       }
       std::this_thread::sleep_for(HEARTBEAT_CHECK_INTERVAL_MS);
@@ -124,7 +124,7 @@ int main()
    // Stop all subsystems
    for (auto& subsystem : subsystems)
    {
-      Logger::log(subsystem->getName(), LogCodeEnum::INFO, "Stopping");
+      LOG_INFO("Stopping");
       subsystem->stop();
    }
 

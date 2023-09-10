@@ -26,7 +26,7 @@ void OpticsManager::configureSubsystems(const std::array<std::shared_ptr<Subsyst
                                     subsystems[static_cast<int>(SubsystemEnum::INFORMATION_DISPLAY)]);
    if (myInformationDisplay.expired())
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
+      LOG_ERROR("Could not cast to Information Display");
    }
 }
 

@@ -89,7 +89,7 @@ private:
    {
       if (!input.empty())
       {
-         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Too many parameters provided for the command");
+         LOG_ERROR("Too many parameters provided for the command");
          return false;
       }
       return true;
@@ -120,7 +120,7 @@ private:
    {
       if (input.empty())
       {
-         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Not enough parameters provided for command");
+         LOG_ERROR("Not enough parameters provided for command");
          return false;
       }
       auto pos = input.find(' ');
@@ -147,7 +147,7 @@ private:
          uint64_t temp = strtoul(val.c_str(), &end, BASE_TEN);
          if (end == val.c_str() || *end != '\0')
          {
-            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Parameter " + val + " cannot be converted to long integer type");
+            LOG_ERROR("Parameter " + val + " cannot be converted to long integer type");
             return false;
          }
          currParam = temp;
@@ -158,14 +158,14 @@ private:
          double temp = strtod(val.c_str(), &end);
          if (end == val.c_str() || *end != '\0')
          {
-            Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Parameter " + val + " cannot be converted to double type");
+            LOG_ERROR("Parameter " + val + " cannot be converted to double type");
             return false;
          }
          currParam = temp;
       }
       else
       {
-         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unsupported type " + std::string(typeid(currParam).name()) + " passed into command");
+         LOG_ERROR("Unsupported type " + std::string(typeid(currParam).name()) + " passed into command");
          return false;
       }
 

@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <mutex>
@@ -11,6 +12,15 @@
 #include <string>
 #include <thread>
 #include <utility>
+
+/*!
+ * Logging macros for easy logging
+ */
+#define __FILENAME__ (std::strrchr(__FILE__, '/') ? std::strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define LOG_ERROR(msg) Logger::log(__FILENAME__, __LINE__, LogCodeEnum::ERROR, msg)
+#define LOG_WARN(msg) Logger::log(__FILENAME__, __LINE__, LogCodeEnum::WARNING, msg)
+#define LOG_INFO(msg) Logger::log(__FILENAME__, __LINE__, LogCodeEnum::INFO, msg)
 
 /*!
  * Enum class of different log codes to use while logging a message.
@@ -31,31 +41,33 @@ struct LogMessage
 {
    /*!
     * Creates a LogMessage object with the specific timestamp of when it is created.
-    * \param[in] subsystemName a string of the subsystem name moved into structure.
+    * \param[in] fileName a string of the file name moved into structure.
+    * \param[in] lineNum a integer to the line number.
     * \param[in] code a constant LogCodeEnum code.
     * \param[in] message a string of the message to be logged moved into structure.
     */
-   LogMessage(std::string subsystemName, const LogCodeEnum code, std::string message) : 
-      mySubsystemName(std::move(subsystemName)), myCode(code), myMessage(std::move(message)), myTime(std::chrono::system_clock::now()) {}
+   LogMessage(std::string fileName, const uint32_t& lineNum, const LogCodeEnum code, std::string message) : 
+               myFileName(std::move(fileName)), myLineNum(lineNum), myCode(code), 
+               myMessage(std::move(message)), myTime(std::chrono::system_clock::now()) {}
    
    /*!
     * Generate a string of the LogMessage to output to the log file. Log strings are in the format of:
-    * DATETIME | SUBSYSTEM_NAME [LOG_CODE] MESSAGE where date time is a formatted value based on the time
+    * DATETIME | [LOG_CODE] MESSAGE (FILE:LINE) where date time is a formatted value based on the time
     * the LogMessage was created.
     * \return a string of the LogMessage in log file format.
     */
    inline std::string toString()
    {
-      // Logs are in format: DATETIME | SUBSYSTEM_NAME [LOG_CODE] MESSAGE
+      // Logs are in format: DATETIME | [LOG_CODE] MESSAGE (FILE:LINE)
       std::ostringstream oss;
       std::time_t t = std::chrono::system_clock::to_time_t(myTime);
       oss << std::put_time(std::localtime(&t), "%T") 
          << " | "
-         << std::setw(18) << mySubsystemName
-         << " "
          << std::setw(7) << "[" + logCodeToString(myCode) + "]"
          << " "
          << myMessage
+         << " "
+         << "(" << myFileName << ":" << myLineNum << ")"
          << "\n";
       return oss.str();
    }
@@ -77,7 +89,8 @@ struct LogMessage
       } 
    }
    
-   const std::string mySubsystemName; //!< Name of the subsystem creating the log.
+   const std::string myFileName; //!< Name of the file creating the log.
+   const uint32_t myLineNum; //!< Line in the file creating the log.
    const LogCodeEnum myCode; //!< Code of the log.
    const std::string myMessage; //!< Message of the log.
    const std::chrono::time_point<std::chrono::system_clock> myTime; //!< Timestamp of when the log was created.
@@ -116,11 +129,13 @@ public:
 
    /*!
     * Add a new log to the logging queue with the subsystem name, the log code, and a specific message.
-    * \param[in] subsystemName a constant string of the subsystem name.
+    * \param[in] fileName a constant string to the file which called the log.
+    * \param[in] lineNum a constant integer to the log line number.
     * \param[in] code a constant LogCodeEnum code.
     * \param[in] message a constant string of the message to be logged.
     */
-   static void log(const std::string& subsystemName, const LogCodeEnum& code, const std::string& message);
+   static void log(const std::string& fileName, const uint32_t& lineNum,
+                   const LogCodeEnum& code, const std::string& message);
 
 private:
    /*!

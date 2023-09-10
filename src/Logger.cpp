@@ -32,10 +32,11 @@ void Logger::terminate()
    theInitializedFlag = false;
 }
 
-void Logger::log(const std::string& subsystemName, const LogCodeEnum& code, const std::string& message)
+void Logger::log(const std::string& fileName, const uint32_t& lineNum,
+                 const LogCodeEnum& code, const std::string& message)
 {
    // Create the log message and get the string representation
-   LogMessage messageToLog(subsystemName, code, message);
+   LogMessage messageToLog(fileName, lineNum, code, message);
    std::string logString = messageToLog.toString();
    {
       std::scoped_lock<std::mutex> lk(theMutex);

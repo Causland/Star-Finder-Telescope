@@ -18,7 +18,7 @@ void InformationDisplay::start()
    }
    else
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to set property: display_refresh_rate_ms. Using default " + std::to_string(myRefreshRate.count()));
    }
 
@@ -85,7 +85,7 @@ void InformationDisplay::updateDisplay()
    myDisplayFile.open(DISPLAY_OUTPUT_FILE);
    if (!myDisplayFile.is_open())
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to open display for writing");
+      LOG_ERROR("Unable to open display for writing");
       return;
    }
 

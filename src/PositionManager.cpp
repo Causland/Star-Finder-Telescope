@@ -17,7 +17,7 @@ void PositionManager::start()
    }
    else
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to set property: manual_move_time_offset_ms. Using default " + std::to_string(myManualMoveTimeOffset.count()));
    }
    if (PropertyManager::getProperty("trajectory_sample_period_ms", &trajectorySamplePeriod))
@@ -26,7 +26,7 @@ void PositionManager::start()
    }
    else
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, 
+      LOG_ERROR(
                      "Unable to set property: trajectory_sample_period_ms. Using default " + std::to_string(myTrajectorySamplePeriod.count()));
    }
 
@@ -51,7 +51,7 @@ void PositionManager::configureSubsystems(const std::array<std::shared_ptr<Subsy
                                     subsystems[static_cast<int>(SubsystemEnum::INFORMATION_DISPLAY)]);
    if (myInformationDisplay.expired())
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
+      LOG_ERROR("Could not cast to Information Display");
    }
 }
 
@@ -65,7 +65,7 @@ void PositionManager::updatePosition(const CmdUpdatePosition& cmd)
    calculateTrajectory(positions);
    myTargetUpdateFlag = true;
    myCondVar.notify_one();
-   Logger::log(mySubsystemName, LogCodeEnum::INFO, "Received move request: (az,el) | (" + std::to_string(myCurrentAzimuth) + "," + std::to_string(myCurrentElevation) + 
+   LOG_INFO("Received move request: (az,el) | (" + std::to_string(myCurrentAzimuth) + "," + std::to_string(myCurrentElevation) + 
                                                          ")->(" + std::to_string(cmd.myThetaInDeg) + "," + std::to_string(cmd.myPhiInDeg) + ")");
 }
 
@@ -80,7 +80,7 @@ void PositionManager::trackTarget(std::vector<std::pair<Position, std::chrono::s
    calculateTrajectory(*positions);
    myTargetUpdateFlag = true;
    myCondVar.notify_one();
-   Logger::log(mySubsystemName, LogCodeEnum::INFO, "Received target track request: points=" + std::to_string(positions->size()) + " start=(" + std::to_string(myCurrentAzimuth) +
+   LOG_INFO("Received target track request: points=" + std::to_string(positions->size()) + " start=(" + std::to_string(myCurrentAzimuth) +
                                                           "," + std::to_string(myCurrentElevation) + ") end=(" + std::to_string(positions->rbegin()->first.myAzimuth) + 
                                                           "," + std::to_string(positions->rbegin()->first.myElevation) + ")");
 }
@@ -212,7 +212,7 @@ void PositionManager::calculateTrajectory(const std::vector<std::pair<Position, 
    }
    else
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Need to provide at least two positions in call to calculateTrajectory()");
+      LOG_ERROR("Need to provide at least two positions in call to calculateTrajectory()");
       return;
    }
 }

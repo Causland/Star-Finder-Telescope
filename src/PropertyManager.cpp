@@ -21,7 +21,7 @@ bool PropertyManager::initialize(const std::string& propFilePath)
    }
    catch(const toml::parse_error& e)
    {
-      Logger::log("PropManager", LogCodeEnum::ERROR, "Unable to parse properties file");
+      LOG_ERROR("Unable to parse properties file");
       return false;
    }
    auto initializeSuccess = true;
@@ -49,7 +49,7 @@ bool PropertyManager::initialize(const std::string& propFilePath)
          std::stringstream ss;
          ss << "Parsed value not supported (" << key << "," << val 
             << ") Supported types are string, int, double, bool\n"; 
-         Logger::log("PropManager", LogCodeEnum::ERROR, ss.str());
+         LOG_ERROR(ss.str());
 
          initializeSuccess = false;
       }
@@ -85,12 +85,12 @@ bool PropertyManager::getProperty(const std::string& propName, std::string* valu
       }
       else
       {
-         Logger::log("PropManager", LogCodeEnum::WARNING, "Unable to find property: " + propName);
+         LOG_WARN("Unable to find property: " + propName);
       }
    }
    else
    {
-      Logger::log("PropManager", LogCodeEnum::ERROR, "Property Manager is uninitialized. No properties are loaded");
+      LOG_ERROR("Property Manager is uninitialized. No properties are loaded");
    }
    return false;
 }
@@ -107,12 +107,12 @@ bool PropertyManager::getProperty(const std::string& propName, int64_t* value)
       }
       else
       {
-         Logger::log("PropManager", LogCodeEnum::WARNING, "Unable to find property: " + propName);
+         LOG_WARN("Unable to find property: " + propName);
       }
    }
    else
    {
-      Logger::log("PropManager", LogCodeEnum::ERROR, "Property Manager is uninitialized. No properties are loaded");
+      LOG_ERROR("Property Manager is uninitialized. No properties are loaded");
    }
    return false;
 }
@@ -129,12 +129,12 @@ bool PropertyManager::getProperty(const std::string& propName, double* value)
       }
       else
       {
-         Logger::log("PropManager", LogCodeEnum::WARNING, "Unable to find property: " + propName);
+         LOG_WARN("Unable to find property: " + propName);
       }
    }
    else
    {
-      Logger::log("PropManager", LogCodeEnum::ERROR, "Property Manager is uninitialized. No properties are loaded");
+      LOG_ERROR("Property Manager is uninitialized. No properties are loaded");
    }
    return false;
 }
@@ -151,12 +151,12 @@ bool PropertyManager::getProperty(const std::string& propName, bool* value)
       }
       else
       {
-         Logger::log("PropManager", LogCodeEnum::WARNING, "Unable to find property: " + propName);
+         LOG_WARN("Unable to find property: " + propName);
       }
    }
    else
    {
-      Logger::log("PropManager", LogCodeEnum::ERROR, "Property Manager is uninitialized. No properties are loaded");
+      LOG_ERROR("Property Manager is uninitialized. No properties are loaded");
    }
    return false;
 }
