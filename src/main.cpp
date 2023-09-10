@@ -52,8 +52,20 @@ int main()
    std::shared_ptr<IMotionController> motionController;
    std::shared_ptr<IGpsModule> gpsModule;
 #ifdef RASPBERRY_PI
+   std::string mcSerialDev;
+   std::string gpsSerialDev;
    int64_t gpsTimeout{0};
    int64_t gpsLookupPeriod{0};
+   if (!PropertyManager::getProperty("avr_serial_device", &mcSerialDev))
+   {
+      LOG_WARN("Unable to read property avr_serial_device. Using default of /dev/serial0");
+      mcSerialDev = "/dev/serial0";
+   }
+   if (!PropertyManager::getProperty("gps_serial_device", &gpsSerialDev))
+   {
+      LOG_WARN("Unable to read property gps_serial_device. Using default of /dev/serial1");
+      gpsSerialDev = "/dev/serial1";
+   }
    if (!PropertyManager::getProperty("gps_serial_timeout_ds", &gpsTimeout))
    {
       LOG_WARN("Unable to read property gps_serial_timeout_ds. Using default of 10");
@@ -67,8 +79,8 @@ int main()
 
    try
    {
-      motionController = std::make_shared<AVRMotionController>("/dev/serial1");
-      gpsModule = std::make_shared<Bn180GpsModule>("/dev/serial0", static_cast<uint8_t>(gpsTimeout), static_cast<uint32_t>(gpsLookupPeriod));
+      motionController = std::make_shared<AVRMotionController>(mcSerialDev);
+      gpsModule = std::make_shared<Bn180GpsModule>(gpsSerialDev, static_cast<uint8_t>(gpsTimeout), static_cast<uint32_t>(gpsLookupPeriod));
    }
    catch (const std::runtime_error& e)
    {

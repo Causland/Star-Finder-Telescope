@@ -59,12 +59,11 @@ void Bn180GpsModule::threadLoop()
       {
          myLastLookupTime = now;
          // Read the serial input for GPS data
-         int readBytes = mySerial.readFromSerial(myRawSerialData.data(), myRawSerialData.size());
+         ssize_t readBytes = mySerial.readFromSerial(myRawSerialData.data(), myRawSerialData.size());
          if (readBytes == -1)
          {
-            LOG_ERROR(
-                           "Check for serial data failed: errno=" + std::to_string(errno) + 
-                           " " + std::string(std::strerror(errno)));
+            LOG_ERROR("Check for serial data failed: errno=" + std::to_string(errno) + 
+                        " " + std::string(std::strerror(errno)));
          }
          else
          {

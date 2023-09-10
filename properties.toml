@@ -1,10 +1,14 @@
-# Information Display Properties
+# InformationDisplay Properties
 display_refresh_rate_ms = 200
 
-# Position Manager Properties
+# PositionManager Properties
 manual_move_time_offset_ms = 1500
 trajectory_sample_period_ms = 10
 
+# AVRMotionController Properties
+avr_serial_device = "/dev/serial0"
+
 # Bn180GpsModule Properties
+gps_serial_device = "/dev/ttyUSB0"
 gps_serial_timeout_ds = 50
 gps_lookup_period_s = 30
