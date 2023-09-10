@@ -14,6 +14,7 @@
 #include "interfaces/MotionController/AVRMotionController.hpp"
 #include "interfaces/MotionController/SimMotionController.hpp"
 #include "interfaces/StarDatabase/SimStarDatabase.hpp"
+#include <array>
 #include <chrono>
 #include <exception>
 #include <iomanip>
@@ -81,13 +82,19 @@ int main()
 
     std::shared_ptr<IStarDatabase> starDatabase = std::make_shared<SimStarDatabase>();
 
-    // Construct all subsystems with their name and needed modules and push to subsystem vector
-    std::vector<std::shared_ptr<Subsystem>> subsystems;
-    subsystems.emplace_back(std::make_shared<InformationDisplay>("InformationDisplay", starDatabase, gpsModule, motionController));
-    subsystems.emplace_back(std::make_shared<StarTracker>("StarTracker", starDatabase, gpsModule));
-    subsystems.emplace_back(std::make_shared<OpticsManager>("OpticsManager"));
-    subsystems.emplace_back(std::make_shared<PositionManager>("PositionManager", motionController));
-    subsystems.emplace_back(std::make_shared<CommandTerminal>("CommandTerminal", exitSignal));
+    // Construct all subsystems with their name associated modules. Add to subsystem array
+    std::array<std::shared_ptr<Subsystem>, static_cast<size_t>(SubsystemEnum::NUM_SUBSYSTEMS)> subsystems;
+    subsystems[static_cast<int>(SubsystemEnum::INFORMATION_DISPLAY)] = 
+                    std::make_shared<InformationDisplay>("InformationDisplay", starDatabase, gpsModule, motionController);
+    subsystems[static_cast<int>(SubsystemEnum::STAR_TRACKER)] =
+                    std::make_shared<StarTracker>("StarTracker", starDatabase, gpsModule);
+    subsystems[static_cast<int>(SubsystemEnum::OPTICS_MANAGER)] =
+                    std::make_shared<OpticsManager>("OpticsManager");
+    subsystems[static_cast<int>(SubsystemEnum::POSITION_MANAGER)] = 
+                    std::make_shared<PositionManager>("PositionManager", motionController);
+    subsystems[static_cast<int>(SubsystemEnum::COMMAND_TERMINAL)] = 
+                    std::make_shared<CommandTerminal>("CommandTerminal", exitSignal);
+
 
     // Update the subsystem interfaces before starting their thread loops
     for (auto& subsystem : subsystems)

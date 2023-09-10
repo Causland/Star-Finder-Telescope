@@ -15,7 +15,8 @@ public:
     // Includes from ISubsystem
     void start() override;
     void stop() override;
-    void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override;
+    void configureSubsystems(const std::array<std::shared_ptr<Subsystem>, 
+                                              static_cast<size_t>(SubsystemEnum::NUM_SUBSYSTEMS)>& subsystems) override;
 
     virtual std::string takePhoto(const CmdTakePhoto& cmd);
     virtual std::string takeVideo(const CmdTakeVideo& cmd);

@@ -49,7 +49,8 @@ public:
      * Set interface pointers for use throughout the subsystem.
      * \param[in] subsystems a list of subsystem interface pointers.
      */
-    void configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems) override {};
+    void configureSubsystems(const std::array<std::shared_ptr<Subsystem>, 
+                                              static_cast<size_t>(SubsystemEnum::NUM_SUBSYSTEMS)>& subsystems) override {};
 
     /*!
      * Update the current position and velocity on the display.

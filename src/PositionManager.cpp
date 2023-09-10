@@ -42,23 +42,16 @@ void PositionManager::stop()
    myThread.join();
 }
 
-void PositionManager::configureSubsystems(const std::vector<std::shared_ptr<Subsystem>>& subsystems)
+void PositionManager::configureSubsystems(const std::array<std::shared_ptr<Subsystem>, 
+                                                           static_cast<size_t>(SubsystemEnum::NUM_SUBSYSTEMS)>& subsystems)
 {
    // Find each subsystem from the vector and store in the respective pointer
    // InformationDisplay
-   auto it{std::find_if(subsystems.begin(), subsystems.end(), 
-      [](auto& subsystem){ return subsystem->getName() == InformationDisplay::NAME; })};
-   if (it == subsystems.end())
+   myInformationDisplay = std::dynamic_pointer_cast<InformationDisplay>(
+                                    subsystems[static_cast<int>(SubsystemEnum::INFORMATION_DISPLAY)]);
+   if (myInformationDisplay.expired())
    {
-      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Unable to find Information Display pointer");
-   }
-   else
-   {
-      myInformationDisplay = std::dynamic_pointer_cast<InformationDisplay>(*it);
-      if (myInformationDisplay.expired())
-      {
-         Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
-      }
+      Logger::log(mySubsystemName, LogCodeEnum::ERROR, "Could not cast to Information Display");
    }
 }
 
