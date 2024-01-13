@@ -21,6 +21,17 @@ enum class ApiResponseEnum
 };
 
 /*!
+ * Holds the response type and content of a NASA/JPL Horizons API call.
+ */
+struct ApiResponse
+{
+   explicit ApiResponse(ApiResponseEnum type) : myType(type) {}
+
+   ApiResponseEnum myType{SUCCESS}; //!< The type of response from the API.
+   std::vector<std::string> myResponseResults; //!< A vector of strings containing lines of parsed response content.
+};
+
+/*!
  * The StarApi class is responsible for querying the NASA/JPL Horizons API and returning
  * the response in a parsed vector of strings where each entry is either a datapoint or a
  * line of text.
@@ -65,41 +76,35 @@ public:
     * \param[in] latitude a latitude position relative to the WGS-84 GPS reference frame.
     * \param[in] longitude a longitude position relative to the WGS-84 GPS reference frame.
     * \param[in] elevation an elevation position relative to the WGS-84 GPS reference frame.
-    * \return an ApiResponseEnum with value matching the result of the query. The response data is stored in the myProcessedQueryResults.
+    * \return an ApiResponse with the result of the API call.
     */
-   ApiResponseEnum performApiQuery(std::string targetName, std::chrono::system_clock::time_point startTime, std::chrono::system_clock::time_point endTime, const std::chrono::milliseconds& timePeriod, double latitude, double longitude, double elevation);
-   
-   /*!
-    * Get the vector of strings which contain either the datapoints from a successful query or 
-    * the user target options from an indeterminate query.
-    * \sa performApiQuery()
-    * \return a vector of strings containing the result of the performApiQuery() function.
-    */
-   std::vector<std::string> getQueryResults();
+   ApiResponse performApiQuery(const std::string& targetName, 
+                               const std::chrono::system_clock::time_point& startTime, 
+                               const std::chrono::system_clock::time_point& endTime, 
+                               const std::chrono::milliseconds& timePeriod, 
+                               const double& latitude, const double& longitude, const double& elevation);
 
 private:
    /*!
     * Calls the cURL function curl_easy_escape() to conver the given input string to a URL encoded string.
     * The cURL function returns a newly allocated C string which needs to be deallocated using the curl_free() function.
-    * \param[in,out] param a parameter value to covert into a URL encoded string. This string is edited directly.
+    * \param[out] param a parameter value to covert into a URL encoded string. This string is edited directly.
     */
-   void encodeParameterValue(std::string& param);
+   void encodeParameterValue(std::string* param);
 
    /*!
     * Processes the query result stream line by line to determine whether the result is a success, has user options,
     * returned no match, or failed. The function first verifies that the API version and source are correct. It then
-    * checks for specific indicators to determine the response type. The text results of each type is retuned in the
-    * myProcessedQueryResults vector of strings.
+    * checks for specific indicators to determine the response type and returns the data.
     * \param[in] response a stringstream containing the response of the API query.
-    * \return an ApiResponseEnum with the value matching the result of the interpreted query.
+    * \return an ApiResponse with the result of the interpreted query.
     */
-   ApiResponseEnum interpretAndStoreResponse(std::stringstream& response);
+   ApiResponse interpretAndStoreResponse(std::stringstream& response);
 
    curlpp::Easy myEasyCurlRequest; //!< The curlpp easy request object used to make an API query.
    const std::string myBaseApiQuery{"https://ssd.jpl.nasa.gov/api/horizons.api?format=text&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'"
                                         "&CENTER='coord'&COORD_TYPE='GEODETIC'&QUANTITIES='4,20'&ANG_FORMAT='DEG'&APPARENT='REFRACTED'"
                                         "&TIME_DIGITS='SECONDS'&RANGE_UNITS='KM'&SKIP_DAYLT='YES'&ELEV_CUT='0'&CSV_FORMAT='YES'"}; //!< The base NASA/JPL Horizons API query used. Variable queries get added in the performApiQuery() function.
-   std::vector<std::string> myProcessedQueryResults; //!< The vector of strings used to store the latest processed API query response.
 };
 
 #endif

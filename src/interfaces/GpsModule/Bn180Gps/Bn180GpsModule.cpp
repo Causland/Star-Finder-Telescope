@@ -160,9 +160,8 @@ bool Bn180GpsModule::parseNmeaGGA(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      LOG_ERROR(
-                     "Unable to convert deg/min into latitude. deg=" 
-                     + degStr + " min=" + minStr + " exception=" + e.what());
+      LOG_ERROR("Unable to convert deg/min into latitude. deg=" 
+                  + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
    }
 
@@ -190,9 +189,8 @@ bool Bn180GpsModule::parseNmeaGGA(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      LOG_ERROR(
-                     "Unable to convert deg/min into longitude. deg=" 
-                     + degStr + " min=" + minStr + " exception=" + e.what());
+      LOG_ERROR("Unable to convert deg/min into longitude. deg=" 
+                  + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
    }
 
@@ -221,9 +219,8 @@ bool Bn180GpsModule::parseNmeaGGA(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      LOG_ERROR(
-                     "Unable to convert altitude into double. alt=" 
-                     + fieldVal + " exception=" + e.what());
+      LOG_ERROR("Unable to convert altitude into double. alt=" 
+                  + fieldVal + " exception=" + e.what());
       return false;
    }
 
@@ -252,8 +249,7 @@ bool Bn180GpsModule::parseNmeaRMC(const std::string& messageStr)
    std::getline(message, fieldVal, ',');
    if (fieldVal != "A")
    {
-      LOG_WARN(
-                     "RMC status not indicating valid");
+      LOG_WARN("RMC status not indicating valid");
       return false;
    }
 
@@ -274,9 +270,8 @@ bool Bn180GpsModule::parseNmeaRMC(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      LOG_ERROR(
-                     "Unable to convert deg/min into latitude. deg=" 
-                     + degStr + " min=" + minStr + " exception=" + e.what());
+      LOG_ERROR("Unable to convert deg/min into latitude. deg=" 
+                  + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
    }
 
@@ -304,9 +299,8 @@ bool Bn180GpsModule::parseNmeaRMC(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      LOG_ERROR(
-                     "Unable to convert deg/min into longitude. deg=" 
-                     + degStr + " min=" + minStr + " exception=" + e.what());
+      LOG_ERROR("Unable to convert deg/min into longitude. deg=" 
+                  + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
    }
 
@@ -351,9 +345,8 @@ bool Bn180GpsModule::parseNmeaGLL(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      LOG_ERROR(
-                     "Unable to convert deg/min into latitude. deg=" 
-                     + degStr + " min=" + minStr + " exception=" + e.what());
+      LOG_ERROR("Unable to convert deg/min into latitude. deg=" 
+                  + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
    }
 
@@ -381,9 +374,8 @@ bool Bn180GpsModule::parseNmeaGLL(const std::string& messageStr)
    }
    catch(const std::exception& e)
    {
-      LOG_ERROR(
-                     "Unable to convert deg/min into longitude. deg=" 
-                     + degStr + " min=" + minStr + " exception=" + e.what());
+      LOG_ERROR("Unable to convert deg/min into longitude. deg=" 
+                  + degStr + " min=" + minStr + " exception=" + e.what());
       return false;
    }
 

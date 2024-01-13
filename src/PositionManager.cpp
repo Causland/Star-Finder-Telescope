@@ -17,8 +17,7 @@ void PositionManager::start()
    }
    else
    {
-      LOG_ERROR(
-                     "Unable to set property: manual_move_time_offset_ms. Using default " + std::to_string(myManualMoveTimeOffset.count()));
+      LOG_ERROR("Unable to set property: manual_move_time_offset_ms. Using default " + std::to_string(myManualMoveTimeOffset.count()));
    }
    if (PropertyManager::getProperty("trajectory_sample_period_ms", &trajectorySamplePeriod))
    {
@@ -26,8 +25,7 @@ void PositionManager::start()
    }
    else
    {
-      LOG_ERROR(
-                     "Unable to set property: trajectory_sample_period_ms. Using default " + std::to_string(myTrajectorySamplePeriod.count()));
+      LOG_ERROR("Unable to set property: trajectory_sample_period_ms. Using default " + std::to_string(myTrajectorySamplePeriod.count()));
    }
 
    // Start the thread loop to begin subsystem behavior

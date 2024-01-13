@@ -18,8 +18,7 @@ void InformationDisplay::start()
    }
    else
    {
-      LOG_ERROR(
-                     "Unable to set property: display_refresh_rate_ms. Using default " + std::to_string(myRefreshRate.count()));
+      LOG_ERROR("Unable to set property: display_refresh_rate_ms. Using default " + std::to_string(myRefreshRate.count()));
    }
 
    myThread = std::thread(&InformationDisplay::threadLoop, this);
