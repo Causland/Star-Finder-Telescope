@@ -1,0 +1,35 @@
+name: build_test_action
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build_test:
+    if: github.repository == 'causland/Star-Finder-Telescope'
+    runs-on: ubuntu-latest
+    steps:               
+    - name: actions-setup-cmake
+      uses: jwlawson/actions-setup-cmake@v1.14.2
+      with:
+        cmake-version: '3.28.x'
+
+    - name: Configure Project
+      run: ./configure.sh
+
+    - name: Build Project
+      run: ./build.sh -t
+
+    - name: Run Tests
+      run: ./run_tests.sh
+    
+    - name: Publish Results
+      uses: mikepenz/action-junit-report@v4
+      with:
+        report_paths: '**/build/test_results.xml'
+        fail_on_failure: true
+        require_tests: true
+        detailed_summary: true
+
