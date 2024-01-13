@@ -20,10 +20,10 @@ protected:
          commandTerminal(std::make_unique<CommandTerminal>("CommandTerminal", exitSignal))
    {
       // Create the subsystems vector
-      subsystems.emplace_back(opticsManager);
-      subsystems.emplace_back(starTracker);
-      subsystems.emplace_back(positionManager);
-      subsystems.emplace_back(informationDisplay);
+      subsystems[static_cast<int>(SubsystemEnum::OPTICS_MANAGER)] = opticsManager;
+      subsystems[static_cast<int>(SubsystemEnum::STAR_TRACKER)] = starTracker;
+      subsystems[static_cast<int>(SubsystemEnum::POSITION_MANAGER)] = positionManager;
+      subsystems[static_cast<int>(SubsystemEnum::INFORMATION_DISPLAY)] = informationDisplay;
 
       // Initialize the Command Terminal subsystem
       commandTerminal->configureSubsystems(subsystems);
@@ -64,7 +64,7 @@ protected:
 
    static Logger logger;
    std::shared_ptr<std::atomic<bool>> exitSignal;
-   std::vector<std::shared_ptr<Subsystem>> subsystems;
+   std::array<std::shared_ptr<Subsystem>, static_cast<size_t>(SubsystemEnum::NUM_SUBSYSTEMS)> subsystems;
    std::shared_ptr<CT_OpticsManager> opticsManager;
    std::shared_ptr<CT_PositionManager> positionManager;
    std::shared_ptr<CT_StarTracker> starTracker;

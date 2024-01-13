@@ -4,9 +4,8 @@
 # Usage
 usage()
 {
-   echo """compile.sh [-r] [-t] [-d] [-h]
+   echo """build.sh [-t] [-d] [-h]
    where:
-      -r   => Cross compile for Raspberry Pi
       -t   => Build unit tests
       -d   => Generate documentation
       -h   => Output this usage
@@ -14,15 +13,11 @@ usage()
    exit
 }
 
-rpi=false
 test=false
 docs=false
 
-while getopts "rtdh" arg; do
+while getopts "tdh" arg; do
    case $arg in 
-   r)
-      rpi=true
-      ;;
    t) 
       test=true
       ;;
@@ -35,21 +30,20 @@ while getopts "rtdh" arg; do
    esac
 done
 
-mkdir -p build
+if [ ! -d build ]; then
+   echo "Build directory not configured"
+   exit
+fi
+
 cd build
 
-cmake_args=""
-if [[ "$rpi" == true ]]; then
-   cmake_args="$cmake_args -DBUILD_RASPBERRYPI=ON"
-fi
-if [[ "$test" == true ]]; then
-   cmake_args="$cmake_args -DUNIT_TEST=ON"
-fi
+make -j8
 
-cmake $cmake_args ..
-make
+if [[ "$test" == true ]]; then
+   make -j8 tests 
+fi
 
 if [[ "$docs" == true ]]; then
-   make docs
+   make -j8 docs
 fi
 

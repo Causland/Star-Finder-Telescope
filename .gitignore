@@ -6,3 +6,4 @@ experimental/
 .vscode/
 .venv/
 telem_display.txt
+.cache/

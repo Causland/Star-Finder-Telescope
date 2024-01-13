@@ -1,10 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.21)
 
 ###########################################################
 # Define options
 ###########################################################
 option (BUILD_RASPBERRYPI "Build for Raspberry Pi with specific components" OFF)
-option (UNIT_TEST "Build unit tests" OFF)
 
 
 ###########################################################
@@ -43,6 +42,9 @@ endif()
 include(FetchContent)
 include(ExternalProject)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 FetchContent_Declare(
    curlpp
    GIT_REPOSITORY https://github.com/jpbarrette/curlpp.git
@@ -65,21 +67,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tomlplusplus)
 
-if (UNIT_TEST)
-   # Configure gtest environment variables
-   set (GTEST_HAS_PTHREAD 1)
+# Configure gtest environment variables
+set (GTEST_HAS_PTHREAD 1)
 
-   FetchContent_Declare(
-      googletest
-      GIT_REPOSITORY https://github.com/google/googletest.git
-      GIT_TAG release-1.12.1
-   )
-   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-   FetchContent_MakeAvailable(googletest)
-endif()
-
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
+FetchContent_Declare(
+   googletest
+   GIT_REPOSITORY https://github.com/google/googletest.git
+   GIT_TAG release-1.12.1
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
 
 ###########################################################
@@ -117,13 +114,6 @@ add_subdirectory(src)
 ###########################################################
 # Add the unit test directory
 ###########################################################
-if (UNIT_TEST)
-   add_subdirectory(test)
-endif()
+enable_testing()
+add_subdirectory(test)
 
-
-###########################################################
-# Remove options from cache to force reconfiguration of CMake
-###########################################################
-unset(UNIT_TEST CACHE)
-unset(BUILD_RASPBERRYPI CACHE)
