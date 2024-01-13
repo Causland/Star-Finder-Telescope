@@ -10,11 +10,18 @@ jobs:
   build_test:
     if: github.repository == 'causland/Star-Finder-Telescope'
     runs-on: ubuntu-latest
-    steps:               
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+    
     - name: actions-setup-cmake
       uses: jwlawson/actions-setup-cmake@v1.14.2
       with:
         cmake-version: '3.28.x'
+
+    - name: Setup Environment
+      run: |
+        sudo apt-get install curl libcurl4-openssl-dev sqlite3 graphviz doxygen
 
     - name: Configure Project
       run: ./configure.sh
