@@ -25,12 +25,10 @@ while getopts "rh" arg; do
    esac
 done
 
-mkdir -p build
-cd build
-
 cmake_args=""
 if [[ "$rpi" == true ]]; then
-   cmake_args="$cmake_args -DBUILD_RASPBERRYPI=ON"
+   cmake . -B build-armv8-rpi3 -DBUILD_RASPBERRYPI=ON --toolchain rpi-toolchain.cmake 
+else
+   cmake . -B build-x86_64-ubuntu
 fi
 
-cmake $cmake_args ..

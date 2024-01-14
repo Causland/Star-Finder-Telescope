@@ -13,17 +13,8 @@ project(Star_Finder_Telescope)
 
 
 ###########################################################
-# Set compiler options and build settings
+# Set compiler/linker options and build settings
 ###########################################################
-# unset(CMAKE_CXX_COMPILER CACHE) # Pick a compiler option each time we build
-# if (BUILD_RASPBERRYPI)
-#    set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc)
-#    set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++)
-# else()
-#    set(CMAKE_C_COMPILER /usr/bin/gcc)
-#    set(CMAKE_CXX_COMPILER /usr/bin/g++)
-# endif()
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS ON)
@@ -42,7 +33,8 @@ endif()
 include(FetchContent)
 include(ExternalProject)
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 FetchContent_Declare(

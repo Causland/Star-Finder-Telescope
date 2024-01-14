@@ -1,6 +1,7 @@
 bin/
 docs/
 build/
+build-*/
 logs/
 experimental/
 .vscode/

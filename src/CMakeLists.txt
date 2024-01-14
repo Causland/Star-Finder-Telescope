@@ -18,15 +18,24 @@ target_include_directories(SFT PUBLIC
    "${tomlplusplus_SOURCE_DIR}/include"
 )
 
-# Add static libs to the executable
-target_link_libraries(SFT PUBLIC
-   curlpp
-   sqlite3
-   sqlpp11
-   Threads::Threads
-)
+# Add libs to the executable (For cross compilation, statically link dependencies)
+if (BUILD_RASPBERRYPI)
+   target_link_libraries(SFT PUBLIC
+      curlpp_static
+      sqlite3
+      sqlpp11
+      Threads::Threads
+   )
+else()
+   target_link_libraries(SFT PUBLIC
+      curlpp
+      sqlite3
+      sqlpp11
+      Threads::Threads
+   )
+endif()
 
-# Add, include, and link any target specific files, folders, and libraries
+# Add any target specific files
 if (BUILD_RASPBERRYPI)
    target_sources(SFT PUBLIC
       ${CMAKE_CURRENT_SOURCE_DIR}/interfaces/MotionController/AVRMotionController.cpp

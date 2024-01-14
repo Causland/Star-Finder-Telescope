@@ -1,5 +1,7 @@
 #include "interfaces/MotionController/AVRMotionController.hpp"
 #include <algorithm>
+#include <array>
+#include <cstdint>
 #include <exception>
 #include <string>
 

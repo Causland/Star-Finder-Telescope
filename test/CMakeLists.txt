@@ -26,7 +26,8 @@ function(create_test)
       ${TEST_LIBS}
    )
 
-   gtest_discover_tests("${TEST_COMPONENT_NAME}_Test")
+   gtest_discover_tests("${TEST_COMPONENT_NAME}_Test"
+      DISCOVERY_MODE PRE_TEST)
 endfunction()
 
 # Logger

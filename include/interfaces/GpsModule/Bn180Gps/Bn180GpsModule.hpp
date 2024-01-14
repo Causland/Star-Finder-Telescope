@@ -3,6 +3,7 @@
 
 #include "interfaces/GpsModule/IGpsModule.hpp"
 #include "serial/Serial.hpp"
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <mutex>

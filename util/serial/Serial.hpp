@@ -1,6 +1,7 @@
 #ifndef SERIAL_HPP
 #define SERIAL_HPP
 
+#include <cstdint>
 #include <fcntl.h>
 #include <string>
 #include <termios.h>
