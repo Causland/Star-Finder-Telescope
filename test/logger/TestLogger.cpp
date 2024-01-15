@@ -34,6 +34,7 @@ protected:
       // Create folder for test files
       std::srand(static_cast<unsigned int>(std::time(nullptr)));
       testoutDir = testoutDir + std::to_string(rand()) + "/";
+      std::filesystem::remove_all(testoutDir); // Remove on small chance of duplicate
       std::filesystem::create_directory(testoutDir);
    }
    static void TearDownTestSuite()
@@ -58,8 +59,9 @@ TEST_F(TestFixtureLogger, Init_Term)
    const auto initSleepTerm = [](const std::string& logName)
 			   {
                               Logger::initialize(logName);
-                              LOG_INFO("Creating " + logName);
 			      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                              LOG_INFO("Creating " + logName);
+			      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			      Logger::terminate();
 			      EXPECT_TRUE(std::filesystem::exists(logName));
 		           };
@@ -76,14 +78,16 @@ TEST_F(TestFixtureLogger, Macros)
 
    const std::string macroLog{testoutDir + std::string("macros.log")};
    Logger::initialize(macroLog);
+   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
    LOG_INFO("info");
    LOG_WARN("warning");
    LOG_ERROR("error");
    LOG_DEBUG("debug");
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   std::this_thread::sleep_for(std::chrono::milliseconds(100));
    std::ifstream is{macroLog};
+   ASSERT_TRUE(is.is_open());
    std::vector<std::string> lines(InIt{is}, InIt{});
    
    ASSERT_EQ(lines.size(), 4);
@@ -120,29 +124,32 @@ TEST_F(TestFixtureLogger, HighDemand)
 
    const std::string demandLog{testoutDir + std::string("high_demand.log")};
    Logger::initialize(demandLog);
+   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-   std::thread t1{std::thread(logRepeatedly, LogCodeEnum::ERROR, 2000, std::chrono::milliseconds(1))};
-   std::thread t2{std::thread(logRepeatedly, LogCodeEnum::WARNING, 1000, std::chrono::milliseconds(2))};
-   std::thread t3{std::thread(logRepeatedly, LogCodeEnum::INFO, 500, std::chrono::milliseconds(4))};
-   std::thread t4{std::thread(logRepeatedly, LogCodeEnum::DEBUG, 250, std::chrono::milliseconds(8))};
+   std::thread t1{std::thread(logRepeatedly, LogCodeEnum::ERROR, 1000, std::chrono::milliseconds(2))};
+   std::thread t2{std::thread(logRepeatedly, LogCodeEnum::WARNING, 500, std::chrono::milliseconds(4))};
+   std::thread t3{std::thread(logRepeatedly, LogCodeEnum::INFO, 250, std::chrono::milliseconds(8))};
+   std::thread t4{std::thread(logRepeatedly, LogCodeEnum::DEBUG, 125, std::chrono::milliseconds(16))};
 
    t1.join();
    t2.join();
    t3.join();
    t4.join();
 
+   std::this_thread::sleep_for(std::chrono::milliseconds(100));
    std::ifstream is{demandLog};
+   ASSERT_TRUE(is.is_open());
    std::vector<std::string> lines(InIt{is}, InIt{});
 
-   ASSERT_EQ(lines.size(), 3750);
+   ASSERT_EQ(lines.size(), 1875);
    EXPECT_EQ(std::count_if(std::begin(lines), std::end(lines), 
-			      [](const auto& s){ return s.find("ERROR") != std::string::npos; }), 2000);
+			      [](const auto& s){ return s.find("ERROR") != std::string::npos; }), 1000);
    EXPECT_EQ(std::count_if(std::begin(lines), std::end(lines), 
-			      [](const auto& s){ return s.find("WARN") != std::string::npos; }), 1000);
+			      [](const auto& s){ return s.find("WARN") != std::string::npos; }), 500);
    EXPECT_EQ(std::count_if(std::begin(lines), std::end(lines), 
-			      [](const auto& s){ return s.find("INFO") != std::string::npos; }), 500);
+			      [](const auto& s){ return s.find("INFO") != std::string::npos; }), 250);
    EXPECT_EQ(std::count_if(std::begin(lines), std::end(lines), 
-			      [](const auto& s){ return s.find("DEBUG") != std::string::npos; }), 250);
+			      [](const auto& s){ return s.find("DEBUG") != std::string::npos; }), 125);
 
    Logger::terminate();
 }

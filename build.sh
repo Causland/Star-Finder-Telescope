@@ -45,10 +45,10 @@ if [ ! -d $build_dir ]; then
    exit
 fi
 
-cmake --build $build_dir -- -j8
-
 if [[ "$test" == true ]]; then
    cmake --build $build_dir -- -j8 tests
+else
+   cmake --build $build_dir -- -j8
 fi
 
 if [[ "$docs" == true ]]; then

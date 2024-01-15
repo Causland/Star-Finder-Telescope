@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.21)
 # Define options
 ###########################################################
 option (BUILD_RASPBERRYPI "Build for Raspberry Pi with specific components" OFF)
+option (CODE_ANALYSIS "Build with code analysis tools enabled" OFF)
 
 
 ###########################################################
@@ -115,8 +116,34 @@ set (CMAKE_CXX_FLAGS "-Wall \
                       -Wno-unused-parameter")
 set (CMAKE_CXX_FLAGS_DEBUG "-O0 \
                             -g3 \
-                            -fsanitize=address")
+                            -fsanitize=address,undefined,leak")
 set (CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+
+###########################################################
+# Code Analysis 
+###########################################################
+if (CODE_ANALYSIS)
+   find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck REQUIRED)
+   list(APPEND CMAKE_CXX_CPPCHECK
+      "src/"
+      "include/"
+      "test/"
+      "-i${CMAKE_BINARY_DIR}/_deps/"
+      "--project=${CMAKE_BINARY_DIR}/compile_commands.json"
+      "--enable=all"
+      "--cppcheck-build-dir=${CMAKE_BINARY_DIR}/cppcheck"
+      "--std=c++17"
+   )
+
+   find_program(CMAKE_CXX_CLANG_TIDY clang-tidy REQUIRED)
+   list(APPEND CMAKE_CXX_CLANG_TIDY
+      "-p=${CMAKE_BINARY_DIR}"
+      "--config-file=${PROJECT_SOURCE_DIR}/.clang-tidy"
+      "--use-color"
+   )
+endif()
+
 
 ###########################################################
 # Add the source directory

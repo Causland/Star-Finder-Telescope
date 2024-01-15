@@ -35,7 +35,7 @@ jobs:
     - name: Publish Results
       uses: mikepenz/action-junit-report@v4
       with:
-        report_paths: '**/build/test_results.xml'
+        report_paths: '**/build-x86_64-ubuntu/test_results.xml'
         fail_on_failure: true
         require_tests: true
         detailed_summary: true
