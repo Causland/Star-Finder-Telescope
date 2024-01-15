@@ -21,6 +21,7 @@
 #define LOG_ERROR(msg) Logger::log(__FILENAME__, __LINE__, LogCodeEnum::ERROR, msg)
 #define LOG_WARN(msg) Logger::log(__FILENAME__, __LINE__, LogCodeEnum::WARNING, msg)
 #define LOG_INFO(msg) Logger::log(__FILENAME__, __LINE__, LogCodeEnum::INFO, msg)
+#define LOG_DEBUG(msg) Logger::log(__FILENAME__, __LINE__, LogCodeEnum::DEBUG, msg)
 
 /*!
  * Enum class of different log codes to use while logging a message.

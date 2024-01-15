@@ -30,6 +30,7 @@ void Logger::terminate()
    theThread.join();
    processLogs();
    theInitializedFlag = false;
+   theExitingFlag = false;
 }
 
 void Logger::log(const std::string& fileName, const uint32_t& lineNum,
