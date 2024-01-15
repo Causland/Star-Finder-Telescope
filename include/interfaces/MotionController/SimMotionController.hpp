@@ -6,6 +6,7 @@
 class SimMotionController : public IMotionController
 {
 public:
+   virtual ~SimMotionController() = default;
    void moveFocusKnob(const double& theta, const double& theta_dot) override;
    void moveHorizAngle(const double& theta, const double& theta_dot) override;
    void moveVertAngle(const double& phi, const double& phi_dot) override;

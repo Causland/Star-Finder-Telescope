@@ -6,6 +6,7 @@
 class IGpsModule
 {
 public:
+   virtual ~IGpsModule() = default;
    virtual bool getGpsPosition(double* latitude, double* longitude, double* elevation) = 0;
    virtual std::string getDisplayInfo() = 0;
 };

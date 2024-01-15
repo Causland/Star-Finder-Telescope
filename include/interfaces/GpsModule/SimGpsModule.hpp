@@ -6,6 +6,7 @@
 class SimGpsModule : public IGpsModule
 {
 public:
+   virtual ~SimGpsModule() = default;
    bool getGpsPosition(double* latitude, double* longitude, double* elevation) override;
    std::string getDisplayInfo() override;
 

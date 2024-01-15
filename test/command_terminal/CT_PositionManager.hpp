@@ -3,6 +3,8 @@
 class CT_PositionManager : public MinPositionManager
 {
 public:
+   virtual ~CT_PositionManager() = default;
+
    void updatePosition(const CmdUpdatePosition& cmd) override 
    {
       myUpdatePositionCmd = cmd;

@@ -4,6 +4,7 @@ class MinCommandTerminal : public CommandTerminal
 {
 public:
    MinCommandTerminal() : CommandTerminal(NAME, nullptr) {};
+   virtual ~MinCommandTerminal() = default;
    void start() override {}
    void stop() override {}
    void configureSubsystems(const std::array<std::shared_ptr<Subsystem>, 

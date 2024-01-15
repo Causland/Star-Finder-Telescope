@@ -42,7 +42,11 @@ public:
     */
    explicit AVRMotionController(const std::string& serialDevice);
 
-   ~AVRMotionController() = default;
+   /*!
+    * Destroys an AVRMotionController.
+    */
+   virtual ~AVRMotionController() = default;
+
    AVRMotionController(const AVRMotionController&) = delete;
    AVRMotionController(AVRMotionController&&) = delete;
    void operator=(const AVRMotionController&) = delete;

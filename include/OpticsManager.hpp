@@ -11,6 +11,7 @@ class OpticsManager : public Subsystem
 {
 public:
    OpticsManager(std::string subsystemName) : Subsystem(subsystemName) {}
+   virtual ~OpticsManager() = default;
 
    // Includes from ISubsystem
    void start() override;

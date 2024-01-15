@@ -45,7 +45,7 @@ public:
    /*!
     * Destroys an RPi3MotionController object by closing the device file.
     */
-   ~RPi3MotionController();
+   virtual ~RPi3MotionController();
 
    RPi3MotionController(const RPi3MotionController&) = delete;
    RPi3MotionController(RPi3MotionController&&) = delete;

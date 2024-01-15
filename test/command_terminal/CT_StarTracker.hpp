@@ -3,6 +3,8 @@
 class CT_StarTracker : public MinStarTracker
 {
 public:
+   virtual ~CT_StarTracker() = default;
+
    void pointToTarget(const CmdGoToTarget& cmd) override 
    {
       myGoToTargetCmd = cmd;

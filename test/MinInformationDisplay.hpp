@@ -4,6 +4,7 @@ class MinInformationDisplay : public InformationDisplay
 {
 public:
    MinInformationDisplay() : InformationDisplay(NAME, nullptr, nullptr, nullptr) {};
+   virtual ~MinInformationDisplay() = default;
    void start() override {}
    void stop() override {}
    void configureSubsystems(const std::array<std::shared_ptr<Subsystem>, 

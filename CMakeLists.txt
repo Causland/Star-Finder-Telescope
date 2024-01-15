@@ -94,8 +94,29 @@ doxygen_add_docs(docs
 # Set compiler flags after building fetched includes to 
 # minimize warnings from external library code
 ###########################################################
-set (CMAKE_CXX_FLAGS "-g3 -fsanitize=address -pedantic -fno-common -Wall -Wextra -Wshadow -Wdouble-promotion -Wundef -Wconversion -Wno-unused-parameter")
-
+set (CMAKE_CXX_FLAGS "-Wall \
+                      -Wextra \
+                      -Wshadow \
+                      -Wnon-virtual-dtor \
+                      -pedantic \
+                      -Wold-style-cast \
+                      -Wcast-align \
+                      -Woverloaded-virtual \
+                      -Wconversion \
+                      -Wduplicated-cond \
+                      -Wduplicated-branches \
+                      -Wlogical-op \
+                      -Wnull-dereference \
+                      -Wuseless-cast \
+                      -Wdouble-promotion \
+                      -Wformat=2 \
+                      -Wimplicit-fallthrough \
+                      -Wundef \
+                      -Wno-unused-parameter")
+set (CMAKE_CXX_FLAGS_DEBUG "-O0 \
+                            -g3 \
+                            -fsanitize=address")
+set (CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 ###########################################################
 # Add the source directory

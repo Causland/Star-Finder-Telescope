@@ -34,6 +34,11 @@ public:
                       std::shared_ptr<IGpsModule> gpsModule, std::shared_ptr<IMotionController> motionController) : 
                            Subsystem(subsystemName), myStarDatabase(starDatabase), 
                            myGpsModule(gpsModule), myMotionController(motionController) {};
+   
+   /*!
+    * Destroys an InformationDisplay.
+    */
+   virtual ~InformationDisplay() = default;
 
    /*!
     * Initialize the subsystem and start the display thread.

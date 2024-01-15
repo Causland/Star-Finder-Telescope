@@ -6,6 +6,7 @@
 class SimStarDatabase : public IStarDatabase
 {
 public:
+   virtual ~SimStarDatabase() = default;
    QueryResult searchTargetsByName(const std::string& searchName) override;
    QueryResult searchTargetsByRange(const double& rangeInLightYears) override;
    QueryResult searchTargetsByLuminosity(const double& watts) override;

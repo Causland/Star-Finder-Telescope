@@ -33,7 +33,7 @@ public:
    /*!
     * Destroys a Bn180GpsModule by stopping the threadloop and waiting for it to exit.
     */
-   ~Bn180GpsModule();
+   virtual ~Bn180GpsModule();
 
    Bn180GpsModule(const Bn180GpsModule&) = delete;
    Bn180GpsModule(Bn180GpsModule&&) = delete;

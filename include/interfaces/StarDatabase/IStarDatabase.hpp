@@ -26,6 +26,8 @@ struct QueryResult
 class IStarDatabase
 {
 public:
+   virtual ~IStarDatabase() = default;
+
    // Search functions find and return target options from the database
    virtual QueryResult searchTargetsByName(const std::string& searchName) = 0;
    virtual QueryResult searchTargetsByRange(const double& rangeInLightYears) = 0;

@@ -17,6 +17,7 @@ public:
    StarTracker(const std::string& subsystemName, 
                std::shared_ptr<IStarDatabase> starDatabase, std::shared_ptr<IGpsModule> gpsModule) : 
                   Subsystem(subsystemName), myStarDatabase(starDatabase), myGpsModule(gpsModule) {}
+   virtual ~StarTracker() = default;
 
    // Includes from ISubsystem
    void start() override;

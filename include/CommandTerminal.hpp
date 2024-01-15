@@ -37,6 +37,11 @@ public:
       Subsystem(subsystemName), myExitingSignal(exitingSignal) {}
 
    /*!
+    * Destroys a CommandTerminal.
+    */
+   virtual ~CommandTerminal() = default;
+
+   /*!
     * Initialize the subsystem and start the threads.
     */
    void start() override;

@@ -27,6 +27,7 @@ class Subsystem
 {
 public:
    explicit Subsystem(std::string subsystemName) : mySubsystemName(std::move(subsystemName)) {}
+   virtual ~Subsystem() = default;
    
    virtual void start() = 0;
    virtual void stop() = 0;

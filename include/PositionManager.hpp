@@ -77,6 +77,11 @@ public:
                         Subsystem(subsystemName), myMotionController(motionController) {}
 
    /*!
+    * Destroys a PositionManager.
+    */
+   virtual ~PositionManager() = default;
+
+   /*!
     * Initialize the subsystem and start the thread.
     */
    void start() override;

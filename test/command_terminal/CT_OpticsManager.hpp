@@ -3,6 +3,8 @@
 class CT_OpticsManager : public MinOpticsManager
 {
 public:
+   virtual ~CT_OpticsManager() = default;
+
    std::string takePhoto(const CmdTakePhoto& cmd) override 
    {
       myTakePhotoCmd = cmd;
