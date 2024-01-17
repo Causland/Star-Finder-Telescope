@@ -4,9 +4,10 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstring>
-#include <fstream>
 #include <iomanip>
+#include <memory>
 #include <mutex>
+#include <ostream>
 #include <queue>
 #include <sstream>
 #include <string>
@@ -115,11 +116,11 @@ public:
    void operator=(Logger&&) = delete;
 
    /*!
-    * Initializes the logger with a particular log file. The logging thread is started upon initialization.
+    * Initializes the logger with a particular stream. The logging thread is started upon initialization.
     * and is only stopped when terminate() is called.
-    * \param[in] fileName a string of the relative path to the log file.
+    * \param[in] stream a ostream shared pointer.
     */
-   static void initialize(const std::string& fileName);
+   static void initialize(std::shared_ptr<std::ostream> stream);
 
    /*!
     * Terminates a logger by signaling the condition variable to stop the thread loop. The function
@@ -162,8 +163,7 @@ private:
     */
    static void writeToLog();
 
-   static std::string theFileName; //!< Relative path to the log file.
-   static std::ofstream theOutputFile; //!< The output file stream to write to the log file.
+   static std::shared_ptr<std::ostream> theOutputStream; //!< The output stream to write to the log file.
    static std::string theLogToWrite; //!< The output string used to write to the log file.
    static bool theLogsAvailableFlag; //!< The flag used to release the condition variable in the logger thread loop.
    static bool theExitingFlag; //!< The flag used to control the thread loop. True when object is begin destroyed.

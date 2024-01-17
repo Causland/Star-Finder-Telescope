@@ -1,8 +1,7 @@
 #include "Logger.hpp"
 #include <iostream>
 
-std::string Logger::theFileName{};
-std::ofstream Logger::theOutputFile{};
+std::shared_ptr<std::ostream> Logger::theOutputStream{nullptr};
 std::string Logger::theLogToWrite{};
 bool Logger::theLogsAvailableFlag{false};
 bool Logger::theExitingFlag{false};
@@ -12,12 +11,12 @@ std::thread Logger::theThread{};
 std::queue<std::string> Logger::theLogsToRecord{};
 bool Logger::theInitializedFlag{false};
 
-void Logger::initialize(const std::string& fileName)
+void Logger::initialize(std::shared_ptr<std::ostream> stream)
 {
    if (!theInitializedFlag) // Only allow initialization once unless terminated
    {
       theInitializedFlag = true;
-      theFileName = fileName;
+      theOutputStream = std::move(stream);
       theThread = std::thread(Logger::threadLoop);
    }
 }
@@ -25,10 +24,16 @@ void Logger::initialize(const std::string& fileName)
 void Logger::terminate()
 {
    theExitingFlag = true;
-   theLogsAvailableFlag = true;
    theCondVar.notify_one();
    theThread.join();
-   processLogs();
+
+   {
+      std::scoped_lock<std::mutex> lk(theMutex);
+      if (theLogsAvailableFlag) processLogs();
+   }
+
+   writeToLog();
+   theOutputStream = nullptr;
    theInitializedFlag = false;
    theExitingFlag = false;
 }
@@ -54,7 +59,7 @@ void Logger::threadLoop()
    {
       // Wait until log is written into the queue
       std::unique_lock<std::mutex> lk(theMutex);
-      theCondVar.wait(lk, [&]{ return theLogsAvailableFlag; });
+      theCondVar.wait(lk, [&]{ return theLogsAvailableFlag || theExitingFlag; });
       if (theExitingFlag) // If signaled by the destructor, need to exit immediately
          break;
 
@@ -84,10 +89,12 @@ void Logger::writeToLog()
 {
    if (!theLogToWrite.empty())
    {
-      // Open file, write, and close so that user can view update
-      theOutputFile.open(theFileName, std::ios::app);
-      theOutputFile << theLogToWrite;
-      theOutputFile.close();
+      // Write to output stream and flush to immediately sync
+      if (theOutputStream != nullptr)
+      {
+         *theOutputStream << theLogToWrite;
+         theOutputStream->flush();
+      }
    }
    theLogToWrite.clear();
 }

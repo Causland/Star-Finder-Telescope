@@ -17,6 +17,8 @@
 #include <array>
 #include <chrono>
 #include <exception>
+#include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <memory>
 #include <sstream>
@@ -39,7 +41,8 @@ int main()
    std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
    oss << "logs/" << std::put_time(std::localtime(&t), "%m-%d-%Y-%I-%M%p") << ".log";
    std::string logFileName = oss.str();
-   Logger::initialize(logFileName);
+   std::filesystem::create_directory("logs/");
+   Logger::initialize(std::make_shared<std::ofstream>(logFileName));
 
    // Initialize the properties manager for use across all subsystems
    if (!PropertyManager::initialize("properties.toml"))
@@ -116,7 +119,7 @@ int main()
    // Start all subsystems to begin functionality
    for (auto& subsystem : subsystems)
    {
-      LOG_INFO("Starting");
+      LOG_INFO("Starting " + subsystem->getName());
       subsystem->start();
    }
 
@@ -127,7 +130,7 @@ int main()
       {
          if (!subsystem->checkHeartbeat())
          {
-            LOG_ERROR("Heartbeat failure");
+            LOG_ERROR("Heartbeat failure " + subsystem->getName());
          }
       }
       std::this_thread::sleep_for(HEARTBEAT_CHECK_INTERVAL_MS);
@@ -136,7 +139,7 @@ int main()
    // Stop all subsystems
    for (auto& subsystem : subsystems)
    {
-      LOG_INFO("Stopping");
+      LOG_INFO("Stopping " + subsystem->getName());
       subsystem->stop();
    }
 

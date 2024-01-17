@@ -31,7 +31,7 @@ protected:
 
    static void SetUpTestSuite()
    {
-      Logger::initialize("logs/CommandTerminalUnitTest.log");
+      Logger::initialize(std::make_shared<std::ofstream>("logs/CommandTerminalUnitTest.log"));
    }
 
    static void TearDownTestSuite()
