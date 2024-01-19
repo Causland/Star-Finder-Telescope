@@ -4,15 +4,13 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstring>
-#include <iomanip>
 #include <memory>
 #include <mutex>
 #include <ostream>
 #include <queue>
-#include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
-#include <utility>
 
 /*!
  * Logging macros for easy logging
@@ -36,67 +34,21 @@ enum class LogCodeEnum
 };
 
 /*!
- * Structure to hold information related to the logged message. Contains details related to the
- * time logged, the subsystem, log code, and the log itself.
+ * Generate a string_view for each code in the LogCodeEnum.
+ * \param[in] code a LogCodeEnum code for the log.
+ * \return a string_view for the provided code.
  */
-struct LogMessage
+static constexpr std::string_view logCodeToString(const LogCodeEnum code)
 {
-   /*!
-    * Creates a LogMessage object with the specific timestamp of when it is created.
-    * \param[in] fileName a string of the file name moved into structure.
-    * \param[in] lineNum a integer to the line number.
-    * \param[in] code a constant LogCodeEnum code.
-    * \param[in] message a string of the message to be logged moved into structure.
-    */
-   LogMessage(std::string fileName, const uint32_t& lineNum, const LogCodeEnum code, std::string message) : 
-               myFileName(std::move(fileName)), myLineNum(lineNum), myCode(code), 
-               myMessage(std::move(message)), myTime(std::chrono::system_clock::now()) {}
-   
-   /*!
-    * Generate a string of the LogMessage to output to the log file. Log strings are in the format of:
-    * DATETIME | [LOG_CODE] MESSAGE (FILE:LINE) where date time is a formatted value based on the time
-    * the LogMessage was created.
-    * \return a string of the LogMessage in log file format.
-    */
-   inline std::string toString()
+   switch (code)
    {
-      // Logs are in format: DATETIME | [LOG_CODE] MESSAGE (FILE:LINE)
-      std::ostringstream oss;
-      std::time_t t = std::chrono::system_clock::to_time_t(myTime);
-      oss << std::put_time(std::localtime(&t), "%T") 
-         << " | "
-         << std::setw(7) << "[" + logCodeToString(myCode) + "]"
-         << " "
-         << myMessage
-         << " "
-         << "(" << myFileName << ":" << myLineNum << ")"
-         << "\n";
-      return oss.str();
-   }
-
-   /*!
-    * Generate a string for each code in the LogCodeEnum.
-    * \param[in] code a LogCodeEnum code for the log.
-    * \return a string for the provided code.
-    */
-   inline static std::string logCodeToString(const LogCodeEnum code)
-   {
-      switch (code)
-      {
-         case (LogCodeEnum::ERROR)   : return "ERROR";
-         case (LogCodeEnum::WARNING) : return "WARN";
-         case (LogCodeEnum::INFO)    : return "INFO";
-         case (LogCodeEnum::DEBUG)   : return "DEBUG";
-         default                     : return "?????";
-      } 
-   }
-   
-   const std::string myFileName; //!< Name of the file creating the log.
-   const uint32_t myLineNum; //!< Line in the file creating the log.
-   const LogCodeEnum myCode; //!< Code of the log.
-   const std::string myMessage; //!< Message of the log.
-   const std::chrono::time_point<std::chrono::system_clock> myTime; //!< Timestamp of when the log was created.
-};
+      case (LogCodeEnum::ERROR)   : return "ERROR";
+      case (LogCodeEnum::WARNING) : return "WARN";
+      case (LogCodeEnum::INFO)    : return "INFO";
+      case (LogCodeEnum::DEBUG)   : return "DEBUG";
+   } 
+   return "?????";
+}
 
 /*!
  * The Logger class defines a simple static logger for storing information about different events
@@ -108,13 +60,6 @@ struct LogMessage
 class Logger
 {
 public:
-   Logger() = default;
-   ~Logger() = default;
-   Logger(const Logger&) = delete;
-   Logger(Logger&&) = delete;
-   void operator=(const Logger&) = delete;
-   void operator=(Logger&&) = delete;
-
    /*!
     * Initializes the logger with a particular stream. The logging thread is started upon initialization.
     * and is only stopped when terminate() is called.
@@ -131,13 +76,28 @@ public:
 
    /*!
     * Add a new log to the logging queue with the subsystem name, the log code, and a specific message.
-    * \param[in] fileName a constant string to the file which called the log.
+    * \param[in] fileName a string_view to the file which called the log.
     * \param[in] lineNum a constant integer to the log line number.
     * \param[in] code a constant LogCodeEnum code.
-    * \param[in] message a constant string of the message to be logged.
+    * \param[in] msg a string_view of the message to be logged.
     */
-   static void log(const std::string& fileName, const uint32_t& lineNum,
-                   const LogCodeEnum& code, const std::string& message);
+   static void log(std::string_view fileName, const uint32_t& lineNum,
+                   const LogCodeEnum code, std::string_view msg);
+
+   /*!
+    * Generate a string of the log to output to the log file. Log strings are in the format of:
+    * DATETIME | [LOG_CODE] MESSAGE (FILE:LINE) where date time is a formatted value based on the time
+    * the LogMessage was created.
+    * \param[in] fileName a string_view to the file which called the log.
+    * \param[in] lineNum a constant integer to the log line number.
+    * \param[in] code a constant LogCodeEnum code.
+    * \param[in] msg a string_view of the message to be logged.
+    * \param[in] timePoint a time point for the log time.
+    * \return a string of the msg in log file format.
+    */
+   [[nodiscard]] static std::string logToString(std::string_view fileName, const uint32_t& lineNum,
+                                                const LogCodeEnum code, std::string_view msg,
+                                                const std::chrono::time_point<std::chrono::system_clock>& timePoint);
 
 private:
    /*!
@@ -163,6 +123,7 @@ private:
     */
    static void writeToLog();
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
    static std::shared_ptr<std::ostream> theOutputStream; //!< The output stream to write to the log file.
    static std::string theLogToWrite; //!< The output string used to write to the log file.
    static bool theLogsAvailableFlag; //!< The flag used to release the condition variable in the logger thread loop.
@@ -172,6 +133,7 @@ private:
    static std::thread theThread; //!< The thread for the logger.
    static std::queue<std::string> theLogsToRecord; //!< The queue which holds the pending log strings to write to the log file.
    static bool theInitializedFlag; //!< Indicates that the logger is initialized.
+   // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 };
 
 #endif
