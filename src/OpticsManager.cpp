@@ -3,8 +3,6 @@
 #include "OpticsManager.hpp"
 #include <algorithm>
 
-const std::string OpticsManager::NAME{"OpticsManager"};
-
 void OpticsManager::start()
 {
    myThread = std::thread(&OpticsManager::threadLoop, this);
@@ -52,9 +50,9 @@ void OpticsManager::threadLoop()
       //          - Take a photo of the target at specific timelapse frequency
       //          - Store photos in a known location based on timelapse/target/time
       // - Possible to focus camera based on distance to target and focal length of the camera/telescope
-            myHeartbeatFlag = true;
-      std::unique_lock<std::mutex> lk(myMutex);
-      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return false || myExitingFlag; }))
+      myHeartbeatFlag = true;
+      std::unique_lock<std::mutex> lock{myMutex};
+      if (!myCondVar.wait_for(lock, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return myExitingFlag.load(); }))
       {
          continue; // Heartbeat update interval timeout
       }

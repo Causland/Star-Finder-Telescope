@@ -1,19 +1,19 @@
 #include "CommandTerminal.hpp"
 #include "InformationDisplay.hpp"
+#include "Logger.hpp"
 #include "OpticsManager.hpp"
 #include "PositionManager.hpp"
 #include "StarTracker.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 
-const std::string CommandTerminal::NAME{"CommandTerminal"};
-
 void CommandTerminal::start()
 {
    myExitingFlag = false;
-   myInputWaitingThread = std::thread(&CommandTerminal::cinWaitThreadLoop, this);
-   myThread = std::thread(&CommandTerminal::threadLoop, this);
+   myInputWaitingThread = std::thread{&CommandTerminal::cinWaitThreadLoop, this};
+   myThread = std::thread{&CommandTerminal::threadLoop, this};
 }
 
 void CommandTerminal::stop()
@@ -63,8 +63,8 @@ void CommandTerminal::threadLoop()
    while (!myExitingFlag)
    {
       myHeartbeatFlag = true;
-      std::unique_lock lk(myMutex);
-      if (!myCondVar.wait_for(lk, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return !myCommandQueue.empty() || myExitingFlag; }))
+      std::unique_lock lock{myMutex};
+      if (!myCondVar.wait_for(lock, HEARTBEAT_UPDATE_INTERVAL_MS, [this](){ return !myCommandQueue.empty() || myExitingFlag; }))
       {
          continue; // Heartbeat update interval timeout
       }
@@ -76,10 +76,9 @@ void CommandTerminal::threadLoop()
       // Process each command and take the specified action
       while (!myCommandQueue.empty())
       {
-         auto command = myCommandQueue.front();
+         std::istringstream stream{myCommandQueue.front()};
+         interpretCommand(stream);
          myCommandQueue.pop();
-
-         interpretCommand(command);
       }
    }
    *myExitingSignal = true;
@@ -95,262 +94,282 @@ void CommandTerminal::cinWaitThreadLoop()
       if (!input.empty())
       {
          LOG_INFO("User input: " + input);
-         auto infoDisp = myInformationDisplay.lock();
+         auto infoDisp{myInformationDisplay.lock()};
          if (infoDisp != nullptr)
          {
             infoDisp->updateLastCommand(input);
          }
+
          // Commands can be delimited by semicolons for sequential inputs
+         std::scoped_lock lock(myMutex);
          std::istringstream iss(input);
          std::string command;
          while(std::getline(iss, command, ';'))
          {
-            // Peek at the value of command to determine if exit
-            if (input == "exit")
+            if (command == "exit")
             {
                myExitingFlag = true;
-               myCondVar.notify_one();
-               break;
             }
-            else
-            {
-               std::scoped_lock lk(myMutex);
-               myCommandQueue.push(command);
-            }
+
+            myCommandQueue.push(std::move(command));
          }
          myCondVar.notify_one(); // Notify when done parsing all input
       } 
    }
 }
 
-bool CommandTerminal::interpretCommand(const std::string& command)
+void CommandTerminal::interpretCommand(std::istream& commandStream)
 {
-   // Commands are space delimited strings starting with a base command keyword (ie. photo/move)
-   // followed by the necessary parameters for the command.
-   auto pos = command.find(' ');
-   std::string baseCommand = command.substr(0, pos);
-   std::string params;
-   if (pos == std::string::npos)
+   // Extract base command and preprocess
+   std::string command;
+   commandStream >> command;
+
+   std::transform(std::begin(command), std::end(command), std::begin(command),
+                     [](auto c){ return std::tolower(c); }); // NOLINT(readability-identifier-length)
+
+   if (command == "photo")
    {
-      params = "";
+      processPhotoCmd(commandStream);
+   }
+   else if (command == "video")
+   {
+      processVideoCmd(commandStream);
+   }
+   else if (command == "timelapse")
+   {
+      processTimelapseCmd(commandStream);
+   }
+   else if (command == "move")
+   {
+      processMoveCmd(commandStream);
+   }
+   else if (command == "focus")
+   {
+      processFocusCmd(commandStream);
+   }
+   else if (command == "follow")
+   {
+      processFollowCmd(commandStream);
+   }
+   else if (command == "goto")
+   {
+      processGoToCmd(commandStream);
+   }
+   else if (command == "search")
+   {
+      processSearchCmd(commandStream);
+   }
+   else if (command == "calibrate")
+   {
+      processCalibrateCmd(commandStream);
+   }
+   else 
+   {
+      LOG_ERROR("Unknown command name " + command);
+   }
+}
+
+void CommandTerminal::processPhotoCmd(std::istream& commandStream)
+{
+   // Format -> photo <name>
+   std::string name;
+   commandStream >> name;
+   auto opticsManager{myOpticsManager.lock()};
+   if (opticsManager != nullptr)
+   {
+      opticsManager->takePhoto(CmdTakePhoto{name});
+   }
+   else 
+   {
+      LOG_ERROR("OpticsManager pointer has expired");
+   }
+}
+
+void CommandTerminal::processVideoCmd(std::istream& commandStream)
+{
+   // Format -> video <name> <duration>
+   std::string name;
+   uint64_t duration{0};
+   if (commandStream >> name >> duration)
+   {
+      auto opticsManager{myOpticsManager.lock()};
+      if (opticsManager != nullptr)
+      {
+         opticsManager->takeVideo(CmdTakeVideo{name, std::chrono::seconds{duration}});
+      }
+      else 
+      {
+         LOG_ERROR("OpticsManager pointer has expired");
+      }
+   }
+   else 
+   {
+      LOG_ERROR("Unable to parse parameters for video command");
+   }
+}
+
+void CommandTerminal::processTimelapseCmd(std::istream& commandStream)
+{
+   // Format -> timelapse <name> <duration> <rate>
+   std::string name;
+   uint64_t duration{0};
+   double rate{0.0};
+   if (commandStream >> name >> duration >> rate)
+   {
+      auto opticsManager{myOpticsManager.lock()};
+      if (opticsManager != nullptr)
+      {
+         opticsManager->takeTimelapse(CmdTakeTimelapse{name, std::chrono::minutes{duration}, rate});
+      }
+      else 
+      {
+         LOG_ERROR("OpticsManager pointer has expired");
+      }
+   }
+   else 
+   {
+      LOG_ERROR("Unable to parse parameters for timelapse command");
+   }
+}
+
+void CommandTerminal::processMoveCmd(std::istream& commandStream)
+{
+   // Format -> move <theta> <phi>
+   double theta{0.0};
+   double phi{0.0};
+   if (commandStream >> theta >> phi)
+   {
+      auto positionManager{myPositionManager.lock()};
+      if (positionManager != nullptr)
+      {
+         positionManager->updatePosition(CmdUpdatePosition{Position{theta, phi}});
+      }
+      else 
+      {
+         LOG_ERROR("PositionManager pointer has expired");
+      }
+   }
+   else 
+   {
+      LOG_ERROR("Unable to parse parameters for move command");
+   }
+}
+
+void CommandTerminal::processFocusCmd(std::istream& commandStream)
+{
+   // Format -> focus <theta>
+   double theta{0.0};
+   if (commandStream >> theta)
+   {
+      auto opticsManager{myOpticsManager.lock()};
+      if (opticsManager != nullptr)
+      {
+         opticsManager->userChangeFocus(CmdUserFocus{theta});
+      }
+      else 
+      {
+         LOG_ERROR("OpticsManager pointer has expired");
+      }
+   }
+   else 
+   {
+      LOG_ERROR("Unable to parse parameters for focus command");
+   }
+}
+
+void CommandTerminal::processFollowCmd(std::istream& commandStream)
+{
+   // Format -> follow <name> <duration>
+   std::string name;
+   uint64_t duration{0};
+   if (commandStream >> name >> duration)
+   {
+      auto starTracker{myStarTracker.lock()};
+      if (starTracker != nullptr)
+      {
+         starTracker->trackTarget(CmdFollowTarget{name, std::chrono::seconds{duration}});
+      }
+      else 
+      {
+         LOG_ERROR("StarTracker pointer has expired");
+      }
+   }
+   else 
+   {
+      LOG_ERROR("Unable to parse parameters for follow command");
+   }
+}
+
+void CommandTerminal::processGoToCmd(std::istream& commandStream)
+{
+   // Format -> goto <name>
+   std::string name;
+   commandStream >> name;
+   auto starTracker{myStarTracker.lock()};
+   if (starTracker != nullptr)
+   {
+      starTracker->pointToTarget(CmdGoToTarget{name});
+   }
+   else 
+   {
+      LOG_ERROR("StarTracker pointer has expired");
+   }
+}
+
+void CommandTerminal::processSearchCmd(std::istream& commandStream)
+{
+   // Search can be used with range, name, brightness option which are then followed by parameters
+   std::string option;
+   commandStream >> option;
+   double range{0.0};
+   double luminosity{0.0};
+   std::string name{"None"};
+   if (option == "range")
+   {
+      if (!(commandStream >> range))
+      {
+         LOG_ERROR("Unable to parse parameters for search range command");
+         return;
+      }
+   }
+   else if (option == "name")
+   {
+      commandStream >> name;
+   }
+   else if (option == "brightness")
+   {
+      if (!(commandStream >> luminosity))
+      {
+         LOG_ERROR("Unable to parse parameters for search brightness command");
+         return;
+      }
    }
    else
    {
-      params = command.substr(pos + 1);
+      LOG_ERROR("Unknown option " + option + " for search command");
    }
-   if (!baseCommand.empty())
+   auto starTracker{myStarTracker.lock()};
+   if (starTracker != nullptr)
    {
-      // Do processing based on selected command
-      std::transform(baseCommand.begin(), baseCommand.end(), baseCommand.begin(),
-         [](auto c){ return std::tolower(c); });
-      if (baseCommand == "photo")
-      {
-         // Format -> photo <name>
-         std::string name;
-         if (!validateParameters(params, name))
-         {
-            LOG_ERROR("Unable to process photo command");
-            return false;
-         }
-         if (myOpticsManager.expired())
-         {
-            LOG_ERROR("OpticsManager pointer has expired");
-            return false;
-         }
-         auto opticsManager = myOpticsManager.lock();
-         opticsManager->takePhoto(CmdTakePhoto(name));
-      }
-      else if (baseCommand == "video")
-      {
-         // Format -> video <name> <duration>
-         std::string name;
-         uint64_t duration;
-         if (!validateParameters(params, name, duration))
-         {
-            LOG_ERROR("Unable to process video command");
-            return false;
-         }
-         if (myOpticsManager.expired())
-         {
-            LOG_ERROR("OpticsManager pointer has expired");
-            return false;
-         }
-         auto opticsManager = myOpticsManager.lock();
-         opticsManager->takeVideo(CmdTakeVideo(name, std::chrono::seconds(duration)));
-      }
-      else if (baseCommand == "timelapse")
-      {
-         // Format -> timelapse <name> <duration> <rate>
-         std::string name;
-         uint64_t duration;
-         double rate;
-         if (!validateParameters(params, name, duration, rate))
-         {
-            LOG_ERROR("Unable to process timelapse command");
-            return false;
-         }
-         if (myOpticsManager.expired())
-         {
-            LOG_ERROR("OpticsManager pointer has expired");
-            return false;
-         }
-         auto opticsManager = myOpticsManager.lock();
-         opticsManager->takeTimelapse(CmdTakeTimelapse(name, std::chrono::minutes(duration), rate));
-      }
-      else if (baseCommand == "move")
-      {
-         // Format -> move <theta> <phi>
-         double theta;
-         double phi;
-         if (!validateParameters(params, theta, phi))
-         {
-            LOG_ERROR("Unable to process move command");
-            return false;
-         }
-         if (myPositionManager.expired())
-         {
-            LOG_ERROR("PositionManager pointer has expired");
-            return false;
-         }
-         auto positionManager = myPositionManager.lock();
-         positionManager->updatePosition(CmdUpdatePosition(theta, phi));
-      }
-      else if (baseCommand == "focus")
-      {
-         // Format -> focus <theta>
-         double theta;
-         if (!validateParameters(params, theta))
-         {
-            LOG_ERROR("Unable to process focus command");
-            return false;
-         }
-         if (myOpticsManager.expired())
-         {
-            LOG_ERROR("OpticsManager pointer has expired");
-            return false;
-         }
-         auto opticsManager = myOpticsManager.lock();
-         opticsManager->userChangeFocus(CmdUserFocus(theta));
-      }
-      else if (baseCommand == "follow")
-      {
-         // Format -> follow <name> <duration>
-         std::string name;
-         uint64_t duration;
-         if (!validateParameters(params, name, duration))
-         {
-            LOG_ERROR("Unable to process follow command");
-            return false;
-         }
-         if (myStarTracker.expired())
-         {
-            LOG_ERROR("StarTracker pointer has expired");
-            return false;
-         }
-         auto starTracker = myStarTracker.lock();
-         starTracker->trackTarget(CmdFollowTarget(name, std::chrono::seconds(duration)));       
-      }
-      else if (baseCommand == "goto")
-      {
-         // Format -> goto <name>
-         std::string name;
-         if (!validateParameters(params, name))
-         {
-            LOG_ERROR("Unable to process goto command");
-            return false;
-         }
-         if (myStarTracker.expired())
-         {
-            LOG_ERROR("StarTracker pointer has expired");
-            return false;
-         }
-         auto starTracker = myStarTracker.lock();
-         starTracker->pointToTarget(CmdGoToTarget(name));           
-      }
-      else if (baseCommand == "search")
-      {
-         // Search can be used with range, name, brightness option which are then followed by parameters
-         pos = params.find(' ');
-         std::string option = params.substr(0, pos);
-         if (pos == std::string::npos)
-         {
-            params = "";
-         }
-         else
-         {
-            params = params.substr(pos + 1);
-         }
-         // Do processing based on option
-         CmdSearchTarget cmd;
-         double range = 0.0;
-         double luminosity = 0.0;
-         std::string name = "None";
-         if (option == "range")
-         {
-            // Format -> search range <range>
-            if (!validateParameters(params, range))
-            {
-               LOG_ERROR("Unable to process search range command");
-               return false;
-            }
-         }
-         else if (option == "name")
-         {
-            // Format -> search name <name>
-            if (!validateParameters(params, name))
-            {
-               LOG_ERROR("Unable to process search name command");
-               return false;
-            }
-         }
-         else if (option == "brightness")
-         {
-            // Format -> search brightness <brightness>
-            if (!validateParameters(params, luminosity))
-            {
-               LOG_ERROR("Unable to process search range command");
-               return false;
-            }
-         }
-         else
-         {
-            LOG_ERROR("Unknown option for search command: " + command);
-            return false;
-         }
-         if (myStarTracker.expired())
-         {
-            LOG_ERROR("StarTracker pointer has expired");
-            return false;
-         }
-         auto starTracker = myStarTracker.lock();
-         starTracker->searchForTargets(CmdSearchTarget(name, range, luminosity));   
-      }
-      else if (baseCommand == "calibrate")
-      {
-         if (!validateParameters(params))
-         {
-            LOG_ERROR("Unable to process calibrate command");
-            return false;
-         }
-         if (myPositionManager.expired())
-         {
-            LOG_ERROR("PositionManager pointer has expired");
-            return false;
-         }
-         auto positionManager = myPositionManager.lock();
-         positionManager->calibrate(CmdCalibrate());
-      }
-      else
-      {
-         LOG_ERROR("Unknown command " + command);
-         return false;
-      }
+      const SearchTargetParams params{name, range, luminosity};
+      starTracker->searchForTargets(CmdSearchTarget{params}); 
    }
-   else
+   else 
    {
-      LOG_ERROR("Attempted to process empty command");
-      return false;
+      LOG_ERROR("StarTracker pointer has expired");
    }
-   return true;
+}
+
+void CommandTerminal::processCalibrateCmd(std::istream& commandStream)
+{
+   auto positionManager{myPositionManager.lock()};
+   if (positionManager != nullptr)
+   {
+      positionManager->calibrate(CmdCalibrate{});
+   }
+   else 
+   {
+      LOG_ERROR("PositionManager pointer has expired");
+   }
 }
 

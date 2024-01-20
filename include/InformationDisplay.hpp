@@ -6,11 +6,14 @@
 #include "interfaces/GpsModule/IGpsModule.hpp"
 #include "interfaces/MotionController/IMotionController.hpp"
 #include "interfaces/StarDatabase/IStarDatabase.hpp"
+
+#include <array>
 #include <chrono>
 #include <fstream>
+#include <string>
 
-constexpr std::chrono::milliseconds DEFAULT_DISPLAY_REFRESH_RATE{500};
-const std::string DISPLAY_OUTPUT_FILE{"telem_display.txt"};
+static constexpr std::chrono::milliseconds DEFAULT_DISPLAY_REFRESH_RATE{500};
+static const std::string DISPLAY_OUTPUT_FILE{"telem_display.txt"};
 
 /*!
  * The InformationDisplay subsystem is responsible for receiving display information
@@ -25,20 +28,24 @@ public:
    /*!
     * Creates an InformationDisplay subsystem object with a pointer to
     * each external device to gather information from.
-    * \param[in] subsystemName a string of the subsystem name moved into the object.
     * \param[in] starDatabase a pointer to a Star Database interface.
     * \param[in] gpsModule a pointer to a GPS module interface.
     * \param[in] motionController a pointer to a Motion Controller interface.
     */
-   InformationDisplay(std::string subsystemName, std::shared_ptr<IStarDatabase> starDatabase, 
+   InformationDisplay(std::shared_ptr<IStarDatabase> starDatabase, 
                       std::shared_ptr<IGpsModule> gpsModule, std::shared_ptr<IMotionController> motionController) : 
-                           Subsystem(subsystemName), myStarDatabase(starDatabase), 
-                           myGpsModule(gpsModule), myMotionController(motionController) {};
+                           Subsystem{"InformationDisplay"}, myStarDatabase{std::move(starDatabase)}, 
+                           myGpsModule{std::move(gpsModule)}, myMotionController{std::move(motionController)} {};
    
    /*!
     * Destroys an InformationDisplay.
     */
-   virtual ~InformationDisplay() = default;
+   ~InformationDisplay() override = default;
+
+   InformationDisplay(const InformationDisplay&) = delete;
+   InformationDisplay& operator=(const InformationDisplay&) = delete;
+   InformationDisplay(InformationDisplay&&) = delete;
+   InformationDisplay& operator=(InformationDisplay&&) = delete;
 
    /*!
     * Initialize the subsystem and start the display thread.
@@ -76,7 +83,6 @@ public:
     */
    void updateLastCommand(const std::string& command);
 
-   static const std::string NAME; //!< Name of the subsystem.
 private:
    /*!
     * The InformationDisplay threadloop waits for the hearbeat interval or the next refresh

@@ -3,19 +3,18 @@
 
 #include "CommandTypes.hpp"
 #include "Common.hpp"
+#include "InformationDisplay.hpp"
 #include "Subsystem.hpp"
 #include "interfaces/MotionController/IMotionController.hpp"
+
 #include <chrono>
 #include <memory>
 #include <queue>
 #include <vector>
 
-class InformationDisplay;
-
-constexpr double MICROSECONDS_TO_SECONDS{0.000001}; //!< Conversion factor from us to s
-constexpr double MILLISECONDS_TO_SECONDS{0.001}; //!< Conversion factor from ms to s
-constexpr uint32_t DEFAULT_MANUAL_MOVE_TIME_OFFSET{300};
-constexpr uint32_t DEFAULT_TRAJECTORY_SAMPLE_PERIOD{10};
+static constexpr double MILLISECONDS_TO_SECONDS{0.001}; //!< Conversion factor from ms to s
+static constexpr uint32_t DEFAULT_MANUAL_MOVE_TIME_OFFSET{300};
+static constexpr uint32_t DEFAULT_TRAJECTORY_SAMPLE_PERIOD{10};
 
 /*!
  * Structure to hold information about a specific point along a trajectory path. Each point is has a
@@ -29,17 +28,12 @@ struct TrajectoryPoint
    TrajectoryPoint() = default;
 
    /*!
-    * Creates a TrajectoryPoint at a specific azimuth, elevation, velocity, and time. Constructs a Position and Velocity
-    * object using the provided information.
-    * \param[in] az an azimuth of the telescope in degrees.
-    * \param[in] el an elevation of the telescope in degrees.
-    * \param[in] vAz an instantaneous change in azimuth over time of the telescope in RPM.
-    * \param[in] vEl an instantaneous change in elevation over time of the telescope in RPM.
-    * \param[in] tp a specific point in time.  
+    * Creates a TrajectoryPoint at a position and time.
+    * \param[in] pos a position of the telescope.
+    * \param[in] tp a specific point in time.
     */
-   TrajectoryPoint(const double& az, const double& el, const double& vAz, const double& vEl, const std::chrono::system_clock::time_point& tp) :
-                     myPosition(az, el), myVelocity(vAz, vEl), myTime(tp)
-   {}
+   TrajectoryPoint(const Position& pos, const std::chrono::system_clock::time_point& time) :
+                     myPosition{pos}, myTime{time} {}
 
    /*!
     * Creates a TrajectoryPoint at a position, velocity, and time.
@@ -47,9 +41,8 @@ struct TrajectoryPoint
     * \param[in] vel an instantaneous velocity of the telescope.
     * \param[in] tp a specific point in time.
     */
-   TrajectoryPoint(const Position& pos, const Velocity& vel, const std::chrono::system_clock::time_point& tp) :
-                     myPosition(pos), myVelocity(vel), myTime(tp)
-   {}
+   TrajectoryPoint(const Position& pos, const Velocity& vel, const std::chrono::system_clock::time_point& time) :
+                     myPosition{pos}, myVelocity{vel}, myTime{time} {}
 
    Position myPosition; //!< The pointing position of the telescope.
    Velocity myVelocity; //!< The instantaneous velocity of the telescope.
@@ -70,16 +63,20 @@ public:
    /*!
     * Creates a PositionManager subsystem object with a pointer to the MotionController use to
     * move the telescope.
-    * \param[in] subsystemName a string of the subsystem name moved into the class.
     * \param[in] motionController a shared pointer to a MotionController interface.
     */
-   PositionManager(std::string subsystemName, std::shared_ptr<IMotionController> motionController) : 
-                        Subsystem(subsystemName), myMotionController(motionController) {}
+   explicit PositionManager(std::shared_ptr<IMotionController> motionController) : 
+                              Subsystem{"PositionManager"}, myMotionController{std::move(motionController)} {}
 
    /*!
     * Destroys a PositionManager.
     */
-   virtual ~PositionManager() = default;
+   ~PositionManager() override = default;
+
+   PositionManager(const PositionManager&) = delete;
+   PositionManager& operator=(const PositionManager&) = delete;
+   PositionManager(PositionManager&&) = delete;
+   PositionManager& operator=(PositionManager&&) = delete;
 
    /*!
     * Initialize the subsystem and start the thread.
@@ -105,23 +102,21 @@ public:
     * \param[in] cmd an update position command
     * \sa calculateTrajectory()
     */
-   virtual void updatePosition(const CmdUpdatePosition& cmd);
+   void updatePosition(const CmdUpdatePosition& cmd);
 
    /*!
-    * Move the telescope to follow a series of positions over time. Creates a trajectory between each
-    * position in the series to smoothly follow the path.
-    * \param[in] positions a pointer to a vector of position and time pairs to create a trajectory from.
+    * Move the telescope to follow a set path over time. Interpolate smooth trajectory from the provided points.
+    * \param[in] path a vector of TrajectoryPoints containing position and time data.
     * \sa calculateTrajectory()
     */
-   virtual void trackTarget(std::vector<std::pair<Position, std::chrono::system_clock::time_point>>* positions);
+   void trackTarget(std::vector<TrajectoryPoint>& path);
 
    /*!
     * Inform the MotionController to calibrate and update its stopping limits
     * \param[in] cmd a calibration command.
     */
-   virtual void calibrate(const CmdCalibrate& cmd);
+   void calibrate(const CmdCalibrate& cmd);
 
-   static const std::string NAME; //!< Name of the subsystem.
 private:
    /*!
     * The PositionManager threadloop handles changing the position of the telescope to follow
@@ -133,56 +128,93 @@ private:
    void threadLoop() override;
 
    /*!
-    * Calculate a trajectory over a series of position and time pairs. The trajectory is created
-    * by interpolating a path using a 5th order polynomial function. The amount of points along
-    * the trajectory are determines using the TRAJECTORY_SAMPLE_PERIOD_DURATION constant. The
-    * acceleration through each position and time pair is calculated to be 0. The velocity through
-    * each of these points is the average velocity from the previous point to the next.
-    * \param[in] positions a vector of position and time pairs to create a trajectory from.
+    * Calculate a trajectory to follow a set path over time. The trajectory is created
+    * by interpolating points along the path using a 5th order polynomial function. The number of points in the 
+    * trajectory are determined using TRAJECTORY_SAMPLE_PERIOD_DURATION. The acceleration through each point is 
+    * calculated to be 0. The velocity through each point is the average velocity from the previous point to the next.
+    * \param[in] path a vector of TrajectoryPoints containing position and time data.
     * \sa calculatePolynomialCoef(), calculatePositionAndVelocity()   
     */
-   void calculateTrajectory(const std::vector<std::pair<Position, std::chrono::system_clock::time_point>>& positions);
+   void calculateTrajectory(std::vector<TrajectoryPoint>& path);
 
    /*!
-    * Calculate the polynomial coefficients for a 5th order polynomial given the previous 
-    * position and velocity and the target position and velocity. It is assumed that the
-    * acceleration at the start point and end point is 0. A 5th order polynomial is defined
-    * as s(t) = at^5 + bt^4 + ct^3 + dt^2 + et + f.
-    * \param[in] prevVal the latest position
-    * \param[in] currVal the target position
-    * \param[in] prevVel the latest velocity
-    * \param[in] currVel the target velocity
-    * \param[out] a coefficient a
-    * \param[out] b coefficient b
-    * \param[out] c coefficient c
-    * \param[out] d coefficient d
-    * \param[out] e coefficient e
-    * \param[out] f coefficient f  
+    * Stores the coefficients for a 5th order polynomial.
     */
-   static void calculatePolynomialCoef(const double& prevVal, const double& currVal, const double& prevVel, const double& currVel, 
-                                 double* a, double* b, double* c, double* d, double* e, double* f);
+   struct PolyCoefs
+   {
+      double a{0.0};
+      double b{0.0};
+      double c{0.0};
+      double d{0.0};
+      double e{0.0};
+      double f{0.0};
+   };
 
    /*!
-    * Calculate the position and velocity for a 5th order polynomial given coefficients
-    * and the time between 0 and 1. A 5th order polynomial for position is defined as
+    * Calculate the 5th order polynomial coefficients for a trajectory which tracks the
+    * position and velocity of the azimuth and elevation.
+    * It is assumed that the acceleration at the start point and end point is 0. 
+    * A 5th order polynomial is defined as s(t) = at^5 + bt^4 + ct^3 + dt^2 + et + f.
+    * \param[in] prevPos the latest position.
+    * \param[in] currPos the target position.
+    * \param[in] prevVel the latest velocity.
+    * \param[in] currVel the target velocity.
+    * \param[out] azCoefs the coefficients for the azimuth polynomial.
+    * \param[out] elCoefs the coefficients for the elevation polynomial.
+    */
+   static constexpr void calculatePolynomialCoef(const Position& prevPos, const Position& currPos, 
+                                                 const Velocity& prevVel, const Velocity& currVel, 
+                                                 PolyCoefs* azCoefs, PolyCoefs* elCoefs)
+   {
+      // Assuming accel is 0 at beginning and end points. Equations for coefficients derived from polynomial 
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+      azCoefs->a = -6*prevPos.myAzimuth + 6*currPos.myAzimuth + -3*prevVel.myVelAzimuth + -3*currVel.myVelAzimuth;
+      azCoefs->b = 15*prevPos.myAzimuth + -15*currPos.myAzimuth + 8*prevVel.myVelAzimuth + 7*currVel.myVelAzimuth;
+      azCoefs->c = -10*prevPos.myAzimuth + 10*currPos.myAzimuth + -6*prevVel.myVelAzimuth + -4*currVel.myVelAzimuth;
+      azCoefs->d = 0;
+      azCoefs->e = prevVel.myVelAzimuth;
+      azCoefs->f = prevPos.myAzimuth;
+
+      elCoefs->a = -6*prevPos.myElevation + 6*currPos.myElevation + -3*prevVel.myVelElevation + -3*currVel.myVelElevation;
+      elCoefs->b = 15*prevPos.myElevation + -15*currPos.myElevation + 8*prevVel.myVelElevation + 7*currVel.myVelElevation;
+      elCoefs->c = -10*prevPos.myElevation + 10*currPos.myElevation + -6*prevVel.myVelElevation + -4*currVel.myVelElevation;
+      elCoefs->d = 0;
+      elCoefs->e = prevVel.myVelElevation;
+      elCoefs->f = prevPos.myElevation;
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+   }
+
+   /*!
+    * Calculate the position and velocity of azimuth and elevation at a point of time 
+    * between 0 and 1 using the provided polynomial coefficients.
+    * A 5th order polynomial for position is defined as
     * s(t) = at^5 + bt^4 + ct^3 + dt^2 + et + f
     * which velocity can be derived from as
     * v(t) = 5at^4 + 4bt^3 + 3ct^2 + 2dt + e
-    * \param[in] t a time between 0 and 1
-    * \param[in] a polynomial coefficient a
-    * \param[in] b polynomial coefficient b
-    * \param[in] c polynomial coefficient c
-    * \param[in] d polynomial coefficient d
-    * \param[in] e polynomial coefficient e
-    * \param[in] f polynomial coefficient f  
-    * \param[out] pos the calculated position
-    * \param[out] vel the calculated instantaneous velocity
+    * \param[in] t a time between 0 and 1.
+    * \param[in] azCoefs the coefficients for the azimuth polynomial.
+    * \param[in] elCoefs the coefficients for the elevation polynomial.
+    * \param[out] pos the calculated position.
+    * \param[out] vel the calculated instantaneous velocity.
     */
-   static void calculatePositionAndVelocity(const double& t, const double& a, const double& b, const double& c, const double& d,
-                                       const double& e, const double& f, double* pos, double* vel);
+   // NOLINTBEGIN(bugprone-easily-swappable-parameters, readability-identifier-length, cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+   static constexpr void calculatePositionAndVelocity(const double& t, const PolyCoefs& azCoefs, const PolyCoefs& elCoefs,
+                                                      Position* pos, Velocity* vel)
+   {
+      const auto t2{t * t};
+      const auto t3{t2 * t};
+      const auto t4{t3 * t};
+      const auto t5{t4 * t};
 
-   double myCurrentAzimuth{0.0}; //!< The current pointing azimuth of the telescope.
-   double myCurrentElevation{0.0}; //!< The current pointing elevation of the telescope.
+      pos->myAzimuth = azCoefs.a*t5 + azCoefs.b*t4 + azCoefs.c*t3 + azCoefs.d*t2 + azCoefs.e*t + azCoefs.f;
+      vel->myVelAzimuth = 5*azCoefs.a*t4 + 4*azCoefs.b*t3 + 3*azCoefs.c*t2 + 2*azCoefs.d*t + azCoefs.e;
+
+      pos->myElevation = elCoefs.a*t5 + elCoefs.b*t4 + elCoefs.c*t3 + elCoefs.d*t2 + elCoefs.e*t + elCoefs.f;
+      vel->myVelElevation = 5*elCoefs.a*t4 + 4*elCoefs.b*t3 + 3*elCoefs.c*t2 + 2*elCoefs.d*t + elCoefs.e;
+   }
+   // NOLINTEND(bugprone-easily-swappable-parameters, readability-identifier-length, cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+
+   Position myCurrentPosition; //!< The current pointing position of the telescope.
    bool myTargetUpdateFlag{false}; //!< The flag used to determine when the telescope needs to be moved.
    std::chrono::milliseconds myManualMoveTimeOffset{DEFAULT_MANUAL_MOVE_TIME_OFFSET}; //!< The time used to offset the time for manually moving the telescope to a specific position.
    std::chrono::milliseconds myTrajectorySamplePeriod{DEFAULT_TRAJECTORY_SAMPLE_PERIOD}; //!< The time used to generate sub-points within a trajectory in milliseconds.

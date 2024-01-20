@@ -45,7 +45,8 @@ int main()
    Logger::initialize(std::make_shared<std::ofstream>(logFileName));
 
    // Initialize the properties manager for use across all subsystems
-   if (!PropertyManager::initialize("properties.toml"))
+   std::ifstream propStream{"properties.toml"};
+   if (!PropertyManager::initialize(propStream))
    {
       LOG_ERROR("Unable to initialize the property manager");
       return 1;
@@ -108,7 +109,7 @@ int main()
    subsystems[static_cast<int>(SubsystemEnum::POSITION_MANAGER)] = 
                   std::make_shared<PositionManager>("PositionManager", motionController);
    subsystems[static_cast<int>(SubsystemEnum::COMMAND_TERMINAL)] = 
-                  std::make_shared<CommandTerminal>("CommandTerminal", exitSignal);
+                  std::make_shared<CommandTerminal>(exitSignal);
 
    // Update the subsystem interfaces before starting their thread loops
    for (auto& subsystem : subsystems)
@@ -119,7 +120,7 @@ int main()
    // Start all subsystems to begin functionality
    for (auto& subsystem : subsystems)
    {
-      LOG_INFO("Starting " + subsystem->getName());
+      LOG_INFO("Starting " + std::string{subsystem->getName()});
       subsystem->start();
    }
 
@@ -130,7 +131,7 @@ int main()
       {
          if (!subsystem->checkHeartbeat())
          {
-            LOG_ERROR("Heartbeat failure " + subsystem->getName());
+            LOG_ERROR("Heartbeat failure " + std::string{subsystem->getName()});
          }
       }
       std::this_thread::sleep_for(HEARTBEAT_CHECK_INTERVAL_MS);
@@ -139,7 +140,7 @@ int main()
    // Stop all subsystems
    for (auto& subsystem : subsystems)
    {
-      LOG_INFO("Stopping " + subsystem->getName());
+      LOG_INFO("Stopping " + std::string{subsystem->getName()});
       subsystem->stop();
    }
 

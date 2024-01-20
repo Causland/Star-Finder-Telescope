@@ -1,186 +1,90 @@
 #include "Logger.hpp"
 #include "PropertyManager.hpp"
-#include <iostream>
+
 #include <sstream>
 #include <toml++/toml.h>
 
-std::atomic<bool> PropertyManager::theInitializedFlag{false};
-std::map<std::string, std::string> PropertyManager::theStringProps{};
-std::map<std::string, int64_t> PropertyManager::theIntProps{};
-std::map<std::string, double> PropertyManager::theDoubleProps{};
-std::map<std::string, bool> PropertyManager::theBoolProps{};
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
+std::mutex PropertyManager::thePropMutex;
+bool PropertyManager::theInitializedFlag{false};
+std::unordered_map<std::string, PropertyManager::Property> PropertyManager::theProps;
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
-bool PropertyManager::initialize(const std::string& propFilePath)
+bool PropertyManager::initialize(std::istream& propStream)
 {
-   // Read in the toml properties file and filter into
-   // a the correct std::map
-   toml::table propsTable;
-   try
-   {
-      propsTable = toml::parse_file(propFilePath);
-   }
-   catch(const toml::parse_error& e)
-   {
-      LOG_ERROR("Unable to parse properties file");
-      return false;
-   }
-   auto initializeSuccess = true;
-   propsTable.for_each([&initializeSuccess](const toml::key& key, auto&& val)
-   {
-      if constexpr (toml::is_string<decltype(val)>)
-      {
-         theStringProps.insert({std::string(key.str()), val.get()}); // val is a toml::value<std::string>
-      }
-      else if constexpr (toml::is_integer<decltype(val)>)
-      {
-         theIntProps.insert({std::string(key.str()), val.get()}); // val is a toml::value<int64_t>
-      }
-      else if constexpr (toml::is_floating_point<decltype(val)>)
-      {
-         theDoubleProps.insert({std::string(key.str()), val.get()}); // val is a toml::value<double>
-      }
-      else if constexpr (toml::is_boolean<decltype(val)>)
-      {
-         theBoolProps.insert({std::string(key.str()), val.get()}); // val is a toml::value<boolean>
-      }
-      else
-      {
-         // val is not a supported property type
-         std::stringstream ss;
-         ss << "Parsed value not supported (" << key << "," << val 
-            << ") Supported types are string, int, double, bool\n"; 
-         LOG_ERROR(ss.str());
+   std::scoped_lock<std::mutex> lock{thePropMutex};
 
-         initializeSuccess = false;
-      }
-   });
-
-   if (initializeSuccess)
+   // Read in the toml properties file and place into properties container
+   try 
    {
       theInitializedFlag = true;
-      return true;
+
+      auto parsedProps{toml::parse(propStream)};
+      parsedProps.for_each([](const auto& key, auto&& val)
+      {
+         if constexpr (toml::is_string<decltype(val)>)
+         {
+            theProps.insert({std::string{key.str()}, 
+                             Property{std::in_place_type<std::string>, val.get()}});
+         }
+         else if constexpr (toml::is_integer<decltype(val)>)
+         {
+            theProps.insert({std::string{key.str()},
+                             Property{std::in_place_type<int64_t>, val.get()}});
+         }
+         else if constexpr (toml::is_floating_point<decltype(val)>)
+         {
+            theProps.insert({std::string{key.str()},
+                             Property{std::in_place_type<double>, val.get()}});
+         }
+         else if constexpr (toml::is_boolean<decltype(val)>)
+         {
+            theProps.insert({std::string{key.str()},
+                             Property{std::in_place_type<bool>, val.get()}});
+         }
+         else
+         {
+            // val is not a supported property type
+            std::ostringstream oss;
+            oss << "Parsed value not supported (" << key << "," << val 
+               << ") Supported types are string, int, double, bool\n"; 
+            LOG_ERROR(oss.str());
+            theInitializedFlag = true;
+         }
+      });
+   } 
+   catch(const toml::parse_error& e)
+   {
+      LOG_ERROR("Unable to parse properties: " + std::string{e.what()});
+      theInitializedFlag = false;
    }
-   return false;
+
+   return theInitializedFlag;
 }
 
 void PropertyManager::terminate()
 {
-   // Clear out the properties
-   theStringProps.clear();
-   theIntProps.clear();
-   theDoubleProps.clear();
-   theBoolProps.clear();
+   std::scoped_lock<std::mutex> lock{thePropMutex};
+   theProps.clear();
    theInitializedFlag = false;
-}
-
-bool PropertyManager::getProperty(const std::string& propName, std::string* value)
-{
-   if (theInitializedFlag)
-   {
-      auto it = theStringProps.find(propName);
-      if (it != theStringProps.end())
-      {
-         *value = it->second;
-         return true;
-      }
-      else
-      {
-         LOG_WARN("Unable to find property: " + propName);
-      }
-   }
-   else
-   {
-      LOG_ERROR("Property Manager is uninitialized. No properties are loaded");
-   }
-   return false;
-}
-
-bool PropertyManager::getProperty(const std::string& propName, int64_t* value)
-{
-   if (theInitializedFlag)
-   {
-      auto it = theIntProps.find(propName);
-      if (it != theIntProps.end())
-      {
-         *value = it->second;
-         return true;
-      }
-      else
-      {
-         LOG_WARN("Unable to find property: " + propName);
-      }
-   }
-   else
-   {
-      LOG_ERROR("Property Manager is uninitialized. No properties are loaded");
-   }
-   return false;
-}
-
-bool PropertyManager::getProperty(const std::string& propName, double* value)
-{
-   if (theInitializedFlag)
-   {
-      auto it = theDoubleProps.find(propName);
-      if (it != theDoubleProps.end())
-      {
-         *value = it->second;
-         return true;
-      }
-      else
-      {
-         LOG_WARN("Unable to find property: " + propName);
-      }
-   }
-   else
-   {
-      LOG_ERROR("Property Manager is uninitialized. No properties are loaded");
-   }
-   return false;
-}
-
-bool PropertyManager::getProperty(const std::string& propName, bool* value)
-{
-   if (theInitializedFlag)
-   {
-      auto it = theBoolProps.find(propName);
-      if (it != theBoolProps.end())
-      {
-         *value = it->second;
-         return true;
-      }
-      else
-      {
-         LOG_WARN("Unable to find property: " + propName);
-      }
-   }
-   else
-   {
-      LOG_ERROR("Property Manager is uninitialized. No properties are loaded");
-   }
-   return false;
 }
 
 std::string PropertyManager::toStringAllProperties()
 {
-   std::stringstream ss;
-   ss << "Properties (name, value)\n";
-   for (const auto& [key, val] : theStringProps)
+   struct MakeStringFunctor
    {
-      ss << "(" << key << ",\"" << val << "\")\n";
-   }
-   for (const auto& [key, val] : theIntProps)
+      std::string operator()(const std::string& val) const { return val; }
+      std::string operator()(const int64_t& val) const { return std::to_string(val); }
+      std::string operator()(const double& val) const { return std::to_string(val); }
+      std::string operator()(const bool val) const {return val ? "true" : "false"; }
+   };
+
+   std::scoped_lock<std::mutex> lock{thePropMutex};
+   std::ostringstream oss;
+   oss << "Properties (name, value)\n";
+   for (const auto& [key, variant] : theProps) // cppcheck-suppress unassignedVariable
    {
-      ss << "(" << key << "," << val << ")\n";
+      oss << "(" << key << ",\"" << std::visit(MakeStringFunctor(), variant) << "\")\n";
    }
-   for (const auto& [key, val] : theDoubleProps)
-   {
-      ss << "(" << key << "," << val << ")\n";
-   }
-   for (const auto& [key, val] : theBoolProps)
-   {
-      auto outVal = val ? "true" : "false";
-      ss << "(" << key << "," << outVal << ")\n";
-   }
-   return ss.str();
+   return oss.str();
 }

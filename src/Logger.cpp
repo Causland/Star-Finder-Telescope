@@ -48,11 +48,10 @@ void Logger::terminate()
 void Logger::log(std::string_view fileName, const uint32_t& lineNum,
                  const LogCodeEnum code, std::string_view msg)
 {
-   {
-      std::scoped_lock<std::mutex> lock(theMutex);
-      theLogsToRecord.push(logToString(fileName, lineNum, code, msg, std::chrono::system_clock::now()));
-      theLogsAvailableFlag = true;
-   }
+   std::scoped_lock<std::mutex> lock(theMutex);
+   theLogsToRecord.push(logToString(fileName, lineNum, code, msg, std::chrono::system_clock::now()));
+   theLogsAvailableFlag = true;
+
    // Signal to the condition variable to wake up the logging thread
    theCondVar.notify_one();
 }

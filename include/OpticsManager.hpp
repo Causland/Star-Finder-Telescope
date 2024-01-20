@@ -3,15 +3,20 @@
 
 #include "CommandTypes.hpp"
 #include "Subsystem.hpp"
-#include <chrono>
 
 class InformationDisplay;
 
 class OpticsManager : public Subsystem
 {
 public:
-   OpticsManager(std::string subsystemName) : Subsystem(subsystemName) {}
-   virtual ~OpticsManager() = default;
+   OpticsManager() : Subsystem{"OpticsManager"} {}
+
+   ~OpticsManager() override = default;
+
+   OpticsManager(const OpticsManager&) = delete;
+   OpticsManager& operator=(const OpticsManager&) = delete;
+   OpticsManager(OpticsManager&&) = delete;
+   OpticsManager& operator=(OpticsManager&&) = delete;
 
    // Includes from ISubsystem
    void start() override;
@@ -24,7 +29,6 @@ public:
    virtual std::string takeTimelapse(const CmdTakeTimelapse& cmd);
    virtual void userChangeFocus(const CmdUserFocus& cmd);
 
-   static const std::string NAME;
 private:
    void threadLoop() override;
     

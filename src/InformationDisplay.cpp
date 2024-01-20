@@ -1,12 +1,11 @@
 #include "InformationDisplay.hpp"
 #include "Logger.hpp"
 #include "PropertyManager.hpp"
+
 #include <algorithm>
-#include <exception>
 #include <iomanip>
 
-constexpr uint32_t SEC_PER_MIN{60};
-const std::string InformationDisplay::NAME{"InformationDisplay"};
+static constexpr uint32_t SEC_PER_MIN{60};
 
 void InformationDisplay::start()
 {
@@ -33,7 +32,7 @@ void InformationDisplay::stop()
 
 void InformationDisplay::updateMotion(const Position& pos, const Velocity& vel)
 {
-   std::scoped_lock lk{myMutex};
+   std::scoped_lock lock{myMutex};
    myPosition = pos;
    myVelocity = vel;
    myCondVar.notify_one();   
@@ -41,14 +40,14 @@ void InformationDisplay::updateMotion(const Position& pos, const Velocity& vel)
 
 void InformationDisplay::updateSearchResults(const std::string& searchResults)
 {
-   std::scoped_lock lk{myMutex};
+   std::scoped_lock lock{myMutex};
    mySearchResults = searchResults;
    myCondVar.notify_one();   
 }
 
 void InformationDisplay::updateLastCommand(const std::string& command)
 {
-   std::scoped_lock lk{myMutex};
+   std::scoped_lock lock{myMutex};
    myLastCommand = command;
    myCondVar.notify_one();   
 }
@@ -58,8 +57,8 @@ void InformationDisplay::threadLoop()
    while (!myExitingFlag)
    {
       myHeartbeatFlag = true;
-      std::unique_lock<std::mutex> lk(myMutex);
-      if (!myCondVar.wait_for(lk, std::min(myTimeToRefresh, HEARTBEAT_UPDATE_INTERVAL_MS), [this](){ return myExitingFlag.load(); }))
+      std::unique_lock<std::mutex> lock{myMutex};
+      if (!myCondVar.wait_for(lock, std::min(myTimeToRefresh, HEARTBEAT_UPDATE_INTERVAL_MS), [this](){ return myExitingFlag.load(); }))
       {
          const auto now{std::chrono::system_clock::now()};
          const auto timeSinceRefresh{std::chrono::duration_cast<std::chrono::milliseconds>(now - myLastRefreshTime)};
@@ -70,7 +69,6 @@ void InformationDisplay::threadLoop()
             myLastRefreshTime = now;
          }
          myTimeToRefresh = myRefreshRate - timeSinceRefresh;
-         continue;
       }
       if (myExitingFlag)
       {
@@ -88,23 +86,27 @@ void InformationDisplay::updateDisplay()
       return;
    }
 
-   auto now{std::chrono::system_clock::now()};
-   auto uptime{std::chrono::duration_cast<std::chrono::seconds>(now - myStartTime)};
+   const auto now{std::chrono::system_clock::now()};
+   const auto uptime{std::chrono::duration_cast<std::chrono::seconds>(now - myStartTime)};
+
+   static constexpr int TIME_MIN_W{2};
+   static constexpr int PV_PREC{2};
+   static constexpr int PV_MIN_W{7};
 
    // Format all the data and write to output file
    myDisplayFile << "=======================================\n"
                  << "    Star Finder Telescope Telemetry    \n"
                  << "=======================================\n"
                  << std::setfill('0')
-                 << "Uptime: " << std::setw(2) << uptime.count() / SEC_PER_MIN << ":" 
-                 << std::setw(2) << uptime.count() % SEC_PER_MIN << "\n"
+                 << "Uptime: " << std::setw(TIME_MIN_W) << uptime.count() / SEC_PER_MIN << ":" 
+                 << std::setw(TIME_MIN_W) << uptime.count() % SEC_PER_MIN << "\n"
                  << "---------------------------------------\n"
                  << "           Position Manager            \n"
                  << std::setfill(' ') << std::fixed << std::internal
-                 << "    Az: " << std::setprecision(2) << std::setw(7) << myPosition.myAzimuth 
-                 <<    "(deg)       El: " << std::setprecision(2) << std::setw(7) << myPosition.myElevation << "(deg)\n"
-                 << "Vel_Az: " << std::setprecision(2) << std::setw(7) << myVelocity.myVelAzimuth 
-                 << "(deg/s) Vel_El: " << std::setprecision(2) << std::setw(7) << myVelocity.myVelElevation << "(deg/s)\n"
+                 << "    Az: " << std::setprecision(PV_PREC) << std::setw(PV_MIN_W) << myPosition.myAzimuth 
+                 <<    "(deg)       El: " << std::setprecision(PV_PREC) << std::setw(PV_MIN_W) << myPosition.myElevation << "(deg)\n"
+                 << "Vel_Az: " << std::setprecision(PV_PREC) << std::setw(PV_MIN_W) << myVelocity.myVelAzimuth 
+                 << "(deg/s) Vel_El: " << std::setprecision(PV_PREC) << std::setw(PV_MIN_W) << myVelocity.myVelElevation << "(deg/s)\n"
                  << "---------------------------------------\n"
                  << "           Motion Controller           \n"
                  << myMotionController->getDisplayInfo() << "\n"
@@ -120,7 +122,5 @@ void InformationDisplay::updateDisplay()
                  << "Last Command: " << myLastCommand << "\n"
                  << "---------------------------------------\n";
 
-   // Flush the file and close
-   myDisplayFile.flush();
    myDisplayFile.close();
 }
