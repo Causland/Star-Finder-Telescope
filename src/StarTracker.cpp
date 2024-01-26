@@ -2,6 +2,7 @@
 #include "Logger.hpp"
 #include "PositionManager.hpp"
 #include "StarTracker.hpp"
+
 #include <algorithm>
 
 void StarTracker::start()
@@ -54,7 +55,7 @@ void StarTracker::threadLoop()
       // Process each command and take the specified action
       while (!myCommandQueue.empty())
       {
-         auto& cmdVariant = myCommandQueue.front();
+         auto& cmdVariant{myCommandQueue.front()};
          if (std::holds_alternative<CmdGoToTarget>(cmdVariant))
          {
             processGoTo(std::get<CmdGoToTarget>(cmdVariant));
@@ -79,77 +80,83 @@ void StarTracker::threadLoop()
 
 void StarTracker::pointToTarget(const CmdGoToTarget& cmd)
 {
-   std::scoped_lock lock(myMutex);
+   std::scoped_lock lock{myMutex};
    myCommandQueue.emplace(cmd);
    myCondVar.notify_one();
 }
 
 void StarTracker::trackTarget(const CmdFollowTarget& cmd)
 {
-   std::scoped_lock lock(myMutex);
+   std::scoped_lock lock{myMutex};
    myCommandQueue.emplace(cmd);
    myCondVar.notify_one();  
 }
 
 void StarTracker::searchForTargets(const CmdSearchTarget& cmd)
 {
-   std::scoped_lock lock(myMutex);
+   std::scoped_lock lock{myMutex};
    myCommandQueue.emplace(cmd);
    myCondVar.notify_one();
 }
 
 void StarTracker::processGoTo(const CmdGoToTarget& cmd)
 {
-   myGpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
-   const auto result{myStarDatabase->queryTargetPointing(cmd.myTargetName, std::chrono::system_clock::now(),
-                                                         myGpsLong, myGpsLat, myGpsElev)};
-   if (result.myStatusCode == QueryResult::SUCCESS)
+   myGpsModule->getGpsPosition(&myGpsPosition);
+   const auto result{myStarDatabase->queryTargetPointing(cmd.myTargetName, std::chrono::system_clock::now(), myGpsPosition)};
+   if (result.myStatus == QueryResultEnum::SUCCESS)
    {
-      auto position{result.myPositionResults.front()};
-      auto positionManager = myPositionManager.lock();
-      LOG_INFO("Issuing goto command for target=" + cmd.myTargetName + " (az,el)=(" + 
-                                             std::to_string(position.first.myAzimuth) + "," + std::to_string(position.first.myElevation) + ")");
-      positionManager->updatePosition(CmdUpdatePosition(Position{position.first.myAzimuth, position.first.myElevation}));
+      const auto& traj{std::get<QueryResult::QueryRsltTrajectory>(result.myQueryResults)};
+      const auto& pos{traj.front().myPosition};
+
+      auto positionManager{myPositionManager.lock()};
+      if (positionManager != nullptr)
+      {
+         LOG_INFO("Issuing goto command for target=" + cmd.myTargetName + " (az,el)=(" + 
+                      std::to_string(pos.myAzimuth) + "," + std::to_string(pos.myElevation) + ")");
+         positionManager->updatePosition(CmdUpdatePosition(pos));
+      }
    }
-   else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
+   else if (result.myStatus == QueryResultEnum::INVALID_PARAM || result.myStatus == QueryResultEnum::FAILURE)
    {
-      LOG_ERROR("Goto Target Result: " + result.myLogStatement);
+      LOG_ERROR("Goto Target Result: " + std::get<std::string>(result.myQueryResults));
    }
 }
 
 void StarTracker::processFollow(const CmdFollowTarget& cmd)
 {
-   myGpsModule->getGpsPosition(&myGpsLat, &myGpsLong, &myGpsElev);
-   auto result = myStarDatabase->queryTargetPointingTrajectory(cmd.myTargetName, cmd.myStartTime, cmd.myStartTime + cmd.myDuration,
-                                                               myGpsLong, myGpsLat, myGpsElev);
-   if (result.myStatusCode == QueryResult::SUCCESS)
+   myGpsModule->getGpsPosition(&myGpsPosition);
+   auto result{myStarDatabase->queryTargetPointingTrajectory(cmd.myTargetName, cmd.myStartTime, cmd.myDuration, myGpsPosition)};
+   if (result.myStatus == QueryResultEnum::SUCCESS)
    {
-      auto positionManager = myPositionManager.lock();
-      positionManager->trackTarget(result.myPositionResults);
+      auto positionManager{myPositionManager.lock()};
+      if (positionManager != nullptr)
+      {
+         positionManager->trackTarget(std::get<QueryResult::QueryRsltTrajectory>(result.myQueryResults));
+      }
    }
-   else if (result.myStatusCode == QueryResult::INVALID_PARAM || result.myStatusCode == QueryResult::FAILURE)
+   else if (result.myStatus == QueryResultEnum::INVALID_PARAM || result.myStatus == QueryResultEnum::FAILURE)
    {
-      LOG_ERROR("Follow Target Result: " + result.myLogStatement);
+      LOG_ERROR("Follow Target Result: " + std::get<std::string>(result.myQueryResults));
    }
 }
 
 void StarTracker::processSearch(const CmdSearchTarget& cmd)
 {
-   QueryResult searchResult;
+   QueryResult queryResult{QueryResultEnum::FAILURE};
    if (cmd.myTargetName != "None")
    {
       LOG_INFO("Searching for " + cmd.myTargetName);
-      searchResult = myStarDatabase->searchTargetsByName(cmd.myTargetName);
+      queryResult = myStarDatabase->searchTargetsByName(cmd.myTargetName);
    }
    else if (cmd.mySearchRadiusInLightYears > 0)
    {
       LOG_INFO("Searching for " + std::to_string(cmd.mySearchRadiusInLightYears));
-      searchResult = myStarDatabase->searchTargetsByRange(cmd.mySearchRadiusInLightYears);
+      queryResult = myStarDatabase->searchTargetsByRange(cmd.mySearchRadiusInLightYears);
    }
    else if (cmd.mySearchLuminosityInWatts > 0)
    {
       LOG_INFO("Searching for " + std::to_string(cmd.mySearchLuminosityInWatts));
-      searchResult = myStarDatabase->searchTargetsByLuminosity(cmd.mySearchLuminosityInWatts);
+      queryResult = myStarDatabase->searchTargetsByLuminosity(cmd.mySearchLuminosityInWatts);
    }
    else
    {
@@ -157,42 +164,37 @@ void StarTracker::processSearch(const CmdSearchTarget& cmd)
                 std::to_string(cmd.mySearchRadiusInLightYears) + " luminosity=" + std::to_string(cmd.mySearchLuminosityInWatts));
    }
    // Check the status code and display the search results to the user
-   auto informationDisplay = myInformationDisplay.lock();
+   auto informationDisplay{myInformationDisplay.lock()};
    if (informationDisplay != nullptr)
    {
-      switch(searchResult.myStatusCode)
+      switch(queryResult.myStatus)
       {
-         case QueryResult::SUCCESS:
+         case QueryResultEnum::SUCCESS:
          {
             // Each entry of the result vector is the name of a target. Format the
             // results as a comma seperated list.
-            auto it = searchResult.mySearchResults.begin();
-            std::string displayString = *it++;
-            for (; it != searchResult.mySearchResults.end(); ++it)
+            const auto& searchResult{std::get<QueryResult::QueryRsltSearch>(queryResult.myQueryResults)};
+            auto iter{searchResult.begin()};
+            std::string displayString{*iter++};
+            for (; iter != searchResult.end(); ++iter)
             {
-               displayString += ", ";
-               displayString += *it;
+               displayString += "\n" + *iter;
             }
             informationDisplay->updateSearchResults(displayString);
             break;
          }
-         case QueryResult::FAILURE:
-         case QueryResult::INVALID_PARAM:
+         case QueryResultEnum::FAILURE:
+         case QueryResultEnum::INVALID_PARAM:
          {
-            LOG_ERROR("Search failed with log: " + searchResult.myLogStatement);
-            informationDisplay->updateSearchResults(searchResult.myLogStatement);
+            const auto& logStatement{std::get<std::string>(queryResult.myQueryResults)};
+            LOG_ERROR("Search failed: " + logStatement);
+            informationDisplay->updateSearchResults(logStatement);
             break;
          }
-         case QueryResult::NO_MATCH:
+         case QueryResultEnum::NO_MATCH:
          {
             LOG_WARN("No search matches returned from database");
             informationDisplay->updateSearchResults("No Matches");
-            break;
-         }
-         case QueryResult::UNINITIALIZED:
-         {
-            LOG_ERROR("QueryResult is uninitialized");
-            informationDisplay->updateSearchResults("Unable to search database");
             break;
          }
       }

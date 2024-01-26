@@ -30,8 +30,12 @@ public:
     */
    ~Serial();
 
+   /*!
+    * Move a serial object.
+    */
+   Serial(Serial&& dev) noexcept;
+
    Serial(const Serial&) = delete;
-   Serial(Serial&&) = delete;
    void operator=(const Serial&) = delete;
    void operator=(Serial&&) = delete;
 

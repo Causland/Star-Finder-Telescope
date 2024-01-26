@@ -7,10 +7,9 @@
 #include <atomic>
 #include <chrono>
 #include <mutex>
-#include <sstream>
 #include <thread>
 
-constexpr uint16_t MAX_GPS_MSG_LEN{1024};
+static constexpr uint16_t MAX_GPS_MSG_LEN{1024};
 
 /*!
  * The BN180 GPS module gathers data from GPS satellites and provides a series of NMEA messages 
@@ -24,16 +23,15 @@ public:
     * Creates a Bn180GpsModule object with the provided serial device, the serial timeout period,
     * and the GPS lookup period for updated position. The module uses the serial port to receive
     * NMEA data from the BN180 GPS module and parses out the position data.
-    * \param[in] serialDevice a path to a valid serial device which provides NMEA GPS messages.
-    * \param[in] serialTimeout a timeout for reading the serial device in deciseconds.
+    * \param[in] serialDevice a serial device provided to the GPS module.
     * \param[in] lookupPeriodInS a period to update the GPS position data.
     */
-   explicit Bn180GpsModule(const std::string& serialDevice, const uint8_t& serialTimeout, const uint32_t& lookupPeriodInS);
+   Bn180GpsModule(Serial&& serialDevice, const uint32_t& lookupPeriodInS);
    
    /*!
     * Destroys a Bn180GpsModule by stopping the threadloop and waiting for it to exit.
     */
-   virtual ~Bn180GpsModule();
+   ~Bn180GpsModule() override;
 
    Bn180GpsModule(const Bn180GpsModule&) = delete;
    Bn180GpsModule(Bn180GpsModule&&) = delete;
@@ -41,13 +39,11 @@ public:
    void operator=(Bn180GpsModule&&) = delete;
 
    /*!
-    * Get the latitude, longitude, and elevation of the current position
-    * \param[out] latitude a latitude in degrees. Positive if North.
-    * \param[out] longitude a longitude in degrees. Positive if East.
-    * \param[out] elevation an elevation in meters.
-    * \return true if the GPS module has received valid data.
-    */
-   bool getGpsPosition(double* latitude, double* longitude, double* elevation) override;
+    * Get the GPS position reported by the module.
+    * \param[out] position the GPS position data.
+    * \return true if the position is known.
+    */ 
+   bool getGpsPosition(GpsPosition* position) override;
 
    /*!
     * Get information to display on the screen about the GPS module.
@@ -71,37 +67,74 @@ private:
     * \param message an NMEA message string.
     * \return true if a matching NMEA parser was found and the parsing is successful.
     */
-   bool parseNmea(const std::string& message);
+   bool parseNmea(std::string_view message);
 
    /*!
     * Parse an NMEA GGA message for latitude, longitude, and altitude data.
     * \param messageStr an NMEA GGA message string.
     * \return true if the data is parsed succesfully.
     */
-   bool parseNmeaGGA(const std::string& messageStr);
+   bool parseNmeaGGA(std::string_view messageStr);
 
    /*!
     * Parse an NMEA RMC message for latitude and longitude data.
     * \param messageStr an NMEA RMC message string.
     * \return true if the data is parsed successfully.
     */
-   bool parseNmeaRMC(const std::string& messageStr);
+   bool parseNmeaRMC(std::string_view messageStr);
 
    /*!
     * Parse an NMEA GLL message for latitude and longitude data.
     * \param messageStr an NMEA GLL message string.
     * \return true if the data is parsed successfully.
     */
-   bool parseNmeaGLL(const std::string& messageStr);
+   bool parseNmeaGLL(std::string_view messageStr);
+
+   /*!
+    * Message parsing helper function. Skip to the next field in the string view.
+    * \param[in,out] messageStr a string view with a field to skip.
+    */ 
+   static constexpr void skipField(std::string_view& messageStr)
+   {
+      const auto posComma{messageStr.find(',')};
+
+      if (posComma == std::string_view::npos)
+      {
+         messageStr.remove_prefix(messageStr.size());
+      }
+      else 
+      {
+         messageStr.remove_prefix(posComma + 1); 
+      }
+   }
+
+   /*!
+    * Message parsing helper function. Save off the current field of the string view and
+    * move to the beginning of the next field.
+    * \param[in,out] messageStr a string view beginning with the field to processes.
+    * \param[out] fieldVal the value of the extracted field.
+    */ 
+   static constexpr void extractField(std::string_view& messageStr, std::string* fieldVal)
+   {
+      const auto posComma{messageStr.find(',')};
+      *fieldVal = messageStr.substr(0, posComma);
+
+      if (posComma == std::string_view::npos)
+      {
+         messageStr.remove_prefix(messageStr.size());
+      }
+      else 
+      {
+         messageStr.remove_prefix(posComma + 1); 
+      }
+   }
    
-   double myLatitude{0.0}; //!< The current latitude. Positive for North.
-   double myLongitude{0.0}; //!< The current longitude. Positive for East.
-   double myElevation{0.0}; //!< The current elevation.
+   GpsPosition myGpsPosition; //!< The current GPS position.
    bool myGpsLockFlag{false}; //!< The flag used to determine if the GPS module has received position data.
    std::atomic<bool> myExitFlag{false}; //!< The flag used to control the lifetime of the thread loop.
    std::thread myThread; //!< The GPS processing thread.
    std::mutex myMutex; //!< The mutex for accessing position data external to module.
-   std::array<uint8_t, MAX_GPS_MSG_LEN> myRawSerialData; //! The array to hold raw data from the serial device.
+   std::array<uint8_t, MAX_GPS_MSG_LEN> myRawSerialData{}; //! The array to hold raw data from the serial device.
    std::string myLeftoverChars; //!< The characters from the serial device left over from last processing loop.
    Serial mySerial; //!< The serial device controller.
    const std::chrono::seconds myLookupPeriod{60}; //!< The period to look for new GPS data.

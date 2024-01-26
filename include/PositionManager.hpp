@@ -17,39 +17,6 @@ static constexpr uint32_t DEFAULT_MANUAL_MOVE_TIME_OFFSET{300};
 static constexpr uint32_t DEFAULT_TRAJECTORY_SAMPLE_PERIOD{10};
 
 /*!
- * Structure to hold information about a specific point along a trajectory path. Each point is has a
- * time at which the telescope should be pointing at the position or moving at the velocity.
- */
-struct TrajectoryPoint
-{
-   /*!
-    * Creates a default TrajectoryPoint positioned at the origin, no velocity, and at the epoch.
-    */
-   TrajectoryPoint() = default;
-
-   /*!
-    * Creates a TrajectoryPoint at a position and time.
-    * \param[in] pos a position of the telescope.
-    * \param[in] tp a specific point in time.
-    */
-   TrajectoryPoint(const Position& pos, const std::chrono::system_clock::time_point& time) :
-                     myPosition{pos}, myTime{time} {}
-
-   /*!
-    * Creates a TrajectoryPoint at a position, velocity, and time.
-    * \param[in] pos a position of the telescope.
-    * \param[in] vel an instantaneous velocity of the telescope.
-    * \param[in] tp a specific point in time.
-    */
-   TrajectoryPoint(const Position& pos, const Velocity& vel, const std::chrono::system_clock::time_point& time) :
-                     myPosition{pos}, myVelocity{vel}, myTime{time} {}
-
-   Position myPosition; //!< The pointing position of the telescope.
-   Velocity myVelocity; //!< The instantaneous velocity of the telescope.
-   std::chrono::system_clock::time_point myTime; //!< The point in time.
-};
-
-/*!
  * The PositionManager subsystem is responsible for changing the pointing position of the
  * telescope over a target trajectory. The PositionManager thread waits for a trajectory
  * to be created via interface calls from either the StarTracker subsystem or the 
@@ -102,20 +69,20 @@ public:
     * \param[in] cmd an update position command
     * \sa calculateTrajectory()
     */
-   void updatePosition(const CmdUpdatePosition& cmd);
+   virtual void updatePosition(const CmdUpdatePosition& cmd);
 
    /*!
     * Move the telescope to follow a set path over time. Interpolate smooth trajectory from the provided points.
     * \param[in] path a vector of TrajectoryPoints containing position and time data.
     * \sa calculateTrajectory()
     */
-   void trackTarget(std::vector<TrajectoryPoint>& path);
+   virtual void trackTarget(std::vector<TrajectoryPoint>& path);
 
    /*!
     * Inform the MotionController to calibrate and update its stopping limits
     * \param[in] cmd a calibration command.
     */
-   void calibrate(const CmdCalibrate& cmd);
+   virtual void calibrate(const CmdCalibrate& cmd);
 
 private:
    /*!

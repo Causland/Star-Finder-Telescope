@@ -3,8 +3,14 @@
 class MinStarTracker : public StarTracker
 {
 public:
-   MinStarTracker() : StarTracker(NAME, nullptr, nullptr) {}
-   virtual ~MinStarTracker() = default;
+   MinStarTracker() : StarTracker{nullptr, nullptr} {}
+   ~MinStarTracker() override = default;
+
+   MinStarTracker(const MinStarTracker&) = delete;
+   MinStarTracker& operator=(const MinStarTracker&) = delete;
+   MinStarTracker(MinStarTracker&&) = delete;
+   MinStarTracker& operator=(MinStarTracker&&) = delete;
+
    void pointToTarget(const CmdGoToTarget& cmd) override {}
    void trackTarget(const CmdFollowTarget& cmd) override {}
    void searchForTargets(const CmdSearchTarget& cmd) override {}
@@ -12,6 +18,4 @@ public:
    void stop() override {}
    void configureSubsystems(const std::array<std::shared_ptr<Subsystem>, 
                                                       static_cast<size_t>(SubsystemEnum::NUM_SUBSYSTEMS)>& subsystems) override {}
-   bool checkHeartbeat() override { return true; }
-   std::string getName() override { return NAME; }
 };

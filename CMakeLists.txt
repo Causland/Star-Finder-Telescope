@@ -125,15 +125,13 @@ set (CMAKE_CXX_FLAGS_RELEASE "-O3")
 ###########################################################
 if (CODE_ANALYSIS)
    find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck REQUIRED)
+   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/cppcheck)
    list(APPEND CMAKE_CXX_CPPCHECK
-      "src/"
-      "include/"
-      "test/"
-      "-i${CMAKE_BINARY_DIR}/_deps/"
-      "--project=${CMAKE_BINARY_DIR}/compile_commands.json"
-      "--enable=all"
-      "--cppcheck-build-dir=${CMAKE_BINARY_DIR}/cppcheck"
-      "--std=c++17"
+      " --project=${CMAKE_BINARY_DIR}/compile_commands.json"
+      " -i${CMAKE_BINARY_DIR}/"
+      " --enable=all"
+      " --cppcheck-build-dir=${CMAKE_BINARY_DIR}/cppcheck"
+      " --std=c++17"
    )
 
    find_program(CMAKE_CXX_CLANG_TIDY clang-tidy REQUIRED)

@@ -1,48 +1,26 @@
 #include "interfaces/StarDatabase/StarDatabaseAdapter.hpp"
-#include <algorithm>
-#include <cmath>
-#include <iomanip>
-
-StarDatabaseAdapter::StarDatabaseAdapter() : myDatabaseConnection(sqlpp::sqlite3::connection_config(myDatabasePath))
-{
-}
-
-StarDatabaseAdapter::~StarDatabaseAdapter()
-{
-}
 
 bool StarDatabaseAdapter::queryTargetPointing(const std::string& targetName, const std::chrono::time_point<std::chrono::system_clock>& time,
-                                                const double& gpsLong, const double& gpsLat, const double& gpsElev, double* azimuth, double* elevation)
+                                              const GpsPosition& gpsPosition, Position* position)
 {
+   /*
    // Preprocess query information
-   // Target Name
-   std::string name = "None";
-   auto id = UINT32_MAX; // No results from API should have this id
-   if (std::find_if(targetName.begin(), targetName.end(), [](auto& c){ return !std::isdigit(c); }) == targetName.end())
-   {
-      id = std::stoi(targetName);
-   }
-   else
-   {
-      name = targetName;
-   }
-
    // Time
    std::ostringstream timeStream;
-   std::time_t t = std::chrono::system_clock::to_time_t(time);
+   std::time_t t{std::chrono::system_clock::to_time_t(time)}; // NOLINT(readability-identifier-length)
    timeStream << std::put_time(std::gmtime(&t), "%F %R");
-   std::string timeStr = timeStream.str();
+   const std::string timeStr{timeStream.str()};
 
    // GPS Position
-   auto roundedLong = std::round(10 * gpsLong) / 10;
-   auto roundedLat = std::round(10 * gpsLat) / 10;
-   auto roundedElev = std::round(10 * gpsElev) / 10;
+   const auto roundedLong{std::round(10 * gpsPosition.myLongitude) / 10};
+   const auto roundedLat{std::round(10 * gpsPosition.myLatitude) / 10};
+   const auto roundedElev{std::round(10 * gpsPosition.myElevation) / 10};
 
    // Query the database
    StarDatabaseSchema::TargetBody tb;
    StarDatabaseSchema::Ephemeris eph;
    auto jt = tb.join(eph).on(tb.bodyId == eph.bodyId);
-   /*auto results = myDatabaseConnection(select(tb.bodyId, tb.bodyName, eph.azimuth, eph.elevation)
+   auto results = myDatabaseConnection(select(tb.bodyId, tb.bodyName, eph.azimuth, eph.elevation)
                                      .from(jt)
                                      .where(
                                           (tb.bodyName == targetName || tb.bodyId == targetName) && 

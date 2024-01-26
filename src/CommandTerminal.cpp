@@ -173,15 +173,21 @@ void CommandTerminal::processPhotoCmd(std::istream& commandStream)
 {
    // Format -> photo <name>
    std::string name;
-   commandStream >> name;
-   auto opticsManager{myOpticsManager.lock()};
-   if (opticsManager != nullptr)
+   if (commandStream >> name)
    {
-      opticsManager->takePhoto(CmdTakePhoto{name});
+      auto opticsManager{myOpticsManager.lock()};
+      if (opticsManager != nullptr)
+      {
+         opticsManager->takePhoto(CmdTakePhoto{name});
+      }
+      else 
+      {
+         LOG_ERROR("OpticsManager pointer has expired");
+      }
    }
    else 
    {
-      LOG_ERROR("OpticsManager pointer has expired");
+      LOG_ERROR("Unable to parse parameters for photo command");
    }
 }
 
@@ -304,15 +310,21 @@ void CommandTerminal::processGoToCmd(std::istream& commandStream)
 {
    // Format -> goto <name>
    std::string name;
-   commandStream >> name;
-   auto starTracker{myStarTracker.lock()};
-   if (starTracker != nullptr)
+   if (commandStream >> name)
    {
-      starTracker->pointToTarget(CmdGoToTarget{name});
+      auto starTracker{myStarTracker.lock()};
+      if (starTracker != nullptr)
+      {
+         starTracker->pointToTarget(CmdGoToTarget{name});
+      }
+      else 
+      {
+         LOG_ERROR("StarTracker pointer has expired");
+      }
    }
    else 
    {
-      LOG_ERROR("StarTracker pointer has expired");
+      LOG_ERROR("Unable to parse parameters for goto command");
    }
 }
 
@@ -334,7 +346,11 @@ void CommandTerminal::processSearchCmd(std::istream& commandStream)
    }
    else if (option == "name")
    {
-      commandStream >> name;
+      if (!(commandStream >> name))
+      {
+         LOG_ERROR("Unable to parse parameters for search name command");
+         return;
+      }
    }
    else if (option == "brightness")
    {
@@ -347,6 +363,7 @@ void CommandTerminal::processSearchCmd(std::istream& commandStream)
    else
    {
       LOG_ERROR("Unknown option " + option + " for search command");
+      return;
    }
    auto starTracker{myStarTracker.lock()};
    if (starTracker != nullptr)

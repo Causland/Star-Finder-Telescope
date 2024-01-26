@@ -9,11 +9,16 @@
 #include "PropertyManager.hpp"
 #include "StarTracker.hpp"
 #include "Subsystem.hpp"
+
+#ifdef RASPBERRY_PI
 #include "interfaces/GpsModule/Bn180Gps/Bn180GpsModule.hpp"
-#include "interfaces/GpsModule/SimGpsModule.hpp"
 #include "interfaces/MotionController/AVRMotionController.hpp"
+#else
+#include "interfaces/GpsModule/SimGpsModule.hpp"
 #include "interfaces/MotionController/SimMotionController.hpp"
 #include "interfaces/StarDatabase/SimStarDatabase.hpp"
+#endif
+
 #include <array>
 #include <chrono>
 #include <exception>
@@ -23,9 +28,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <thread>
-#include <unordered_set>
-#include <vector>
 
 // The main function creates all resources for each subsystem of the telescope
 int main()
@@ -33,13 +35,13 @@ int main()
    // Create the flag which controls the lifetime of the main thread and execution
    // of the program. This flag is set by the CommandTerminal when an "exit" command
    // is entered by the user.
-   std::shared_ptr<std::atomic<bool>> exitSignal = std::make_shared<std::atomic<bool>>(false);
+   auto exitSignal{std::make_shared<std::atomic<bool>>(false)};
 
    // Initialize the logger to be used throughout the program.
    // Use the current date and time to name the log file
    std::ostringstream oss;
-   std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-   oss << "logs/" << std::put_time(std::localtime(&t), "%m-%d-%Y-%I-%M%p") << ".log";
+   std::time_t time{std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+   oss << "logs/" << std::put_time(std::localtime(&time), "%m-%d-%Y-%I-%M%p") << ".log";
    std::string logFileName = oss.str();
    std::filesystem::create_directory("logs/");
    Logger::initialize(std::make_shared<std::ofstream>(logFileName));
@@ -83,12 +85,13 @@ int main()
 
    try
    {
-      motionController = std::make_shared<AVRMotionController>(mcSerialDev);
-      gpsModule = std::make_shared<Bn180GpsModule>(gpsSerialDev, static_cast<uint8_t>(gpsTimeout), static_cast<uint32_t>(gpsLookupPeriod));
+      motionController = std::make_shared<AVRMotionController>(Serial{mcSerialDev, O_WRONLY, B9600, 50});
+      gpsModule = std::make_shared<Bn180GpsModule>(Serial{gpsSerialDev, O_RDWR, B9600, static_cast<uint8_t>(gpsTimeout)}, 
+                                                   static_cast<uint32_t>(gpsLookupPeriod));
    }
    catch (const std::runtime_error& e)
    {
-      LOG_ERROR("Unable to create RPI3 interface module: " + std::string(e.what()));
+      LOG_ERROR("Unable to create RPI3 interface module: " + std::string{e.what()});
       return 1;
    }
 #else
@@ -96,18 +99,18 @@ int main()
    gpsModule = std::make_shared<SimGpsModule>();
 #endif
 
-   std::shared_ptr<IStarDatabase> starDatabase = std::make_shared<SimStarDatabase>();
+   std::shared_ptr<IStarDatabase> starDatabase{std::make_shared<SimStarDatabase>()};
 
    // Construct all subsystems with their name associated modules. Add to subsystem array
    std::array<std::shared_ptr<Subsystem>, static_cast<size_t>(SubsystemEnum::NUM_SUBSYSTEMS)> subsystems;
    subsystems[static_cast<int>(SubsystemEnum::INFORMATION_DISPLAY)] = 
-                  std::make_shared<InformationDisplay>("InformationDisplay", starDatabase, gpsModule, motionController);
+                  std::make_shared<InformationDisplay>(starDatabase, gpsModule, motionController);
    subsystems[static_cast<int>(SubsystemEnum::STAR_TRACKER)] =
-                  std::make_shared<StarTracker>("StarTracker", starDatabase, gpsModule);
+                  std::make_shared<StarTracker>(starDatabase, gpsModule);
    subsystems[static_cast<int>(SubsystemEnum::OPTICS_MANAGER)] =
-                  std::make_shared<OpticsManager>("OpticsManager");
+                  std::make_shared<OpticsManager>();
    subsystems[static_cast<int>(SubsystemEnum::POSITION_MANAGER)] = 
-                  std::make_shared<PositionManager>("PositionManager", motionController);
+                  std::make_shared<PositionManager>(motionController);
    subsystems[static_cast<int>(SubsystemEnum::COMMAND_TERMINAL)] = 
                   std::make_shared<CommandTerminal>(exitSignal);
 

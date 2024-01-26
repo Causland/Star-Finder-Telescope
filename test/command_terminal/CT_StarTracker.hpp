@@ -3,7 +3,12 @@
 class CT_StarTracker : public MinStarTracker
 {
 public:
-   virtual ~CT_StarTracker() = default;
+   CT_StarTracker() = default;
+   ~CT_StarTracker() override = default;
+   CT_StarTracker(const CT_StarTracker&) = delete;
+   CT_StarTracker& operator=(const CT_StarTracker&) = delete;
+   CT_StarTracker(CT_StarTracker&&) = delete;
+   CT_StarTracker& operator=(CT_StarTracker&&) = delete;
 
    void pointToTarget(const CmdGoToTarget& cmd) override 
    {

@@ -3,7 +3,12 @@
 class CT_OpticsManager : public MinOpticsManager
 {
 public:
-   virtual ~CT_OpticsManager() = default;
+   CT_OpticsManager() = default;
+   ~CT_OpticsManager() override = default;
+   CT_OpticsManager(const CT_OpticsManager&) = delete;
+   CT_OpticsManager& operator=(const CT_OpticsManager&) = delete;
+   CT_OpticsManager(CT_OpticsManager&&) = delete;
+   CT_OpticsManager& operator=(CT_OpticsManager&&) = delete;
 
    std::string takePhoto(const CmdTakePhoto& cmd) override 
    {
@@ -31,7 +36,7 @@ public:
       myCommandReceived = false;
    }
 
-   void userChangeFocus(const CmdUserFocus& cmd)
+   void userChangeFocus(const CmdUserFocus& cmd) override
    {
       myUserFocusCmd = cmd;
       myCommandReceived = true;

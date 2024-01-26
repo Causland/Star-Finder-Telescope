@@ -3,12 +3,16 @@
 class MinInformationDisplay : public InformationDisplay
 {
 public:
-   MinInformationDisplay() : InformationDisplay(NAME, nullptr, nullptr, nullptr) {};
-   virtual ~MinInformationDisplay() = default;
+   MinInformationDisplay() : InformationDisplay{nullptr, nullptr, nullptr} {};
+   ~MinInformationDisplay() override = default;
+
+   MinInformationDisplay(const MinInformationDisplay&) = delete;
+   MinInformationDisplay(MinInformationDisplay&&) = delete;
+   MinInformationDisplay& operator=(const MinInformationDisplay&) = delete;
+   MinInformationDisplay& operator=(MinInformationDisplay&&) = delete;
+
    void start() override {}
    void stop() override {}
    void configureSubsystems(const std::array<std::shared_ptr<Subsystem>, 
                                                       static_cast<size_t>(SubsystemEnum::NUM_SUBSYSTEMS)>& subsystems) override {}
-   bool checkHeartbeat() override { return true; }
-   std::string getName() override { return NAME; }
 };

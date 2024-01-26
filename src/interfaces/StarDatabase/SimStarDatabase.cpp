@@ -1,6 +1,6 @@
 #include "interfaces/StarDatabase/SimStarDatabase.hpp"
 
-QueryResult SimStarDatabase::searchTargetsByName(const std::string& searchName)
+QueryResult SimStarDatabase::searchTargetsByName(std::string_view searchName)
 {
    return myResult;
 }
@@ -16,14 +16,13 @@ QueryResult SimStarDatabase::searchTargetsByLuminosity(const double& watts)
 }
 
 QueryResult SimStarDatabase::queryTargetPointing(const std::string& targetName, const std::chrono::system_clock::time_point& time, 
-                                          const double& gpsLong, const double& gpsLat, const double& gpsElev)
+                                                 const GpsPosition& gpsPosition)
 {
    return myResult;
 }
 
 QueryResult SimStarDatabase::queryTargetPointingTrajectory(const std::string& targetName, const std::chrono::system_clock::time_point& startTime, 
-                                                   const std::chrono::system_clock::time_point& endTime, const double& gpsLong,
-                                                   const double& gpsLat, const double& gpsElev)
+                                                   const std::chrono::seconds& duration, const GpsPosition& gpsPosition)
 {
    return myResult;
 }

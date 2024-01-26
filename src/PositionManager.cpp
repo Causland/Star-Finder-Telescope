@@ -112,8 +112,8 @@ void PositionManager::threadLoop()
          // If the current time is past the next trajectory point time, it is time to move the telescope
          if (currentTime >= trajPnt.myTime)
          {
-            myMotionController->moveHorizAngle(trajPnt.myPosition.myAzimuth, trajPnt.myVelocity.myVelAzimuth);
-            myMotionController->moveVertAngle(trajPnt.myPosition.myElevation, trajPnt.myVelocity.myVelElevation);
+            myMotionController->moveHorizAngle(Rotation{trajPnt.myPosition.myAzimuth, trajPnt.myVelocity.myVelAzimuth});
+            myMotionController->moveVertAngle(Rotation{trajPnt.myPosition.myElevation, trajPnt.myVelocity.myVelElevation});
             myCurrentPosition.myAzimuth = trajPnt.myPosition.myAzimuth;
             myCurrentPosition.myElevation = trajPnt.myPosition.myElevation;
             

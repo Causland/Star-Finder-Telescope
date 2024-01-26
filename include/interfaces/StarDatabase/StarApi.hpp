@@ -1,12 +1,14 @@
 #ifndef STAR_API_HPP
 #define STAR_API_HPP
 
+#include "interfaces/GpsModule/IGpsModule.hpp"
+#include "Common.hpp"
 #include "curlpp/cURLpp.hpp"
-#include "curlpp/Easy.hpp"
-#include "curlpp/Options.hpp"
+
 #include <chrono>
-#include <sstream>
+#include <istream>
 #include <string>
+#include <variant>
 #include <vector>
 
 /*!
@@ -25,16 +27,31 @@ enum class ApiResponseEnum
  */
 struct ApiResponse
 {
-   explicit ApiResponse(ApiResponseEnum type) : myType(type) {}
+   using ApiRspSuccess = std::vector<TrajectoryPoint>;
+   using ApiRspOptions = std::vector<std::string>;
+   
+   /*!
+    * Create a response with the specified response type.
+    * \param[in] type the result of the response.
+    */
+   explicit ApiResponse(const ApiResponseEnum type) : myType{type} {}
 
-   ApiResponseEnum myType{SUCCESS}; //!< The type of response from the API.
-   std::vector<std::string> myResponseResults; //!< A vector of strings containing lines of parsed response content.
+   /*!
+    * Create a response with a specified type and variant.
+    * \param[in] type the type of the response.
+    * \param[in] result the content of the response.
+    */
+   ApiResponse(const ApiResponseEnum type, 
+               std::variant<ApiRspSuccess, ApiRspOptions, std::string>&& result) : 
+                  myType{type}, myResponseResults{std::move(result)} {}
+
+   ApiResponseEnum myType{ApiResponseEnum::FAILURE}; //!< The type of response from the API.
+   std::variant<ApiRspSuccess, ApiRspOptions, std::string> myResponseResults; //!< A variant containing either a trajectory, options, or comment.
 };
 
 /*!
  * The StarApi class is responsible for querying the NASA/JPL Horizons API and returning
- * the response in a parsed vector of strings where each entry is either a datapoint or a
- * line of text.
+ * the response. The contents of the response may vary depending on the result.
  */
 class StarApi
 {
@@ -68,43 +85,50 @@ public:
     * converted into strings of format YYYY-MM-DD HH:MM. All value strings are preprocessed into
     * URL format to escape special characters. The beginning and end time range is sub divided
     * into a number of counts based on the provided time interval.
-    * \sa encodeParameterValue(), interpretAndStoreResponse()
     * \param[in] targetName a string of the target's name.
     * \param[in] startTime a system clock time point to begin the query.
     * \param[in] endTime a system clock time point to end the query.
     * \param[in] timePeriod a time interval to sub divide the beginning and end time.
-    * \param[in] latitude a latitude position relative to the WGS-84 GPS reference frame.
-    * \param[in] longitude a longitude position relative to the WGS-84 GPS reference frame.
-    * \param[in] elevation an elevation position relative to the WGS-84 GPS reference frame.
+    * \param[in] gpsPosition a position relative to the WGS-84 GPS reference frame.
     * \return an ApiResponse with the result of the API call.
     */
-   ApiResponse performApiQuery(const std::string& targetName, 
-                               const std::chrono::system_clock::time_point& startTime, 
-                               const std::chrono::system_clock::time_point& endTime, 
-                               const std::chrono::milliseconds& timePeriod, 
-                               const double& latitude, const double& longitude, const double& elevation);
+   static ApiResponse performApiQuery(const std::string& targetName, 
+                                      const std::chrono::system_clock::time_point& startTime, 
+                                      const std::chrono::system_clock::time_point& endTime, 
+                                      const std::chrono::milliseconds& timePeriod, 
+                                      const GpsPosition& position);
 
 private:
-   /*!
-    * Calls the cURL function curl_easy_escape() to conver the given input string to a URL encoded string.
-    * The cURL function returns a newly allocated C string which needs to be deallocated using the curl_free() function.
-    * \param[out] param a parameter value to covert into a URL encoded string. This string is edited directly.
-    */
-   void encodeParameterValue(std::string* param);
-
    /*!
     * Processes the query result stream line by line to determine whether the result is a success, has user options,
     * returned no match, or failed. The function first verifies that the API version and source are correct. It then
     * checks for specific indicators to determine the response type and returns the data.
-    * \param[in] response a stringstream containing the response of the API query.
+    * \param[in] response a stream containing the response of the API query.
     * \return an ApiResponse with the result of the interpreted query.
     */
-   ApiResponse interpretAndStoreResponse(std::stringstream& response);
+   static ApiResponse processResponse(std::istream& response);
 
-   curlpp::Easy myEasyCurlRequest; //!< The curlpp easy request object used to make an API query.
-   const std::string myBaseApiQuery{"https://ssd.jpl.nasa.gov/api/horizons.api?format=text&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'"
-                                        "&CENTER='coord'&COORD_TYPE='GEODETIC'&QUANTITIES='4,20'&ANG_FORMAT='DEG'&APPARENT='REFRACTED'"
-                                        "&TIME_DIGITS='SECONDS'&RANGE_UNITS='KM'&SKIP_DAYLT='YES'&ELEV_CUT='0'&CSV_FORMAT='YES'"}; //!< The base NASA/JPL Horizons API query used. Variable queries get added in the performApiQuery() function.
+   /*!
+    * Detect which type of response was received from the API. The types are defined in the 
+    * ApiResponseEnum.
+    * \param[in] response a stream containing the response of the API query.
+    * \return the type of response contained in the remaining stream.
+    */ 
+   static ApiResponseEnum detectResponseType(std::istream& response);
+
+   /*!
+    * Process a successful response by parsing out data points.
+    * \param[in] response a stream containing a successful response from the API.
+    * \return an ApiResponse with the successful result and data.
+    */ 
+   static ApiResponse processSuccessResponse(std::istream& response);
+
+   /*!
+    * Process an options response by parsing out the available options.
+    * \param[in] response a stream containing an options response from the API.
+    * \return an ApiResponse with the options result and the parsed options.
+    */ 
+   static ApiResponse processOptionsResponse(std::istream& response);
 };
 
 #endif
