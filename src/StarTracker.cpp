@@ -3,8 +3,6 @@
 #include "PositionManager.hpp"
 #include "StarTracker.hpp"
 
-#include <algorithm>
-
 void StarTracker::start()
 {
    myThread = std::thread(&StarTracker::threadLoop, this);
@@ -174,12 +172,15 @@ void StarTracker::processSearch(const CmdSearchTarget& cmd)
             // Each entry of the result vector is the name of a target. Format the
             // results as a comma seperated list.
             const auto& searchResult{std::get<QueryResult::QueryRsltSearch>(queryResult.myQueryResults)};
-            auto iter{searchResult.begin()};
-            std::string displayString{*iter++};
-            for (; iter != searchResult.end(); ++iter)
-            {
-               displayString += "\n" + *iter;
-            }
+            const auto displayString{[searchResult]() -> std::string {
+                                             auto iter{searchResult.begin()};
+                                             std::string ret{*iter++};
+                                             for (; iter != searchResult.end(); ++iter)
+                                             {
+                                                ret += "\n" + *iter;   
+                                             }
+                                             return ret;
+                                    }()};
             informationDisplay->updateSearchResults(displayString);
             break;
          }

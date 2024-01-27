@@ -113,6 +113,7 @@ set (CMAKE_CXX_FLAGS "-Wall \
                       -Wformat=2 \
                       -Wimplicit-fallthrough \
                       -Wundef \
+                      -Wuninitialized \
                       -Wno-unused-parameter")
 set (CMAKE_CXX_FLAGS_DEBUG "-O0 \
                             -g3 \

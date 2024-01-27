@@ -33,13 +33,13 @@ public:
     * \param[out] position the GPS position data.
     * \return true if the position is known.
     */ 
-   bool getGpsPosition(GpsPosition* position) override;
+   [[nodiscard]] bool getGpsPosition(GpsPosition* position) override;
 
    /*!
     * Get the GPS position as a formatted string.
     * \return a formatted string with the GPS position.
     */ 
-   std::string getDisplayInfo() override;
+   [[nodiscard]] std::string getDisplayInfo() override;
 
 private:
    GpsPosition myGpsPosition{SIM_LATITUDE, SIM_LONGITUDE, SIM_ELEVATION};

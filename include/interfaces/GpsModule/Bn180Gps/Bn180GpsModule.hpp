@@ -43,13 +43,13 @@ public:
     * \param[out] position the GPS position data.
     * \return true if the position is known.
     */ 
-   bool getGpsPosition(GpsPosition* position) override;
+   [[nodiscard]] bool getGpsPosition(GpsPosition* position) override;
 
    /*!
     * Get information to display on the screen about the GPS module.
     * \return a formatted string of information to display.
     */
-   std::string getDisplayInfo() override;
+   [[nodiscard]] std::string getDisplayInfo() override;
 
 private:
    /*!
@@ -67,28 +67,28 @@ private:
     * \param message an NMEA message string.
     * \return true if a matching NMEA parser was found and the parsing is successful.
     */
-   bool parseNmea(std::string_view message);
+   [[nodiscard]] bool parseNmea(std::string_view message);
 
    /*!
     * Parse an NMEA GGA message for latitude, longitude, and altitude data.
     * \param messageStr an NMEA GGA message string.
     * \return true if the data is parsed succesfully.
     */
-   bool parseNmeaGGA(std::string_view messageStr);
+   [[nodiscard]] bool parseNmeaGGA(std::string_view messageStr);
 
    /*!
     * Parse an NMEA RMC message for latitude and longitude data.
     * \param messageStr an NMEA RMC message string.
     * \return true if the data is parsed successfully.
     */
-   bool parseNmeaRMC(std::string_view messageStr);
+   [[nodiscard]] bool parseNmeaRMC(std::string_view messageStr);
 
    /*!
     * Parse an NMEA GLL message for latitude and longitude data.
     * \param messageStr an NMEA GLL message string.
     * \return true if the data is parsed successfully.
     */
-   bool parseNmeaGLL(std::string_view messageStr);
+   [[nodiscard]] bool parseNmeaGLL(std::string_view messageStr);
 
    /*!
     * Message parsing helper function. Skip to the next field in the string view.

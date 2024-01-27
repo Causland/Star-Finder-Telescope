@@ -58,7 +58,7 @@ Serial::~Serial()
    close(fd);
 }
 
-Serial::Serial(Serial&& dev) : fd{std::move(dev.fd)}, tty{std::move(tty)} {};
+Serial::Serial(Serial&& dev) : fd{std::exchange(dev.fd, 0)}, tty{std::exchange(tty, {})} {};
 
 ssize_t Serial::readFromSerial(uint8_t* data, const size_t& len)
 {

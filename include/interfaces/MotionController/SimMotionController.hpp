@@ -47,7 +47,7 @@ public:
    /*!
     * Get a formatted string of the stored values
     */ 
-   std::string getDisplayInfo() override;
+   [[nodiscard]] std::string getDisplayInfo() override;
 
 private:
    Rotation myHorizRot;

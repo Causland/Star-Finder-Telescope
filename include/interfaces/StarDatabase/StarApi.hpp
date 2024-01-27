@@ -92,11 +92,11 @@ public:
     * \param[in] gpsPosition a position relative to the WGS-84 GPS reference frame.
     * \return an ApiResponse with the result of the API call.
     */
-   static ApiResponse performApiQuery(const std::string& targetName, 
-                                      const std::chrono::system_clock::time_point& startTime, 
-                                      const std::chrono::system_clock::time_point& endTime, 
-                                      const std::chrono::milliseconds& timePeriod, 
-                                      const GpsPosition& position);
+   [[nodiscard]] static ApiResponse performApiQuery(const std::string& targetName, 
+                                                    const std::chrono::system_clock::time_point& startTime, 
+                                                    const std::chrono::system_clock::time_point& endTime, 
+                                                    const std::chrono::milliseconds& timePeriod, 
+                                                    const GpsPosition& position);
 
 private:
    /*!
@@ -106,7 +106,7 @@ private:
     * \param[in] response a stream containing the response of the API query.
     * \return an ApiResponse with the result of the interpreted query.
     */
-   static ApiResponse processResponse(std::istream& response);
+   [[nodiscard]] static ApiResponse processResponse(std::istream& response);
 
    /*!
     * Detect which type of response was received from the API. The types are defined in the 
@@ -114,21 +114,21 @@ private:
     * \param[in] response a stream containing the response of the API query.
     * \return the type of response contained in the remaining stream.
     */ 
-   static ApiResponseEnum detectResponseType(std::istream& response);
+   [[nodiscard]] static ApiResponseEnum detectResponseType(std::istream& response);
 
    /*!
     * Process a successful response by parsing out data points.
     * \param[in] response a stream containing a successful response from the API.
     * \return an ApiResponse with the successful result and data.
     */ 
-   static ApiResponse processSuccessResponse(std::istream& response);
+   [[nodiscard]] static ApiResponse processSuccessResponse(std::istream& response);
 
    /*!
     * Process an options response by parsing out the available options.
     * \param[in] response a stream containing an options response from the API.
     * \return an ApiResponse with the options result and the parsed options.
     */ 
-   static ApiResponse processOptionsResponse(std::istream& response);
+   [[nodiscard]] static ApiResponse processOptionsResponse(std::istream& response);
 };
 
 #endif

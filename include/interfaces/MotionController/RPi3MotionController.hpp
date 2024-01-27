@@ -57,7 +57,7 @@ public:
     * Get information to display on the screen about the motion controller.
     * \return a formatted string of information to display.
     */
-   std::string getDisplayInfo() override;
+   [[nodiscard]] std::string getDisplayInfo() override;
 
 private:
    /*!

@@ -46,7 +46,7 @@ public:
     * Get the GPS position as a formatted string.
     * \return a formatted string with the GPS position.
     */ 
-   virtual std::string getDisplayInfo() = 0;
+   [[nodiscard]] virtual std::string getDisplayInfo() = 0;
 };
 
 #endif

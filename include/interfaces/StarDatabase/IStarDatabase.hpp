@@ -71,21 +71,21 @@ public:
     * \param[in] searchName the name to search for.
     * \return the result of the search.
     */ 
-   virtual QueryResult searchTargetsByName(std::string_view searchName) = 0;
+   [[nodiscard]] virtual QueryResult searchTargetsByName(std::string_view searchName) = 0;
 
    /*!
     * Search for targets within a specified range.
     * \param[in] rangeInLightYears the range to search for.
     * \return the result of the search.
     */ 
-   virtual QueryResult searchTargetsByRange(const double& rangeInLightYears) = 0;
+   [[nodiscard]] virtual QueryResult searchTargetsByRange(const double& rangeInLightYears) = 0;
 
    /*!
     * Search for targets greater than the specified luminosity. 
     * \param[in] watts the minimum luminosity to search for.
     * \return the result of the search.
     */ 
-   virtual QueryResult searchTargetsByLuminosity(const double& watts) = 0;
+   [[nodiscard]] virtual QueryResult searchTargetsByLuminosity(const double& watts) = 0;
 
    /*!
     * Get the target info for a specific time with the observer at the provided GPS position.
@@ -94,8 +94,8 @@ public:
     * \param[in] gpsPosition the GPS position of the observer.
     * \return the result of the query.
     */ 
-   virtual QueryResult queryTargetPointing(const std::string& targetName, const std::chrono::system_clock::time_point& time, 
-                                           const GpsPosition& gpsPosition) = 0;
+   [[nodiscard]] virtual QueryResult queryTargetPointing(const std::string& targetName, const std::chrono::system_clock::time_point& time, 
+                                                         const GpsPosition& gpsPosition) = 0;
 
    /*!
     * Get the target info for a specific time range with the observer at the provided GPS position.
@@ -105,13 +105,13 @@ public:
     * \param[in] gpsPosition the GPS position of the observer.
     * \return the result of the query.
     */ 
-   virtual QueryResult queryTargetPointingTrajectory(const std::string& targetName, const std::chrono::system_clock::time_point& startTime, 
-                                                      const std::chrono::seconds& duration, const GpsPosition& gpsPosition) = 0;
+   [[nodiscard]] virtual QueryResult queryTargetPointingTrajectory(const std::string& targetName, const std::chrono::system_clock::time_point& startTime, 
+                                                                   const std::chrono::seconds& duration, const GpsPosition& gpsPosition) = 0;
 
    /*!
     * Get information about the database in a formatted string.
     */ 
-   virtual std::string getDisplayInfo() = 0;
+   [[nodiscard]] virtual std::string getDisplayInfo() = 0;
 };
 
 #endif

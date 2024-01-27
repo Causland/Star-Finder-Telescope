@@ -59,7 +59,7 @@ public:
     * Get information about the Motion Controller state in string format.
     * \return a formatted string.
     */ 
-   virtual std::string getDisplayInfo() = 0;
+   [[nodiscard]] virtual std::string getDisplayInfo() = 0;
 };
 
 #endif

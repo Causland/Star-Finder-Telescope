@@ -42,8 +42,8 @@ public:
     * type does not meet the type of the stored property.
     * \return true if the property is found and assigned to value.
     */
-   template <typename T>
-   inline static bool getProperty(std::string_view propName, T* value)
+   template <typename OutType>
+   inline static bool getProperty(std::string_view propName, OutType* value)
    {
       std::scoped_lock<std::mutex> lock{thePropMutex};
 
@@ -52,9 +52,9 @@ public:
          const auto iter{theProps.find(std::string{propName})};
          if (iter != theProps.end())
          {
-            if (std::holds_alternative<T>(iter->second))
+            if (std::holds_alternative<OutType>(iter->second))
             {
-               *value = std::get<T>(iter->second);
+               *value = std::get<OutType>(iter->second);
                return true;
             }
             

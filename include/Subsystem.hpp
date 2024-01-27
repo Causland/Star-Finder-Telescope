@@ -79,7 +79,7 @@ public:
     * Check the heatbeat of the subsystem. All subsystem threadLoops must set
     * the heartbeat status flag to true within the heartbeat interval.
     */ 
-   bool checkHeartbeat()
+   [[nodiscard]] bool checkHeartbeat()
    {
       const auto statusFlag{myHeartbeatFlag.load()};
       myHeartbeatFlag = false;
