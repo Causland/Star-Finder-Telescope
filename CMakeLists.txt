@@ -48,7 +48,7 @@ FetchContent_MakeAvailable(curlpp)
 FetchContent_Declare(
    sqlpp11
    GIT_REPOSITORY https://github.com/rbock/sqlpp11.git
-   GIT_TAG 0.61
+   GIT_TAG 0.64
    CMAKE_ARGS -DBUILD_SQLITE3_CONNECTOR ON
 )
 FetchContent_MakeAvailable(sqlpp11)
@@ -56,19 +56,15 @@ FetchContent_MakeAvailable(sqlpp11)
 FetchContent_Declare(
    tomlplusplus
    GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
-   GIT_TAG v3.2.0
+   GIT_TAG v3.4.0
 )
 FetchContent_MakeAvailable(tomlplusplus)
-
-# Configure gtest environment variables
-set (GTEST_HAS_PTHREAD 1)
 
 FetchContent_Declare(
    googletest
    GIT_REPOSITORY https://github.com/google/googletest.git
-   GIT_TAG release-1.12.1
+   GIT_TAG v1.14.0
 )
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 
@@ -114,7 +110,8 @@ set (CMAKE_CXX_FLAGS "-Wall \
                       -Wimplicit-fallthrough \
                       -Wundef \
                       -Wuninitialized \
-                      -Wno-unused-parameter")
+                      -Wno-unused-parameter \
+                      -Wno-psabi") # Silence note: parameter passing for argument... changed in GCC 7.1
 set (CMAKE_CXX_FLAGS_DEBUG "-O0 \
                             -g3 \
                             -fsanitize=address,undefined,leak")

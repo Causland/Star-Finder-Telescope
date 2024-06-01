@@ -114,7 +114,7 @@ private:
     * \param[in,out] messageStr a string view beginning with the field to processes.
     * \param[out] fieldVal the value of the extracted field.
     */ 
-   static constexpr void extractField(std::string_view& messageStr, std::string* fieldVal)
+   static void extractField(std::string_view& messageStr, std::string* fieldVal)
    {
       const auto posComma{messageStr.find(',')};
       *fieldVal = messageStr.substr(0, posComma);

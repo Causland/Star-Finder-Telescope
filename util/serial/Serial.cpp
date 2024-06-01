@@ -1,11 +1,14 @@
 #include "serial/Serial.hpp"
 
 #include <cerrno>
+#include <cstring>
+#include <stdexcept>
+#include <utility>
 
 Serial::Serial(const std::string& serialDevice, const int& fcntlMode, const uint32_t& baudRate, const uint8_t& timeoutds)
 {
    // Open the port using the serial device and mode
-   fd = std::open(serialDevice.c_str(), fcntlMode);
+   fd = open(serialDevice.c_str(), fcntlMode);
    if (fd == -1)
    {
       throw std::runtime_error("Unable to open serial device: " + serialDevice + "\n");
@@ -58,7 +61,7 @@ Serial::~Serial()
    close(fd);
 }
 
-Serial::Serial(Serial&& dev) : fd{std::exchange(dev.fd, 0)}, tty{std::exchange(tty, {})} {};
+Serial::Serial(Serial&& dev) noexcept : fd{std::exchange(dev.fd, 0)}, tty{std::exchange(tty, {})} {}
 
 ssize_t Serial::readFromSerial(uint8_t* data, const size_t& len)
 {

@@ -35,7 +35,7 @@ static constexpr std::string_view commandTypeToString(const CommandTypeEnum cmdT
       case CommandTypeEnum::CALIBRATE: return "CALIBRATE";
    }
    return "UNKNOWN";
-};
+}
 
 struct Command
 {

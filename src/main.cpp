@@ -13,6 +13,7 @@
 #ifdef RASPBERRY_PI
 #include "interfaces/GpsModule/Bn180Gps/Bn180GpsModule.hpp"
 #include "interfaces/MotionController/AVRMotionController.hpp"
+#include "interfaces/StarDatabase/SimStarDatabase.hpp"
 #else
 #include "interfaces/GpsModule/SimGpsModule.hpp"
 #include "interfaces/MotionController/SimMotionController.hpp"

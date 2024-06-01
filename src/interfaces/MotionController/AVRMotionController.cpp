@@ -35,7 +35,7 @@ void AVRMotionController::moveFocusKnob(const Rotation& rot)
       // Adjust to keep within min and max
       numTenUs = std::clamp(numTenUs, 
                             static_cast<double>(FOCUS_SERVO_MIN_TEN_US), 
-                            static_cast<double>(FOCUS_SERVO_CW_DEADZONE_TEN_US - 1));
+                            FOCUS_SERVO_CW_DEADZONE_TEN_US - 1);
    }
    else if (rpm < 0.0)
    {
@@ -45,7 +45,7 @@ void AVRMotionController::moveFocusKnob(const Rotation& rot)
 
       // Adjust to keep within min and max
       numTenUs = std::clamp(numTenUs, 
-                            static_cast<double>(FOCUS_SERVO_CCW_DEADZONE_TEN_US + 1), 
+                            FOCUS_SERVO_CCW_DEADZONE_TEN_US + 1, 
                             static_cast<double>(FOCUS_SERVO_MAX_TEN_US));
    }
    

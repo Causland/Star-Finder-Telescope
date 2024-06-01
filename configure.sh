@@ -46,7 +46,7 @@ if [[ "$analysis" == true ]]; then
 fi
 
 if [[ "$rpi" == true ]]; then
-   cmake . -B build-armv8-rpi3 $cmake_flags -DCMAKE_BUILD_TYPE=$build_type -DBUILD_RASPBERRYPI=ON --toolchain rpi-toolchain.cmake 
+   cmake . -B build-armv8-rpi3 $cmake_flags -DCMAKE_BUILD_TYPE=$build_type -DBUILD_RASPBERRYPI=ON --toolchain rpi-toolchain.cmake
 else
    cmake . -B build-x86_64-ubuntu $cmake_flags -DCMAKE_BUILD_TYPE=$build_type
 fi
