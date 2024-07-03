@@ -167,17 +167,24 @@ void loop()
                break;
             }               
             case HORIZ_SERVO_NUM:
+            {
                float theta{0.0f};
                memcpy(&theta, gCommand+1, sizeof(float));
 
                targetHorizAngle = theta;
                break;
+            }
             case FOCUS_SERVO_NUM:
+            {
                gFocusServo.writeMicroseconds(gCommand[1] * 10);
                break;
+            }
             default: // Nothing here
                break;
          }
       }
    }
+
+   measureHorizAngle();
+   controlHorizServo();
 }

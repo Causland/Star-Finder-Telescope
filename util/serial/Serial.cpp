@@ -61,7 +61,7 @@ Serial::~Serial()
    close(fd);
 }
 
-Serial::Serial(Serial&& dev) noexcept : fd{std::exchange(dev.fd, 0)}, tty{std::exchange(tty, {})} {}
+Serial::Serial(Serial&& dev) noexcept : fd{std::exchange(dev.fd, -1)}, tty{std::exchange(tty, {})} {}
 
 ssize_t Serial::readFromSerial(uint8_t* data, const size_t& len)
 {

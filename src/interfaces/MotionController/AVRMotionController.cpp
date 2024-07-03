@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
-#include <exception>
+#include <cstring>
 #include <string>
 
 static constexpr double DEGPERSEC_TO_ROTPERMIN{60.0 / 360.0};

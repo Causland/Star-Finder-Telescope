@@ -181,7 +181,7 @@ private:
    }
    // NOLINTEND(bugprone-easily-swappable-parameters, readability-identifier-length, cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 
-   Position myCurrentPosition; //!< The current pointing position of the telescope.
+   Position myCurrentPosition{0.0, 90.0}; //!< The current pointing position of the telescope.
    bool myTargetUpdateFlag{false}; //!< The flag used to determine when the telescope needs to be moved.
    std::chrono::milliseconds myManualMoveTimeOffset{DEFAULT_MANUAL_MOVE_TIME_OFFSET}; //!< The time used to offset the time for manually moving the telescope to a specific position.
    std::chrono::milliseconds myTrajectorySamplePeriod{DEFAULT_TRAJECTORY_SAMPLE_PERIOD}; //!< The time used to generate sub-points within a trajectory in milliseconds.
