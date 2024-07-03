@@ -61,11 +61,7 @@ void AVRMotionController::moveHorizAngle(const Rotation& rot)
    command[0] = BASE_HORIZ_SERVO_NUM;
 
    const float theta{static_cast<float>(rot.theta)};
-   const auto* ptr = reinterpret_cast<const uint8_t*>(&theta);
-   for (size_t i = 0; i < sizeof(float); ++i)
-   {
-      command[i+1] = *(ptr+i);
-   }
+   std::memcpy(&command[1], &theta, sizeof(theta));
 
    mySerial.writeToSerial(command.data(), command.size());
 }
@@ -77,11 +73,7 @@ void AVRMotionController::moveVertAngle(const Rotation& rot)
    command[0] = BASE_VERT_SERVO_NUM;
 
    const float theta{static_cast<float>(rot.theta)};
-   const auto* ptr{reinterpret_cast<const uint8_t*>(&theta)};
-   for (size_t i = 0; i < sizeof(float); ++i)
-   {
-      command[i+1] = *(ptr+i);
-   }
+   std::memcpy(&command[1], &theta, sizeof(theta));
 
    mySerial.writeToSerial(command.data(), command.size());
 }

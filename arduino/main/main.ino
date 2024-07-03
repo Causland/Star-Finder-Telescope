@@ -2,9 +2,7 @@
 // target positions. Uses sensors to create feedback loop to correct
 // for error in servo motion
 
-#include <algorithm>
-#include <cstring>
-
+#include <string.h>
 #include <Servo.h>
 
 // Constants
@@ -23,9 +21,9 @@ static constexpr uint8_t HORIZ_SERVO_FEEDBACK_PIN{11};
 static constexpr uint16_t HORIZ_SERVO_DEFAULT_US{1500};
 static constexpr uint16_t HORIZ_SERVO_MIN_US{1280};
 static constexpr uint16_t HORIZ_SERVO_MAX_US{1720};
-static constexpr double HORIZ_SERVO_AVG_TEN_US{(HORIZ_SERVO_MAX_TEN_US - HORIZ_SERVO_MIN_TEN_US) / 2.0 + HORIZ_SERVO_MIN_TEN_US};
-static constexpr double HORIZ_SERVO_CW_DEADZONE_TEN_US{148}; 
-static constexpr double HORIZ_SERVO_CCW_DEADZONE_TEN_US{152};
+static constexpr double HORIZ_SERVO_AVG_US{(HORIZ_SERVO_MAX_US - HORIZ_SERVO_MIN_US) / 2.0 + HORIZ_SERVO_MIN_US};
+static constexpr double HORIZ_SERVO_CW_DEADZONE_US{1480}; 
+static constexpr double HORIZ_SERVO_CCW_DEADZONE_US{1520};
 
 static constexpr uint8_t FOCUS_SERVO_NUM{2};
 static constexpr uint8_t FOCUS_SERVO_PIN{12};
@@ -80,7 +78,8 @@ void measureHorizAngle()
    int theta = (unitsFC - 1) - ((dc - dcMin) * unitsFC) / (dcMax - dcMin + 1);
 
    // Clamp theta to positive
-   theta = std::clamp(theta, 0, unitsFC - 1);
+   if (theta < 0) theta = 0;
+   else if (theta > unitsFC - 1) theta = unitsFC - 1;
 
    // If we transition from quadrant 4 to quadrant 1, increase the turn count
    if ((theta < q2min) && (thetaP > q3max)) ++turns;
@@ -106,7 +105,9 @@ void controlHorizServo()
    int output{errorAngle * Kp};
    int offset{0};
 
-   output = std::clamp(output, -200, 200);
+   if (output < -200) output = -200;
+   else if (output > 200) output = 200;
+
    if (errorAngle > 0)
    {
       offset = 30;
@@ -156,18 +157,18 @@ void loop()
             case VERT_SERVO_NUM:
             {
                float theta{0.0f};
-               std::memcpy(&theta, gCommand+1, sizeof(float));
+               memcpy(&theta, gCommand+1, sizeof(float));
 
-               const int numUs{static_cast<int>(std::clamp(theta * VERT_SERVO_US_PER_DEG + VERT_SERVO_MIN_US,
-                                                           static_cast<double>(VERT_SERVO_MIN_US),
-                                                           static_cast<double>(VERT_SERVO_MAX_US)))};
+               int numUs{theta * VERT_SERVO_US_PER_DEG + VERT_SERVO_MIN_US};
+               if (numUs < VERT_SERVO_MIN_US) numUs = VERT_SERVO_MIN_US;
+               else if (numUs > VERT_SERVO_MAX_US) numUs = VERT_SERVO_MAX_US;
 
                gVertServo.writeMicroseconds(numUs);
                break;
             }               
             case HORIZ_SERVO_NUM:
                float theta{0.0f};
-               std::memcpy(&theta, gCommand+1, sizeof(float));
+               memcpy(&theta, gCommand+1, sizeof(float));
 
                targetHorizAngle = theta;
                break;
