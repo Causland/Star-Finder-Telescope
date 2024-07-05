@@ -8,22 +8,21 @@
 // Constants
 static constexpr uint8_t VERT_SERVO_NUM{0};
 static constexpr uint8_t VERT_SERVO_PIN{9};
-static constexpr uint16_t VERT_SERVO_DEFAULT_US{1500};
+static constexpr uint16_t VERT_SERVO_DEFAULT_US{1200};
 static constexpr uint16_t VERT_SERVO_MIN_US{860};
-static constexpr uint16_t VERT_SERVO_MAX_US{2120};
-static constexpr double VERT_SERVO_MOTION_RANGE_DEG{180};
+static constexpr uint16_t VERT_SERVO_MAX_US{1490};
+static constexpr double VERT_SERVO_MOTION_RANGE_DEG{90.0};
 static constexpr double VERT_SERVO_US_PER_DEG{(VERT_SERVO_MAX_US - VERT_SERVO_MIN_US) 
                                                          / VERT_SERVO_MOTION_RANGE_DEG};
 
 static constexpr uint8_t HORIZ_SERVO_NUM{1};
 static constexpr uint8_t HORIZ_SERVO_PIN{10};
 static constexpr uint8_t HORIZ_SERVO_FEEDBACK_PIN{11};
-static constexpr uint16_t HORIZ_SERVO_DEFAULT_US{1500};
-static constexpr uint16_t HORIZ_SERVO_MIN_US{1280};
-static constexpr uint16_t HORIZ_SERVO_MAX_US{1720};
-static constexpr double HORIZ_SERVO_AVG_US{(HORIZ_SERVO_MAX_US - HORIZ_SERVO_MIN_US) / 2.0 + HORIZ_SERVO_MIN_US};
-static constexpr double HORIZ_SERVO_CW_DEADZONE_US{1480}; 
-static constexpr double HORIZ_SERVO_CCW_DEADZONE_US{1520};
+static constexpr uint16_t HORIZ_SERVO_STOP_US{1500};
+static constexpr int HORIZ_SERVO_MIN_SPEED_OFFSET_US{30};
+static constexpr int HORIZ_SERVO_MAX_SPEED_OFFSET_US{220};
+static constexpr uint16_t HORIZ_SERVO_DEFAULT_US{HORIZ_SERVO_STOP_US};
+static constexpr uint16_t HORIZ_SERVO_REFRESH_RATE_MS{10};
 
 static constexpr uint8_t FOCUS_SERVO_NUM{2};
 static constexpr uint8_t FOCUS_SERVO_PIN{12};
@@ -31,97 +30,142 @@ static constexpr uint16_t FOCUS_SERVO_DEFAULT_US{1500};
 
 static constexpr uint8_t COMMAND_LEN{5};
 
+static constexpr int UNITS_FC{360};
+
 // Globals
 Servo gVertServo;
 Servo gHorizServo;
 Servo gFocusServo;
 byte gCommand[COMMAND_LEN];
 
-int currHorizAngle{0};
-int targetHorizAngle{0};
-int Kp{1}; // Proportionality constant
+double gCurrHorizAngle{0.0}; //!< Current angle of horizontal servo
+double gTargetHorizAngle{0.0}; //!< Target angle of horizontal servo from latest command
+unsigned long gCurrHorizUpdateMs{0}; //!< Current time of the latest horizontal servo measurement and update
+unsigned long gPrevHorizUpdateMs{0}; //!< Previous time the horizontal servo was measured and updated
 
-void measureHorizAngle()
+
+/*!
+ * Measure the duty cycle of a pin using a +-100 window around the period.
+ * \param[in] pin the pin to read the duty cycle.
+ * \param[in] periodUs the period of the full cycle in microseconds.
+ * \param[in] average the number of samples to average the duty cycle over.
+ * \param[in] timeoutMs the duration to wait for a valid duty cycle calculation in milliseconds.
+ * \return the duty cycle. -1.0 if invalid.
+ */
+double measureDutyCycle(const int& pin, const int& periodUs, 
+                        const int& average, const int& timeoutMs)
 {
-   // Taken from Paralax 360 Feedback Angle Control code
-   
-   // Constants
-   static constexpr int unitsFC{360};       // Units in a full circle
-   static constexpr int dutyScale{1000};    // Scale duty cycle to 1/1000ths
-   static constexpr int dcMin{29};          // Min duty cycle
-   static constexpr int dcMax{971};         // Max duty cycle
-   static constexpr int q2min{unitsFC / 4}; // For checking if in 1st quadrant
-   static constexpr int q3max{q2min * 3};   // For checking if in 4th quadrant
+   const auto startTime{millis()};
+   auto sampleCount{0};
+   double dcSum{0.0};
 
-   static int turns{0};      // For tracking turns
-   static int thetaP{0}; // For tracking angle 
-
-   // Measure low and high times, making sure to take only valid cycle times
-   // (Check for jumps across 0 to 359 degree boundary)
-   int tCycle{0};
-   int tHigh{0};
-   int tLow{0};
-   int dc{0};
-   while(true)
+   while(millis() - startTime < timeoutMs)
    {
-      tHigh = pulseIn(HORIZ_SERVO_FEEDBACK_PIN, HIGH);
-      tLow = pulseIn(HORIZ_SERVO_FEEDBACK_PIN, LOW);
-      tCycle = tHigh + tLow;
-      if ((tCycle > 1000) && tCycle < 1200) // Check for valid
+      const auto tHigh{pulseIn(pin, HIGH)};
+      const auto tLow{pulseIn(pin, LOW)};
+      const auto tCycle{tHigh + tLow};
+      if (tCycle > periodUs - 100 && tCycle < periodUs + 100)
       {
-         break;
+         dcSum += static_cast<double>(tHigh) / tCycle;
+         ++sampleCount;
+         if (sampleCount == average)
+         {
+            return dcSum / average;
+         }
       }
-      dc = (dutyScale * tHigh) / tCycle;
    }
 
-   // Calculate angle
-   int theta = (unitsFC - 1) - ((dc - dcMin) * unitsFC) / (dcMax - dcMin + 1);
-
-   // Clamp theta to positive
-   if (theta < 0) theta = 0;
-   else if (theta > unitsFC - 1) theta = unitsFC - 1;
-
-   // If we transition from quadrant 4 to quadrant 1, increase the turn count
-   if ((theta < q2min) && (thetaP > q3max)) ++turns;
-   // If we transition from quadrant 1 to quadrant 4, decrease the turn count
-   if ((thetaP < q2min) && (theta > q3max)) --turns;
-
-   // Construct current angle from turns count and theta
-   if (turns >= 0)
-   {
-      currHorizAngle = (turns * unitsFC) + theta;
-   }
-   else
-   {
-      currHorizAngle = ((turns + 1) * unitsFC) - (unitsFC - theta);
-   }
-
-   thetaP = theta;
+   return -1.0;
 }
 
+/*!
+ * Calculate the position of the horizontal servo using feedback sensor data.
+ */
+void calcHorizAngle()
+{
+   static constexpr double DC_MIN{0.029}; //!< Min duty cycle
+   static constexpr double DC_MAX{0.971}; //!< Max duty cycle
+   static constexpr int CYCLE_PERIOD_US{1100}; //!< The approx. period of one complete cycle
+   static constexpr int Q1_MAX{UNITS_FC / 4}; //!< The max angle of the first quadrant
+   static constexpr int Q4_MIN{Q1_MAX * 3}; //!< The min angle of the fourth quadrant
+
+   static int turns{0};
+   static double prevMeasuredAngle{0.0};
+
+   double dc{measureDutyCycle(HORIZ_SERVO_FEEDBACK_PIN, 
+                              CYCLE_PERIOD_US,
+                              5,
+                              500)};
+   if (dc < 0.0) return; // The calculation failed, nothing to do anymore
+
+   // Clamp measured angle into the 0 - UNITS_FC range
+   double measuredAngle = ((dc - DC_MIN) * UNITS_FC) / (DC_MAX - DC_MIN);
+   if (measuredAngle < 0) measuredAngle = 0;
+   // Subtract very small number to be just under UNITS_FC
+   else if (measuredAngle >= UNITS_FC) measuredAngle = UNITS_FC - 0.000001;
+
+   // Check for origin crossover and adjust turn count. Note - This calculation assumes
+   // the servo will not move over 50% FC within update frequency
+   if (measuredAngle > Q4_MIN && prevMeasuredAngle < Q1_MAX) --gTurns;
+   else if (measuredAngle < Q1_MAX && prevMeasuredAngle > Q4_MIN) ++gTurns;
+
+   // Calculate the current position based on turn count
+   if (turns >= 0) gCurrHorizAngle = (turns * UNITS_FC) + measuredAngle;
+   else gCurrHorizAngle = ((turns + 1) * UNITS_FC) - (UNITS_FC - measuredAngle);
+
+   prevMeasuredAngle = measuredAngle;
+}
+
+/*!
+ * Move the horizontal servo towards the target angle.
+ */
 void controlHorizServo()
 {
-   int errorAngle{targetHorizAngle - currHorizAngle};
-   int output{errorAngle * Kp};
-   int offset{0};
+   static constexpr double ERROR_TOLERANCE{0.5};
+   static constexpr double K_P{0.8};
+   static constexpr double K_I{0.001};
+   static constexpr double K_D{4.5};
+   
+   static constexpr uint8_t ERROR_HISTORY_LEN{5};
+   static double errorHistory[ERROR_HISTORY_LEN]{0.0};
+   static double errorSum{0.0};
+   static uint8_t errorIndex{0};
+   static double prevAvgError{0.0};
+   static double prevIntegral{0.0};
 
-   if (output < -200) output = -200;
-   else if (output > 200) output = 200;
+   errorSum -= errorHistory[errorIndex];
+   errorHistory[errorIndex] = gTargetHorizAngle - gCurrHorizAngle;
+   errorSum += errorHistory[errorIndex];
+   ++errorIndex;
+   if (errorIndex >= ERROR_HISTORY_LEN) errorIndex = 0;
 
-   if (errorAngle > 0)
+   const double avgError{errorSum / ERROR_HISTORY_LEN};
+
+   if (avgError < ERROR_TOLERANCE && avgError > -1 * ERROR_TOLERANCE)
    {
-      offset = 30;
-   }
-   else if (errorAngle < 0)
-   {
-      offset = -30;
-   }
-   else
-   {
-      offset = 0;
+      // We are within tolerance, stop the servo
+      gHorizServo.writeMicroseconds(HORIZ_SERVO_STOP_US);
+      prevAvgError = avgError;
+      prevIntegral = 0.0;
+      return;
    }
 
-   gHorizServo.writeMicroseconds(output + offset);
+   auto deltaMs{gCurrHorizUpdateMs - gPrevHorizUpdateMs};
+   double integral{prevIntegral + avgError * deltaMs};
+   if (integral < -1 * HORIZ_SERVO_MIN_SPEED_OFFSET_US) 
+      integral = -1 * HORIZ_SERVO_MIN_SPEED_OFFSET_US;
+   else if (integral > HORIZ_SERVO_MIN_SPEED_OFFSET_US)
+      integral = HORIZ_SERVO_MIN_SPEED_OFFSET_US;
+
+   // Determine output offset of the PID controller
+   int offset{avgError * K_P + 
+              integral * K_I +
+              (avgError - prevAvgError) / deltaMs * K_D};
+
+   gHorizServo.writeMicroseconds(HORIZ_SERVO_STOP_US + offset);
+
+   prevAvgError = avgError;
+   prevIntegral = integral;
 }
 
 void setup()
@@ -171,7 +215,7 @@ void loop()
                float theta{0.0f};
                memcpy(&theta, gCommand+1, sizeof(float));
 
-               targetHorizAngle = theta;
+               gTargetHorizAngle = theta;
                break;
             }
             case FOCUS_SERVO_NUM:
@@ -185,6 +229,11 @@ void loop()
       }
    }
 
-   measureHorizAngle();
-   controlHorizServo();
+   gCurrHorizUpdateMs = millis();
+   if (gCurrHorizUpdateMs - gPrevHorizUpdateMs > HORIZ_SERVO_REFRESH_RATE_MS)
+   {
+      calcHorizAngle();
+      controlHorizServo();
+      gPrevHorizUpdateMs = gCurrHorizUpdateMs;
+   }
 }

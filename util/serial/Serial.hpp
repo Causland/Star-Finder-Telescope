@@ -9,7 +9,7 @@
 
 /*!
  * This utility supports writing and reading to and from a designated serial port.
- * A majority of the code for the configuration of the serial port was adapted or
+ * Code for the configuration of the serial port was adapted or
  * take directly from the following blog written by Geoffrey Hunter:
  * https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/
  */

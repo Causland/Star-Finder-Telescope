@@ -20,36 +20,32 @@ Serial::Serial(const std::string& serialDevice, const int& fcntlMode, const uint
       throw std::runtime_error("Error " + std::to_string(errno) + " from tcgetattr: " + std::strerror(errno));
    }
 
-   // Set control flags
-   tty.c_cflag &= ~PARENB; // Clear parity bit
+   // Set interface to raw
+   cfmakeraw(&tty);
+
+   // Set the baud rate based on parameter
+   cfsetspeed(&tty, baudRate);
+
+   // Set control modes outside cfmakeraw
    tty.c_cflag &= ~CSTOPB; // Clear stop field
-   tty.c_cflag &= ~CSIZE; // Clear all bits that set the data size 
-   tty.c_cflag |= CS8; // 8 bits per byte
    tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control
    tty.c_cflag |= CREAD | CLOCAL; // Turn on READ & ignore ctrl lines
 
-   // Set local modes
-   tty.c_lflag &= ~ICANON; // Disable canonical mode
-   tty.c_lflag &= ~ECHO; // Disable echo
+   // Set local modes outside cfmakeraw
    tty.c_lflag &= ~ECHOE; // Disable erasure
-   tty.c_lflag &= ~ECHONL; // Disable new-line echo
-   tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
-   tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
-   tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
+   
+   // Set input modes outside cfmakeraw
+   tty.c_iflag &= ~(IXOFF | IXANY); // Turn off s/w flow ctrl
 
-   // Set output modes
-   tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+   // Set output modes outside cfmakeraw
    tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
 
    // Set timeout based on parameter
    tty.c_cc[VTIME] = timeoutds;
    tty.c_cc[VMIN] = 0;
 
-   // Set the baud rate based on parameter
-   cfsetispeed(&tty, baudRate);
-   cfsetospeed(&tty, baudRate);
-
-   // Save tty settings
+   // Flush port and save tty settings
+   tcflush(fd, TCIFLUSH);
    if (tcsetattr(fd, TCSANOW, &tty) != 0)
    {
       throw std::runtime_error("Error " + std::to_string(errno) + " from tcsetattr: " + std::strerror(errno));
