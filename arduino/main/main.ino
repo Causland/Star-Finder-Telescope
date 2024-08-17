@@ -106,8 +106,8 @@ void calcHorizAngle()
 
    // Check for origin crossover and adjust turn count. Note - This calculation assumes
    // the servo will not move over 50% FC within update frequency
-   if (measuredAngle > Q4_MIN && prevMeasuredAngle < Q1_MAX) --gTurns;
-   else if (measuredAngle < Q1_MAX && prevMeasuredAngle > Q4_MIN) ++gTurns;
+   if (measuredAngle > Q4_MIN && prevMeasuredAngle < Q1_MAX) --turns;
+   else if (measuredAngle < Q1_MAX && prevMeasuredAngle > Q4_MIN) ++turns;
 
    // Calculate the current position based on turn count
    if (turns >= 0) gCurrHorizAngle = (turns * UNITS_FC) + measuredAngle;
@@ -123,8 +123,8 @@ void controlHorizServo()
 {
    static constexpr double ERROR_TOLERANCE{0.5};
    static constexpr double K_P{0.8};
-   static constexpr double K_I{0.001};
-   static constexpr double K_D{4.5};
+   static constexpr double K_I{0.005};
+   static constexpr double K_D{45};
    
    static constexpr uint8_t ERROR_HISTORY_LEN{5};
    static double errorHistory[ERROR_HISTORY_LEN]{0.0};
@@ -151,18 +151,22 @@ void controlHorizServo()
    }
 
    auto deltaMs{gCurrHorizUpdateMs - gPrevHorizUpdateMs};
-   double integral{prevIntegral + avgError * deltaMs};
-   if (integral < -1 * HORIZ_SERVO_MIN_SPEED_OFFSET_US) 
-      integral = -1 * HORIZ_SERVO_MIN_SPEED_OFFSET_US;
-   else if (integral > HORIZ_SERVO_MIN_SPEED_OFFSET_US)
-      integral = HORIZ_SERVO_MIN_SPEED_OFFSET_US;
+   const double integral{prevIntegral + avgError * deltaMs};
+   double integralPortion{integral * K_I};
+   if (integralPortion < -1 * HORIZ_SERVO_MIN_SPEED_OFFSET_US) 
+      integralPortion = -1 * HORIZ_SERVO_MIN_SPEED_OFFSET_US;
+   else if (integralPortion > HORIZ_SERVO_MIN_SPEED_OFFSET_US)
+      integralPortion = HORIZ_SERVO_MIN_SPEED_OFFSET_US;
 
    // Determine output offset of the PID controller
    int offset{avgError * K_P + 
-              integral * K_I +
+              integralPortion +
               (avgError - prevAvgError) / deltaMs * K_D};
 
-   gHorizServo.writeMicroseconds(HORIZ_SERVO_STOP_US + offset);
+   if (offset < -1 * HORIZ_SERVO_MAX_SPEED_OFFSET_US) offset = -1 * HORIZ_SERVO_MAX_SPEED_OFFSET_US;
+   else if (offset > HORIZ_SERVO_MAX_SPEED_OFFSET_US) offset = HORIZ_SERVO_MAX_SPEED_OFFSET_US;
+
+   gHorizServo.writeMicroseconds(HORIZ_SERVO_STOP_US - offset);
 
    prevAvgError = avgError;
    prevIntegral = integral;
