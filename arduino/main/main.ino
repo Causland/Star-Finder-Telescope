@@ -2,25 +2,27 @@
 // target positions. Uses sensors to create feedback loop to correct
 // for error in servo motion
 
+// Uncomment for debug logging of PID controllers
+//#define DEBUG
+
+#include <stdint.h>
 #include <string.h>
 #include <Servo.h>
 
 // Constants
 static constexpr uint8_t VERT_SERVO_NUM{0};
 static constexpr uint8_t VERT_SERVO_PIN{9};
-static constexpr uint16_t VERT_SERVO_DEFAULT_US{1200};
 static constexpr uint16_t VERT_SERVO_MIN_US{860};
 static constexpr uint16_t VERT_SERVO_MAX_US{1490};
 static constexpr double VERT_SERVO_MOTION_RANGE_DEG{90.0};
-static constexpr double VERT_SERVO_US_PER_DEG{(VERT_SERVO_MAX_US - VERT_SERVO_MIN_US) 
-                                                         / VERT_SERVO_MOTION_RANGE_DEG};
 
 static constexpr uint8_t HORIZ_SERVO_NUM{1};
 static constexpr uint8_t HORIZ_SERVO_PIN{10};
 static constexpr uint8_t HORIZ_SERVO_FEEDBACK_PIN{11};
 static constexpr uint16_t HORIZ_SERVO_STOP_US{1500};
-static constexpr int HORIZ_SERVO_MIN_SPEED_OFFSET_US{30};
-static constexpr int HORIZ_SERVO_MAX_SPEED_OFFSET_US{220};
+static constexpr uint16_t HORIZ_SERVO_MIN_SPEED_OFFSET_US{30};
+static constexpr uint16_t HORIZ_SERVO_MAX_SPEED_OFFSET_US{220};
+static constexpr uint16_t HORIZ_SERVO_MAX_SPEED_DPS{840};
 static constexpr uint16_t HORIZ_SERVO_DEFAULT_US{HORIZ_SERVO_STOP_US};
 static constexpr uint16_t HORIZ_SERVO_REFRESH_RATE_MS{10};
 
@@ -30,214 +32,515 @@ static constexpr uint16_t FOCUS_SERVO_DEFAULT_US{1500};
 
 static constexpr uint8_t COMMAND_LEN{5};
 
-static constexpr int UNITS_FC{360};
-
-// Globals
-Servo gVertServo;
-Servo gHorizServo;
-Servo gFocusServo;
-byte gCommand[COMMAND_LEN];
-
-double gCurrHorizAngle{0.0}; //!< Current angle of horizontal servo
-double gTargetHorizAngle{0.0}; //!< Target angle of horizontal servo from latest command
-unsigned long gCurrHorizUpdateMs{0}; //!< Current time of the latest horizontal servo measurement and update
-unsigned long gPrevHorizUpdateMs{0}; //!< Previous time the horizontal servo was measured and updated
-
-
 /*!
- * Measure the duty cycle of a pin using a +-100 window around the period.
- * \param[in] pin the pin to read the duty cycle.
- * \param[in] periodUs the period of the full cycle in microseconds.
- * \param[in] average the number of samples to average the duty cycle over.
- * \param[in] timeoutMs the duration to wait for a valid duty cycle calculation in milliseconds.
- * \return the duty cycle. -1.0 if invalid.
- */
-double measureDutyCycle(const int& pin, const int& periodUs, 
-                        const int& average, const int& timeoutMs)
+ * Servo wrapper class to provide some default properties and state to servos.
+ */ 
+class CustomServo
 {
-   const auto startTime{millis()};
-   auto sampleCount{0};
-   double dcSum{0.0};
+public:
+  /*!
+   * Create a CustomServo with a dedicated output pin and uS range.
+   * \param[in] pinNum the physical pin number.
+   * \param[in] defaultUs the default microseconds for the servo.
+   * \param[in] minUs the minimum microseconds for the servo.
+   * \param[in] maxUs the maximum microseconds for the servo.
+   */
+  CustomServo(const uint8_t pinNum, const uint16_t defaultUs, 
+              const uint16_t minUs, const uint16_t maxUs) :
+                pinNum(pinNum), defaultUs(defaultUs), minUs(minUs), maxUs(maxUs) {}
 
-   while(millis() - startTime < timeoutMs)
-   {
+  /*!
+   * Initializes the default state of the servo and attaches to the underlying resource
+   */
+  void init()
+  {
+    servo.attach(pinNum);
+    servo.writeMicroseconds(defaultUs);
+  }
+
+  virtual ~CustomServo() = default;
+  CustomServo(const CustomServo&) = delete;
+  CustomServo& operator=(const CustomServo&) = delete;
+  CustomServo(CustomServo&&) = delete;
+  CustomServo& operator=(CustomServo&&) = delete;
+
+  /*!
+   * Wrapper function to write a certain microsecond value to the servo object.
+   * \param[in] us microseconds to write.
+   */
+  void writeMicroseconds(const int& us) { servo.writeMicroseconds(us); }
+
+  /*!
+   * Stop any motion.
+   */
+  virtual void stop() = 0;
+
+  /*!
+   * Measure the current position of the servo.
+   * \return the position of the servo in degrees.
+   */
+  virtual double measurePosition() = 0;
+
+  double getCurrPos() { return currAngle; }
+  double getPrevPos() { return prevAngle; }
+
+  uint8_t pinNum{0}; //!< The physical pin number.
+
+  uint16_t defaultUs{0}; //!< The default microseconds for the servo.
+  uint16_t minUs{0}; //!< The minimum microseconds for the servo.
+  uint16_t maxUs{UINT16_MAX}; //!< The maximum microseconds for the servo.
+
+protected:
+  /*!
+   * Measure the duty cycle of a pin using a +-100 window around the period.
+   * \param[in] pin the pin to read the duty cycle.
+   * \param[in] periodUs the period of the full cycle in microseconds.
+   * \param[in] average the number of samples to average the duty cycle over.
+   * \param[in] timeoutMs the duration to wait for a valid duty cycle calculation in milliseconds.
+   * \return the duty cycle. -1.0 if invalid.
+   */
+  static double measureDutyCycle(const int& pin, const int& periodUs, 
+                                 const int& average, const int& timeoutMs)
+  {
+    const auto startTime{millis()};
+    auto sampleCount{0};
+    double dcSum{0.0};
+
+    while(millis() - startTime < timeoutMs)
+    {
       const auto tHigh{pulseIn(pin, HIGH)};
       const auto tLow{pulseIn(pin, LOW)};
       const auto tCycle{tHigh + tLow};
       if (tCycle > periodUs - 100 && tCycle < periodUs + 100)
       {
-         dcSum += static_cast<double>(tHigh) / tCycle;
-         ++sampleCount;
-         if (sampleCount == average)
-         {
-            return dcSum / average;
-         }
+        dcSum += static_cast<double>(tHigh) / tCycle;
+        ++sampleCount;
+        if (sampleCount == average)
+        {
+          return dcSum / average;
+        }
       }
-   }
+    }
+    return -1.0;
+  }
 
-   return -1.0;
-}
-
-/*!
- * Calculate the position of the horizontal servo using feedback sensor data.
- */
-void calcHorizAngle()
-{
-   static constexpr double DC_MIN{0.029}; //!< Min duty cycle
-   static constexpr double DC_MAX{0.971}; //!< Max duty cycle
-   static constexpr int CYCLE_PERIOD_US{1100}; //!< The approx. period of one complete cycle
-   static constexpr int Q1_MAX{UNITS_FC / 4}; //!< The max angle of the first quadrant
-   static constexpr int Q4_MIN{Q1_MAX * 3}; //!< The min angle of the fourth quadrant
-
-   static int turns{0};
-   static double prevMeasuredAngle{0.0};
-
-   double dc{measureDutyCycle(HORIZ_SERVO_FEEDBACK_PIN, 
-                              CYCLE_PERIOD_US,
-                              5,
-                              500)};
-   if (dc < 0.0) return; // The calculation failed, nothing to do anymore
-
-   // Clamp measured angle into the 0 - UNITS_FC range
-   double measuredAngle = ((dc - DC_MIN) * UNITS_FC) / (DC_MAX - DC_MIN);
-   if (measuredAngle < 0) measuredAngle = 0;
-   // Subtract very small number to be just under UNITS_FC
-   else if (measuredAngle >= UNITS_FC) measuredAngle = UNITS_FC - 0.000001;
-
-   // Check for origin crossover and adjust turn count. Note - This calculation assumes
-   // the servo will not move over 50% FC within update frequency
-   if (measuredAngle > Q4_MIN && prevMeasuredAngle < Q1_MAX) --turns;
-   else if (measuredAngle < Q1_MAX && prevMeasuredAngle > Q4_MIN) ++turns;
-
-   // Calculate the current position based on turn count
-   if (turns >= 0) gCurrHorizAngle = (turns * UNITS_FC) + measuredAngle;
-   else gCurrHorizAngle = ((turns + 1) * UNITS_FC) - (UNITS_FC - measuredAngle);
-
-   prevMeasuredAngle = measuredAngle;
-}
+  double currAngle{0.0}; //!< Current angle of the servo. Most recent measurement.
+  double prevAngle{0.0}; //!< Previous angle of the servo.
+  
+  Servo servo; //!< The underlying Servo object to control the servo.
+};
 
 /*!
- * Move the horizontal servo towards the target angle.
+ * A generic 360 degree continuous servo.
  */
-void controlHorizServo()
+class ContinuousServo : public CustomServo
 {
-   static constexpr double ERROR_TOLERANCE{0.5};
-   static constexpr double K_P{0.8};
-   static constexpr double K_I{0.005};
-   static constexpr double K_D{45};
-   
-   static constexpr uint8_t ERROR_HISTORY_LEN{5};
-   static double errorHistory[ERROR_HISTORY_LEN]{0.0};
-   static double errorSum{0.0};
-   static uint8_t errorIndex{0};
-   static double prevAvgError{0.0};
-   static double prevIntegral{0.0};
+public:
+  /*!
+   * Create a ContinuousServo with a dedicated output pin, uS range, and speed properties.
+   * \param[in] pinNum the physical pin number.
+   * \param[in] defaultUs the default microseconds for the servo.
+   * \param[in] minSpeedOffsetUs the minimum microsecond offset to cause the servo to rotate.
+   * \param[in] maxSpeedOffsetUs the maximum microsecond offset the servo can be set (max speed).
+   * \param[in] maxSpeedDps the calculated maximum speed in deg per second the servo can operate.
+   *                        Used to help filter sporadic jumps in sensors.
+   * \param[in] feedbackPinNum the physical pin number of the feedback sensor.
+   */
+  ContinuousServo(const uint8_t pinNum, const uint16_t defaultUs,
+                   const uint16_t minSpeedOffsetUs, const uint16_t maxSpeedOffsetUs,
+                   const uint16_t maxSpeedDps, const uint8_t feedbackPinNum) : 
+                    CustomServo(pinNum, defaultUs, defaultUs - maxSpeedOffsetUs, defaultUs + maxSpeedOffsetUs),
+                    minSpeedOffsetUs(minSpeedOffsetUs), maxSpeedOffsetUs(maxSpeedOffsetUs), 
+                    maxSpeedDps(maxSpeedDps), feedbackPinNum(feedbackPinNum) 
+  {
+    pinMode(feedbackPinNum, INPUT);
+  }
 
-   errorSum -= errorHistory[errorIndex];
-   errorHistory[errorIndex] = gTargetHorizAngle - gCurrHorizAngle;
-   errorSum += errorHistory[errorIndex];
-   ++errorIndex;
-   if (errorIndex >= ERROR_HISTORY_LEN) errorIndex = 0;
+  ~ContinuousServo() override = default;
+  ContinuousServo(const ContinuousServo&) = delete;
+  ContinuousServo& operator=(const ContinuousServo&) = delete;
+  ContinuousServo(ContinuousServo&&) = delete;
+  ContinuousServo& operator=(ContinuousServo&&) = delete;
 
-   const double avgError{errorSum / ERROR_HISTORY_LEN};
+  /*!
+   * Stop rotation by setting to default microseconds.
+   */
+  void stop() override { servo.writeMicroseconds(defaultUs); }
 
-   if (avgError < ERROR_TOLERANCE && avgError > -1 * ERROR_TOLERANCE)
-   {
-      // We are within tolerance, stop the servo
-      gHorizServo.writeMicroseconds(HORIZ_SERVO_STOP_US);
-      prevAvgError = avgError;
-      prevIntegral = 0.0;
-      return;
-   }
+  /*!
+   * Get the true measured angle 0-360 degrees of the sensor. This value is not
+   * adjusted for the number of turns.
+   * \return the measured angle from 0-360 degrees.
+   */
+  double getMeasuredAngle() { return currMeasuredAngle; }
 
-   auto deltaMs{gCurrHorizUpdateMs - gPrevHorizUpdateMs};
-   const double integral{prevIntegral + avgError * deltaMs};
-   double integralPortion{integral * K_I};
-   if (integralPortion < -1 * HORIZ_SERVO_MIN_SPEED_OFFSET_US) 
-      integralPortion = -1 * HORIZ_SERVO_MIN_SPEED_OFFSET_US;
-   else if (integralPortion > HORIZ_SERVO_MIN_SPEED_OFFSET_US)
-      integralPortion = HORIZ_SERVO_MIN_SPEED_OFFSET_US;
+  uint16_t minSpeedOffsetUs{0}; //!< Microsecond offset to cause rotation of servo.
+  uint16_t maxSpeedOffsetUs{UINT16_MAX}; //!< Microsecond offset to rotate servo at max speed.
+  uint16_t maxSpeedDps{UINT16_MAX}; //!< Maximum speed of the servo.
+  int turns{0}; //!< The number of turns the servo has made since startup.
 
-   // Determine output offset of the PID controller
-   int offset{avgError * K_P + 
-              integralPortion +
-              (avgError - prevAvgError) / deltaMs * K_D};
+protected:
+  /*!
+   * Adjust the number of turns based on the previous and current measured angle.
+   * Uses quadrants to figure out 0-360 crossover
+   */
+  void calcTurns()
+  {
+    // Use quadrants to figure out turn
+    if (prevMeasuredAngle >= 270.0 && currMeasuredAngle <= 90.0)
+    {
+      ++turns;
+    }
+    else if (prevMeasuredAngle <= 90.0 && currMeasuredAngle >= 270.0) 
+    {
+      --turns;
+    }
+  }
 
-   if (offset < -1 * HORIZ_SERVO_MAX_SPEED_OFFSET_US) offset = -1 * HORIZ_SERVO_MAX_SPEED_OFFSET_US;
-   else if (offset > HORIZ_SERVO_MAX_SPEED_OFFSET_US) offset = HORIZ_SERVO_MAX_SPEED_OFFSET_US;
+  uint8_t feedbackPinNum{0}; //!< The physical pin number of the feedback sensor.
 
-   gHorizServo.writeMicroseconds(HORIZ_SERVO_STOP_US - offset);
+  double currMeasuredAngle{0.0}; //!< The real 0-360 measured angle of the servo.
+                                 //!< CustomServo::currAngle holds the angle adjusted for turns.
+  double prevMeasuredAngle{0.0}; //!< The real 0-360 previous measured angle of the servo.
+                                 //!< CustomServo::prevAngle holds the angle adjusted for turns.
+};
 
-   prevAvgError = avgError;
-   prevIntegral = integral;
-}
+/*!
+ * A ContinuousServo implementation for a Parallax 360 servo.
+ */
+class Parallax360Servo : public ContinuousServo
+{
+public:
+  /*!
+   * Create a ContinuousServo with a dedicated output pin, uS range, and speed properties.
+   * \param[in] pinNum the physical pin number.
+   * \param[in] defaultUs the default microseconds for the servo.
+   * \param[in] minSpeedOffsetUs the minimum microsecond offset to cause the servo to rotate.
+   * \param[in] maxSpeedOffsetUs the maximum microsecond offset the servo can be set (max speed).
+   * \param[in] maxSpeedDps the calculated maximum speed in deg per second the servo can operate.
+   *                        Used to help filter sporadic jumps in sensors.
+   * \param[in] feedbackPinNum the physical pin number of the feedback sensor.
+   */
+  Parallax360Servo(const uint8_t pinNum, const uint16_t defaultUs,
+                   const uint16_t minSpeedOffsetUs, const uint16_t maxSpeedOffsetUs,
+                   const uint16_t maxSpeedDps, const uint8_t feedbackPinNum) : 
+                     ContinuousServo(pinNum, defaultUs,
+                                     minSpeedOffsetUs, maxSpeedOffsetUs, 
+                                     maxSpeedDps, feedbackPinNum) {}
+  
+  ~Parallax360Servo() override = default;
+  Parallax360Servo(const Parallax360Servo&) = delete;
+  Parallax360Servo& operator=(const Parallax360Servo&) = delete;
+  Parallax360Servo(Parallax360Servo&&) = delete;
+  Parallax360Servo& operator=(Parallax360Servo&&) = delete;
+
+  /*!
+   * Measure the position of the servo and adjust on turn count
+   * \return the adjusted turn based position
+   */
+  double measurePosition() override
+  {
+    static constexpr double DC_MIN{0.029}; //!< Min duty cycle
+    static constexpr double DC_MAX{0.971}; //!< Max duty cycle
+    static constexpr int CYCLE_PERIOD_US{1100}; //!< The approx. period of one complete cycle
+
+    const double dc{measureDutyCycle(feedbackPinNum,
+                                     CYCLE_PERIOD_US,
+                                     3,
+                                     100)};
+    if (dc < 0.0) return prevAngle; // The calculation failed, nothing to do anymore
+
+    // Clamp measured angle into the 0 - 360 range
+    prevMeasuredAngle = currMeasuredAngle;
+    currMeasuredAngle = ((dc - DC_MIN) * 360.0) / (DC_MAX - DC_MIN);
+    if (currMeasuredAngle < 0 || currMeasuredAngle >= 360.0) currMeasuredAngle = 0;
+
+    calcTurns();
+
+    prevAngle = currAngle;
+    currAngle = 360.0 * turns + currMeasuredAngle;
+    return currAngle;    
+  }
+};
+
+/*! 
+ * A generic position controlled servo.
+ */
+class PositionalServo : public CustomServo
+{
+public:
+  /*!
+   * Create a PositionalServo with a dedicated output pin and uS range.
+   * \param[in] pinNum the physical pin number.
+   * \param[in] defaultUs the default microseconds for the servo.
+   * \param[in] minUs the minimum microseconds for the servo.
+   * \param[in] maxUs the maximum microseconds for the servo.
+   * \param[in] rangeDeg the motion range of the servo in degrees.
+   */
+  PositionalServo(const uint8_t pinNum,
+                  const uint16_t defaultUs, const uint16_t minUs, const uint16_t maxUs,
+                  const double& rangeDeg) : CustomServo(pinNum, defaultUs, minUs, maxUs),
+                    rangeDeg(rangeDeg), usPerDeg(rangeDeg > 0.0 ? (maxUs - minUs) / rangeDeg : 0.0) {}
+  
+  ~PositionalServo() override = default;
+  PositionalServo(const PositionalServo&) = delete;
+  PositionalServo& operator=(const PositionalServo&) = delete;
+  PositionalServo(PositionalServo&&) = delete;
+  PositionalServo& operator=(PositionalServo&&) = delete;
+
+  /*!
+   * Stop the servo by writing the current position
+   */
+  void stop() override { servo.writeMicroseconds(servo.readMicroseconds()); }
+
+  /*!
+   * Estimate the position of the servo by finding current 
+   * servo microseconds.
+   */
+  double measurePosition() override
+  {
+    prevAngle = currAngle;
+    currAngle = servo.readMicroseconds() / usPerDeg;
+    return currAngle;
+  }
+
+  double rangeDeg{0.0}; //!< The range of motion of the servo.
+  double usPerDeg{0.0}; //!< The number of microseconds for each degree of motion in the range.
+};
+
+/*! 
+ * A basic implementation of a generic PID controller for a continuous servo.
+ */
+class PIDController
+{
+public:
+  /*!
+   * Create a PIDController with the provided ContinousServo and PID constants.
+   * \param[in] servo a pointer to a ContinuousServo object for position, properties, and control.
+   * \param[in] settlingTimeSec the duration in seconds in which to control the servo before stopping PID.
+   * \param[in] P the P constant.
+   * \param[in] I the I constant.
+   * \param[in] D the D constant.
+   */
+  PIDController(ContinuousServo* servo, const int& settlingTimeSec=-1,
+                const double& P=0.0, const double& I=0.0, const double& D=0.0) : 
+    servo(servo), settlingTimeSec(settlingTimeSec), K_P(P), K_I(I), K_D(D) 
+    {
+      if (servo == nullptr) 
+      {
+        Serial.println("ERROR - Servo cannot be null for PID controller");
+        while (1) 
+        {
+          // Wait forever
+        }
+      }
+    }
+
+    /*!
+     * Update the PID controller and move the servo. Applies filtering to input and velocity before
+     * calculating microsecond offset for motion.
+     */
+    void move()
+    {
+      const auto currUpdateMs{millis()};
+
+      // If we are out of the settling window, do not move
+      if (settlingTimeSec > 0 &&
+          currUpdateMs - targetTimeMs > settlingTimeSec * 1000)
+      {
+        servo->stop();
+        return;
+      }
+
+      // Find time between this and last call
+
+      const double deltaS{(currUpdateMs - prevUpdateMs) / 1000.0};
+
+      // Update position
+      const double currAngle{servo->measurePosition()};
+      const double prevAngle{servo->getPrevPos()};
+
+      // Ignore sporadic jumps greater than max possible speed
+      const auto dist{currAngle > prevAngle ? currAngle - prevAngle : 
+                                              prevAngle - currAngle};
+      if (dist > servo->maxSpeedDps * deltaS) return;
+
+      // Filter the input current angle
+      static constexpr double ANGLE_FILTER_FREQ{100}; // Very light filtering. This should be ok from sensor
+      const double filteredCurrAngle{prevFilteredCurrAngle + 
+                                     (ANGLE_FILTER_FREQ * deltaS / (1.0 + ANGLE_FILTER_FREQ * deltaS)) * 
+                                     (currAngle - prevFilteredCurrAngle)};
+  
+      // Calculate error based on filtered position
+      double error{filteredCurrAngle - targetAngle};
+
+      // Calculate integral portion
+      double integral{prevIntegral + error * deltaS};
+      if (integral < -1 * (servo->minSpeedOffsetUs / K_I)) 
+          integral = -1 * (servo->minSpeedOffsetUs / K_I);
+      else if (integral > servo->minSpeedOffsetUs / K_I)
+          integral = servo->minSpeedOffsetUs / K_I;
+
+      // Calculate derivative portion
+      static constexpr double VEL_FILTER_FREQ{120};
+      const double vel{(filteredCurrAngle - prevFilteredCurrAngle) / deltaS};
+      const double filteredVel{prevFilteredVel + 
+                               (VEL_FILTER_FREQ * deltaS / (1.0 + VEL_FILTER_FREQ * deltaS)) * 
+                               (vel - prevFilteredVel)};
+      
+      const double propPortion{error * K_P};
+      const double integPortion{integral * K_I};
+      const double derivPortion{filteredVel * K_D};
+      const int offset{propPortion + integPortion + derivPortion};
+
+#ifdef DEBUG
+      static char buf[128]{};
+      static char str[16]{};
+      dtostrf(currUpdateMs / 1000.0, 0, 3, str); strncpy(buf, str, 15); strcat(buf, ", ");
+      itoa(servo->turns, str, 10);               strncat(buf, str, 15); strcat(buf, ", ");
+      dtostrf(currAngle, 0, 3, str);             strncat(buf, str, 15); strcat(buf, ", ");
+      dtostrf(filteredCurrAngle, 0, 3, str);     strncat(buf, str, 15); strcat(buf, ", ");
+      dtostrf(targetAngle, 0, 3, str);           strncat(buf, str, 15); strcat(buf, ", ");
+      dtostrf(error, 0, 3, str);                 strncat(buf, str, 15); strcat(buf, ", ");
+      dtostrf(propPortion, 0, 3, str);           strncat(buf, str, 15); strcat(buf, ", ");
+      dtostrf(integPortion, 0, 3, str);          strncat(buf, str, 15); strcat(buf, ", ");
+      dtostrf(derivPortion, 0, 3, str);          strncat(buf, str, 15); strcat(buf, ", ");
+      itoa(offset, str, 10);                     strncat(buf, str, 15); strcat(buf, "\n");
+      Serial.print(buf);
+#endif
+
+      servo->writeMicroseconds(servo->defaultUs + offset);
+
+      // Setup for next function call
+      prevFilteredCurrAngle = filteredCurrAngle;
+      prevIntegral = integral;
+      prevFilteredVel = filteredVel;
+      prevUpdateMs = currUpdateMs;
+    }
+
+    /*!
+     * Update the target for the controller.
+     * \param[in] newTargetDeg the new target in degrees.
+     */
+    void updateTarget(const double& newTargetDeg) 
+    { 
+      targetTimeMs = millis();
+      targetAngle = newTargetDeg;
+      prevIntegral = 0.0; 
+    }
+
+private:
+    double K_P{0.0}; //!< The proportional constant.
+    double K_I{0.0}; //!< The integration constant.
+    double K_D{0.0}; //!< The derivative constant.
+
+    unsigned long prevUpdateMs{millis()}; //!< The last time the move() function was called.
+    double prevFilteredCurrAngle{0.0}; //!< The previous filtered angle of the servo.
+    double prevFilteredVel{0.0}; //!< The previous filtered velocity of the servo.
+    double prevIntegral{0.0}; //!< The previous integral value.
+
+    unsigned long targetTimeMs{millis()}; //!< Time of the last target update.
+    double targetAngle{0.0}; //!< The target angle in degrees.
+
+    int settlingTimeSec{-1}; //!< The duration in seconds in which to let the PID controller operate before stopping.
+                             //!< Important for stopping drift of servo due to I.
+
+    ContinuousServo* servo; //!< A pointer to the ContinousServo for position and control.
+};
+
+// Globals
+PositionalServo gVertServo{VERT_SERVO_PIN, (VERT_SERVO_MIN_US + VERT_SERVO_MAX_US) / 2, 
+                           VERT_SERVO_MIN_US, VERT_SERVO_MAX_US, VERT_SERVO_MOTION_RANGE_DEG};
+Parallax360Servo gHorizServo{HORIZ_SERVO_PIN, HORIZ_SERVO_STOP_US, 
+                             HORIZ_SERVO_MIN_SPEED_OFFSET_US, HORIZ_SERVO_MAX_SPEED_OFFSET_US,
+                             HORIZ_SERVO_MAX_SPEED_DPS, HORIZ_SERVO_FEEDBACK_PIN};
+PIDController gHorizPID{&gHorizServo, 5, 1.275, 3.0, 0.425};
+Servo gFocusServo;
 
 void setup()
 {
-   // Attach the servos and move to default positions
-   gVertServo.attach(VERT_SERVO_PIN);
-   gVertServo.writeMicroseconds(VERT_SERVO_DEFAULT_US);
-   
-   gHorizServo.attach(HORIZ_SERVO_PIN);
-   gHorizServo.writeMicroseconds(HORIZ_SERVO_DEFAULT_US);
-   pinMode(HORIZ_SERVO_FEEDBACK_PIN, INPUT);
+  Serial.begin(9600);
 
-   gFocusServo.attach(FOCUS_SERVO_PIN);
-   gFocusServo.writeMicroseconds(FOCUS_SERVO_DEFAULT_US);
+#ifdef DEBUG
+  Serial.println("Time (s), Turns, Measured Theta (deg), Current Theta (deg), Target Theta (deg), Error (deg), P, I, D, Offset (10us)");
+#endif
 
-   Serial.begin(9600);
+  gVertServo.init();
+  gHorizServo.init();
+
+  // Move to known angle
+  gHorizPID.updateTarget(20);
 }
 
 void loop()
 {
-   // Check for new serial data
-   if (Serial.available() > 0)
-   {
-      size_t numBytes = Serial.readBytes(gCommand, COMMAND_LEN);
+  // Check for new serial data
+  if (Serial.available() > 0)
+  {
+    byte command[COMMAND_LEN];
+    const size_t numBytes{Serial.readBytes(command, COMMAND_LEN)};
 
-      if (numBytes >= COMMAND_LEN)
+    if (numBytes >= COMMAND_LEN)
+    {
+      // We received a command for a servo. Update its position
+      switch(command[0])
       {
-         // We received a command. Check for which servo and set
-         // the new microseconds. Note, the commanded value is
-         // in ten microseconds units
-         switch(gCommand[0])
-         {
-            case VERT_SERVO_NUM:
-            {
-               float theta{0.0f};
-               memcpy(&theta, gCommand+1, sizeof(float));
+        case VERT_SERVO_NUM:
+        {
+          float theta{0.0f};
+          memcpy(&theta, command+1, sizeof(float));
 
-               int numUs{theta * VERT_SERVO_US_PER_DEG + VERT_SERVO_MIN_US};
-               if (numUs < VERT_SERVO_MIN_US) numUs = VERT_SERVO_MIN_US;
-               else if (numUs > VERT_SERVO_MAX_US) numUs = VERT_SERVO_MAX_US;
+          int numUs{theta * gVertServo.usPerDeg + gVertServo.minUs};
+          if (numUs < gVertServo.minUs) numUs = gVertServo.minUs;
+          else if (numUs > gVertServo.maxUs) numUs = gVertServo.maxUs;
 
-               gVertServo.writeMicroseconds(numUs);
-               break;
-            }               
-            case HORIZ_SERVO_NUM:
-            {
-               float theta{0.0f};
-               memcpy(&theta, gCommand+1, sizeof(float));
+          gVertServo.writeMicroseconds(numUs);
+          break;
+        }               
+        case HORIZ_SERVO_NUM:
+        {
+          float theta{0.0f};
+          memcpy(&theta, command+1, sizeof(float));
 
-               gTargetHorizAngle = theta;
-               break;
-            }
-            case FOCUS_SERVO_NUM:
-            {
-               gFocusServo.writeMicroseconds(gCommand[1] * 10);
-               break;
-            }
-            default: // Nothing here
-               break;
-         }
+          double targetAngle{theta};
+
+          // Calculate the next target based on the current real
+          // angle adjusted for turns
+          gHorizServo.measurePosition();
+          const auto measuredAngle{gHorizServo.getMeasuredAngle()};
+          const auto& turns{gHorizServo.turns};
+          if (targetAngle > measuredAngle && 
+              targetAngle - measuredAngle > 180.0)
+          {
+            gHorizPID.updateTarget(targetAngle + 360.0 * (turns - 1));
+          }
+          else if (measuredAngle > targetAngle &&
+                   measuredAngle - targetAngle > 180)
+          {
+            gHorizPID.updateTarget(targetAngle + 360.0 * (turns + 1));
+          }
+          else
+          {
+            gHorizPID.updateTarget(targetAngle + 360.0 * turns);
+          }
+          break;
+        }
+        case FOCUS_SERVO_NUM:
+        {
+          gFocusServo.writeMicroseconds(command[1] * 10);
+          break;
+        }
+        default: // Nothing here
+          break;
       }
-   }
+    }
+  }
 
-   gCurrHorizUpdateMs = millis();
-   if (gCurrHorizUpdateMs - gPrevHorizUpdateMs > HORIZ_SERVO_REFRESH_RATE_MS)
-   {
-      calcHorizAngle();
-      controlHorizServo();
-      gPrevHorizUpdateMs = gCurrHorizUpdateMs;
-   }
+  static auto prevHorizUpdateMs{millis() - HORIZ_SERVO_REFRESH_RATE_MS};
+  const auto now{millis()};
+  if (now - prevHorizUpdateMs > HORIZ_SERVO_REFRESH_RATE_MS)
+  {
+    gHorizPID.move();
+    prevHorizUpdateMs = now;
+  }
 }
